@@ -155,26 +155,6 @@ watch([getPrimary, getSurface, isDarkTheme], () => {
 
             <div class="font-semibold text-xl" style="border-bottom: 1px solid var(--surface-border)">Разделы</div>
 
-            <!-- <div class="flex flex-col md:flex-row gap-4">
-                <InputGroup>
-                    <div class="layout-menu ul a">
-                        <span>Раздел №1</span>
-                        <i class="pi pi-fw pi-angle-right layout-submenu-toggler"></i>
-                    </div>
-                </InputGroup>
-                <InputGroup>
-                    <span>Раздел №1</span>
-                </InputGroup>
-            </div>
-            <div class="flex flex-col md:flex-row gap-4">
-                <InputGroup>
-                    <span>Раздел №1</span>
-                </InputGroup>
-                <InputGroup>
-                    <span>Раздел №1</span>
-                </InputGroup>
-            </div> -->
-
             <div class="sections-list">
                 <div v-for="section in sections" :key="section.id" class="section-item" @click="goToSection(section.link)">
                     {{ section.name }}
@@ -183,7 +163,7 @@ watch([getPrimary, getSurface, isDarkTheme], () => {
             </div>
         </div>
 
-        <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Папки</div>
+        <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Опросы</div>
         <TreeTable :value="treeTableValue" selectionMode="button" v-model:selectionKeys="selectedTreeTableValue">
             <Column field="name" header="Имя" :expander="true"></Column>
             <Column field="size" header="Дата"></Column>

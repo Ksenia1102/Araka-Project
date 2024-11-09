@@ -7,9 +7,9 @@ import AppMenuItem from './AppMenuItem.vue';
 const model = ref([
     {
         items: [
-            { label: 'Библиотека', icon: 'pi pi-fw pi-home', to: '/' },
-            { label: 'Отчеты', icon: 'pi pi-fw pi-home', to: '/pages/auth/login' },
-            { label: 'Ученики', icon: 'pi pi-fw pi-home', to: '/uikit/filedoc' }
+            { label: 'Библиотека', icon: 'pi pi-fw pi-home', to: '/pages/dashboard' },
+            { label: 'Отчеты', icon: 'pi pi-fw pi-home', to: '/uikit/working' },
+            { label: 'Ученики', icon: 'pi pi-fw pi-home', to: '/uikit/working' }
         ]
     }
 ]);

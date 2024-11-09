@@ -1,4 +1,11 @@
 <script setup>
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
+function goToLogin() {
+    router.push({ name: 'login' });
+}
 // function smoothScroll(id) {
 //     document.body.click();
 //     document.querySelector(id).scrollIntoView({
@@ -62,7 +69,7 @@
                 <div class="mx-6 md:mx-20 mt-0 md:mt-6">
                     <h1 class="text-6xl font-bold text-gray-900 leading-tight"><span class="font-light block">Интерактивное обучение</span>EduVision</h1>
                     <p class="font-normal text-2xl leading-normal md:mt-4 text-gray-700">Создаваемая система предназначена для создания учителями тестов и классов (состоящих из учеников), а также для просмотра аналитики по проведённым тестам</p>
-                    <Button label="Начать" as="router-link" to="/pages/auth/login" rounded class="!text-xl mt-8 !px-4"></Button>
+                    <Button label="Начать" :to="{ name: 'login' }" as="router-link" @click="goToLogin" rounded class="!text-xl mt-8 !px-4"></Button>
                 </div>
                 <div class="flex justify-center md:justify-end">
                     <img src="/demo/images/landing/home1.png" alt="Hero Image" class="w-9/12 md:w-auto" />

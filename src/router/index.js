@@ -4,20 +4,24 @@ import { createRouter, createWebHistory } from 'vue-router';
 const router = createRouter({
     history: createWebHistory(),
     routes: [
-        // {
-        //     path: '/',
-        //     name: 'Home',
-        //     component: Home
-        // },
-
         {
             path: '/',
+            name: 'Home',
+            component: () => import('@/views/Home.vue')
+        },
+        {
+            path: '/pages/dashboard',
             component: AppLayout,
             children: [
                 {
-                    path: '/',
+                    path: '/pages/dashboard',
                     name: 'dashboard',
-                    component: () => import('@/views/Dashboard.vue')
+                    component: () => import('@/views/pages/Dashboard.vue')
+                },
+                {
+                    path: '/pages/survey',
+                    name: 'survey',
+                    component: () => import('@/views/pages/Survey.vue')
                 },
                 {
                     path: '/uikit/formlayout',
@@ -28,6 +32,11 @@ const router = createRouter({
                     path: '/uikit/input',
                     name: 'input',
                     component: () => import('@/views/uikit/InputDoc.vue')
+                },
+                {
+                    path: '/uikit/working',
+                    name: 'working',
+                    component: () => import('@/views/uikit/Working.vue')
                 },
                 {
                     path: '/uikit/button',
@@ -118,9 +127,19 @@ const router = createRouter({
             component: () => import('@/views/pages/Landing.vue')
         },
         {
+            path: '/pages/survey',
+            name: 'survey',
+            component: () => import('@/views/pages/Survey.vue')
+        },
+        {
             path: '/pages/notfound',
             name: 'notfound',
             component: () => import('@/views/pages/NotFound.vue')
+        },
+        {
+            path: '/pages/empty',
+            name: 'empty',
+            component: () => import('@/views/pages/Empty.vue')
         },
 
         {
@@ -139,6 +158,19 @@ const router = createRouter({
             component: () => import('@/views/pages/auth/Error.vue')
         }
     ]
+});
+
+// Добавляем глобальный навигационный хук для проверки авторизации
+router.beforeEach((to, from, next) => {
+    const isAuthenticated = false; // Здесь добавьте логику для проверки, авторизован ли пользователь
+
+    if (to.matched.some((record) => record.meta.requiresAuth) && !isAuthenticated) {
+        // Если маршрут требует авторизации и пользователь не авторизован
+        next({ name: 'login' }); // Перенаправляем на страницу логина
+    } else {
+        // Если авторизация не требуется или пользователь авторизован
+        next(); // Продолжаем переход
+    }
 });
 
 export default router;
