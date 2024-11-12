@@ -8,8 +8,7 @@ const model = ref([
     {
         items: [
             { label: 'Библиотека', icon: 'pi pi-fw pi-home', to: '/pages/dashboard' },
-            { label: 'Отчеты', icon: 'pi pi-fw pi-home', to: '/uikit/working' },
-            { label: 'Ученики', icon: 'pi pi-fw pi-home', to: '/uikit/working' }
+            { label: 'Отчеты', icon: 'pi pi-fw pi-home', to: '/uikit/working' }
         ]
     }
 ]);
@@ -37,27 +36,27 @@ const model1 = ref([
     }
 ]);
 
-const model2 = ref([
-    {
-        items: [
-            {
-                label: 'Разделы',
-                icon: 'pi pi-fw pi-bookmark',
-                items: [
-                    {
-                        label: 'Раздел 1',
-                        icon: 'pi pi-fw pi-bookmark'
-                    },
-                    {
-                        label: 'Раздел 2',
-                        icon: 'pi pi-fw pi-bookmark',
-                        showButton: true
-                    }
-                ]
-            }
-        ]
-    }
-]);
+// const model2 = ref([
+//     {
+//         items: [
+//             {
+//                 label: 'Разделы',
+//                 icon: 'pi pi-fw pi-bookmark',
+//                 items: [
+//                     {
+//                         label: 'Раздел 1',
+//                         icon: 'pi pi-fw pi-bookmark'
+//                     },
+//                     {
+//                         label: 'Раздел 2',
+//                         icon: 'pi pi-fw pi-bookmark',
+//                         showButton: true
+//                     }
+//                 ]
+//             }
+//         ]
+//     }
+// ]);
 </script>
 
 <template>
@@ -77,7 +76,7 @@ const model2 = ref([
             <li v-if="item.separator" class="menu-separator"></li>
         </template>
     </ul>
-    <ul
+    <!-- <ul
         class="layout-menu"
         style="background-color: var(--surface-overlay); border-radius: var(--content-border-radius); padding: 0.5rem; margin: 1rem 0; display: flex; align-items: flex-start; flex-direction: row-reverse; justify-content: space-between"
     >
@@ -86,7 +85,7 @@ const model2 = ref([
             <app-menu-item v-if="!item.separator" :item="item" :index="i"></app-menu-item>
             <li v-if="item.separator" class="menu-separator"></li>
         </template>
-    </ul>
+    </ul> -->
 </template>
 
 <style lang="scss" scoped></style>

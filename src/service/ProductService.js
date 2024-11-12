@@ -369,7 +369,7 @@ export const ProductService = {
             {
                 id: '1000',
                 code: 'f230fh0g3',
-                name: 'Bamboo Watch',
+                name: 'Где находится ухо у кузнечика?',
                 description: 'Product Description',
                 image: 'bamboo-watch.jpg',
                 price: 65,

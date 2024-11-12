@@ -39,6 +39,11 @@ const router = createRouter({
                     component: () => import('@/views/uikit/Working.vue')
                 },
                 {
+                    path: '/uikit/sur-data',
+                    name: 'sur-data',
+                    component: () => import('@/views/uikit/SurveyData.vue')
+                },
+                {
                     path: '/uikit/button',
                     name: 'button',
                     component: () => import('@/views/uikit/ButtonDoc.vue')

@@ -12,7 +12,7 @@ const chartOptions = ref(null);
 
 const treeValue = ref(null);
 const treeTableValue = ref(null);
-const selectedTreeTableValue = ref(null);
+//const selectedTreeTableValue = ref(null);
 
 onMounted(() => {
     NodeService.getTreeNodes().then((data) => (treeValue.value = data));
@@ -24,20 +24,20 @@ onMounted(() => {
 // ]);
 
 //разделы!!!
-import { useRouter } from 'vue-router';
+//import { useRouter } from 'vue-router';
 
-const router = useRouter();
+//const router = useRouter();
 
-const sections = ref([
-    { id: 1, name: 'Раздел №1', link: '/section/1' },
-    { id: 2, name: 'Раздел №2', link: '/section/2' },
-    { id: 3, name: 'Раздел №3', link: '/section/3' },
-    { id: 4, name: 'Раздел №4', link: '/section/4' }
-]);
+// const sections = ref([
+//     { id: 1, name: 'Раздел №1', link: '/section/1' },
+//     { id: 2, name: 'Раздел №2', link: '/section/2' },
+//     { id: 3, name: 'Раздел №3', link: '/section/3' },
+//     { id: 4, name: 'Раздел №4', link: '/section/4' }
+// ]);
 
-function goToSection(link) {
-    router.push(link);
-}
+// function goToSection(link) {
+//     router.push(link);
+// }
 ////
 
 onMounted(() => {
@@ -126,6 +126,36 @@ watch([getPrimary, getSurface, isDarkTheme], () => {
 });
 </script>
 
+<script>
+export default {
+    data() {
+        return {
+            surveys: [
+                { id: 1, name: 'Опрос 1', modified: '2023-10-16' },
+                { id: 2, name: 'Untitled Set', modified: new Date() }
+                // Добавьте другие опросы, если нужно
+            ],
+            selectedSurvey: null
+        };
+    },
+    methods: {
+        // goToSurvey(surveyId) {
+
+        //     this.$router.push(`/uikit/working/${surveyId}`);
+        // },
+        goToSurvey() {
+            // Логика перехода к выбранному опросу
+            this.$router.push(`/uikit/sur-data`);
+        },
+        formatDate(date) {
+            // Функция для форматирования даты
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(date).toLocaleDateString('ru-RU', options);
+        }
+    }
+};
+</script>
+
 <template>
     <div class="card">
         <div class="flex" style="gap: 0.5rem; align-items: stretch">
@@ -145,30 +175,41 @@ watch([getPrimary, getSurface, isDarkTheme], () => {
                 </template>
 
                 <template #end>
-                    <Button icon="pi pi-plus" class="mr-2" severity="secondary" text />
-                    <Button icon="pi pi-print" class="mr-2" severity="secondary" text />
-                    <Button icon="pi pi-upload" severity="secondary" text />
-                    <Button icon="pi pi-upload" severity="secondary" text />
-                    <Button icon="pi pi-ellipsis-v" severity="secondary" text />
+                    <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-plus" class="mr-2" severity="secondary" text />
+                    <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-print" class="mr-2" severity="secondary" text />
+                    <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-upload" severity="secondary" text />
+                    <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-upload" severity="secondary" text />
+                    <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-ellipsis-v" severity="secondary" text />
                 </template>
             </Toolbar>
 
-            <div class="font-semibold text-xl" style="border-bottom: 1px solid var(--surface-border)">Разделы</div>
+            <!-- <div class="font-semibold text-xl" style="border-bottom: 1px solid var(--surface-border)">Разделы</div>
 
             <div class="sections-list">
                 <div v-for="section in sections" :key="section.id" class="section-item" @click="goToSection(section.link)">
                     {{ section.name }}
                     <i class="pi pi-fw pi-angle-right" />
                 </div>
-            </div>
+            </div> -->
         </div>
 
         <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Опросы</div>
-        <TreeTable :value="treeTableValue" selectionMode="button" v-model:selectionKeys="selectedTreeTableValue">
-            <Column field="name" header="Имя" :expander="true"></Column>
-            <Column field="size" header="Дата"></Column>
-            <Column field="type" header="Время"></Column>
-        </TreeTable>
+        <DataTable :value="surveys" class="p-datatable-sm">
+            <Column field="name" header="Имя" />
+            <Column field="modified" header="Последнее изменение">
+                <template #body="slotProps">
+                    <span>{{ formatDate(slotProps.data.modified) }}</span>
+                </template>
+            </Column>
+            <Column header="">
+                <template #body="slotProps">
+                    <button @click="goToSurvey(slotProps.data.id)" class="arrow-button">
+                        ➔
+                        <!-- Стрелочка для перехода -->
+                    </button>
+                </template>
+            </Column>
+        </DataTable>
     </div>
 </template>
 
@@ -194,5 +235,14 @@ watch([getPrimary, getSurface, isDarkTheme], () => {
 
 .section-item:hover {
     background-color: #e6f7ff; /* Цвет при наведении */
+}
+.arrow-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+}
+.arrow-button:hover {
+    background-color: aqua;
 }
 </style>
