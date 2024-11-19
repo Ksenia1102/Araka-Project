@@ -9,6 +9,7 @@ const dotenv = require('dotenv');
 
 // Импортируем маршруты для обработки регистрации
 const registrationRoutes = require('./routes/registration');
+const loginRoutes = require('./routes/login');
 
 const cors = require('cors'); // Импортируем CORS для обеспечения кросс-доменных запросов
 
@@ -25,6 +26,7 @@ app.use(cors()); // Включаем CORS для разрешения запро
 
 // Подключаем маршруты для обработки запросов по пути /registration
 app.use('/registration', registrationRoutes);
+app.use('/login', loginRoutes);
 
 // Запуск сервера на порту 3000
 app.listen(3000, () => {

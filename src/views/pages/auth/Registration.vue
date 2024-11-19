@@ -13,21 +13,38 @@ function goToLogin() {
 
 const login = ref(''); // Создаем реактивную переменную для логина
 const password = ref(''); // Создаем реактивную переменную для пароля
-
+const errors = ref({ login: '', password: '' }); // Состояние для ошибок валидации
 // Функция для регистрации пользователя
 async function registerUser() {
+    errors.value.login = '';
+    errors.value.password = '';
+
+    // Проверка на пустые поля
+    if (!login.value) {
+        errors.value.login = 'Пожалуйста, заполните логин';
+    }
+    if (!password.value) {
+        errors.value.password = 'Пожалуйста, заполните пароль';
+    }
+
+    // Если есть ошибки, прекратить выполнение
+    if (errors.value.login || errors.value.password) {
+        return;
+    }
+
     try {
         // Отправляем POST-запрос на сервер с логином и паролем
         const response = await axios.post('http://localhost:3000/registration/register', {
-            login: login.value, // Передаем значение логина
-            password: password.value // Передаем значение пароля
+            login: login.value,
+            password: password.value
         });
-        console.log('User registered:', response.data); // Логируем успешный ответ от сервера
+        console.log('User registered:', response.data);
 
         // Редирект на страницу логина после успешной регистрации
         router.push({ name: 'login' });
     } catch (error) {
-        console.error('Error registering user:', error); // Логируем ошибку, если что-то пошло не так
+        console.error('Error registering user:', error);
+        alert('Ошибка при регистрации. Пожалуйста, попробуйте снова.');
     }
 }
 </script>
@@ -43,13 +60,20 @@ async function registerUser() {
                         <div class="text-surface-900 dark:text-surface-0 text-3xl font-medium mb-4">Welcome to EduVision!</div>
                         <span class="text-muted-color font-medium">Регистрация</span>
                     </div>
-
                     <div>
-                        <label for="email1" class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2">Email</label>
+                        <label for="login1" class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2">
+                            Email
+                            <span class="text-red-500">*</span>
+                        </label>
+                        <p v-if="errors.login" class="text-red-500 text-sm">{{ errors.login }}</p>
                         <InputText id="login1" type="text" placeholder="Login" class="w-full md:w-[30rem] mb-8" v-model="login" />
+                        <!-- Сообщение об ошибке -->
 
-                        <label for="password1" class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2">Password</label>
-                        <Password id="password1" v-model="password" placeholder="Password" :toggleMask="true" class="mb-4" fluid :feedback="false"></Password>
+                        <label for="password1" class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2"> Password <span class="text-red-500">*</span> </label>
+                        <p v-if="errors.password" class="text-red-500 text-sm">{{ errors.password }}</p>
+                        <Password id="password1" v-model="password" placeholder="Password" :class="{ 'border-red-500': errors.password }" class="mb-2" fluid :feedback="false"></Password>
+                        <!-- Сообщение об ошибке -->
+
                         <Button :to="{ name: 'login' }" label="Уже есть аккаунт" class="w-full" severity="secondary" text @click="goToLogin"></Button>
 
                         <Button label="Зарегистрироваться" class="w-full" @click="registerUser"></Button>
