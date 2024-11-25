@@ -201,7 +201,7 @@ export default {
                     <span>{{ formatDate(slotProps.data.modified) }}</span>
                 </template>
             </Column>
-            <Column header="">
+            <Column style="padding: 1.5rem" header="">
                 <template #body="slotProps">
                     <button @click="goToSurvey(slotProps.data.id)" class="arrow-button">
                         ➔

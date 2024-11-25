@@ -1,6 +1,5 @@
 <script>
 import SurveyLayout from '@/layout/SurveyLayout.vue';
-
 export default {
     components: {
         SurveyLayout
@@ -14,14 +13,7 @@ export default {
     },
     computed: {
         currentQuestion() {
-            if (this.currentQuestionIndex !== null) {
-                const question = this.questions[this.currentQuestionIndex];
-                return {
-                    ...question,
-                    indexedText: `${this.currentQuestionIndex + 1}. ${question.text}` // Добавляем индекс к тексту
-                };
-            }
-            return null;
+            return this.currentQuestionIndex !== null ? this.questions[this.currentQuestionIndex] : null;
         }
     },
     methods: {
@@ -60,7 +52,7 @@ export default {
         },
         selectOption(index) {
             if (this.currentQuestion) {
-                this.questions[this.currentQuestionIndex].selectedOption = index; // Устанавливаем выбранный вариант как правильный
+                this.currentQuestion.selectedOption = index; // Устанавливаем выбранный вариант как правильный
             }
         }
     },
@@ -74,8 +66,8 @@ export default {
 
 <template>
     <SurveyLayout :title="surveyTitle" :questions="questions" @goBack="goBack" @selectQuestion="selectQuestion" @addQuestion="addQuestion" @copyQuestion="copyQuestion" @deleteQuestion="deleteQuestion">
-        <div v-if="currentQuestion !== null" class="card" style="height: calc(100vh - 8rem)">
-            <input v-model="currentQuestion.indexedText" placeholder="Введите текст вопроса" class="question-input" />
+        <div v-if="currentQuestion !== null" class="card">
+            <input v-model="currentQuestion.text" placeholder="Введите текст вопроса" class="question-input" />
             <ul>
                 <li v-for="(option, index) in currentQuestion.options" :key="index" :class="{ selected: currentQuestion.selectedOption === index }" @click="selectOption(index)" class="option">
                     <span class="option-label">{{ ['А', 'Б', 'В', 'Г'][index] }}.</span>
@@ -98,7 +90,6 @@ export default {
     align-items: center;
     padding: 10px;
     cursor: pointer;
-    margin: 10px;
 }
 
 .option-label {
@@ -116,7 +107,6 @@ export default {
 
 .option.selected {
     border: 1px solid green; /* Зеленая рамка для правильного варианта */
-    border-radius: 8px;
 }
 
 .question-input {

@@ -1,12 +1,6 @@
 <script setup>
 import { useLayout } from '@/layout/composables/layout';
-import { ref } from 'vue';
 import AppConfigurator from './AppConfigurator.vue';
-
-// import ToggleSwitchButton from 'toggle-switch-button-vue';
-
-// Создаем переменную для состояния переключателя
-const isActive = ref(true);
 
 const { onMenuToggle } = useLayout();
 // const switchValue = ref(false);
@@ -25,14 +19,6 @@ const { onMenuToggle } = useLayout();
 
                 <span>EduVision</span>
             </router-link>
-            <!-- переключатель -->
-            <!-- <ToggleSwitch v-model="switchValue" /> -->
-
-            <!-- <div class="dashboard">
-                <div class="toggle-switch-section">
-                    <ToggleSwitch v-model="isActive" label="ON|OFF" />
-                </div>
-            </div> -->
         </div>
 
         <div class="layout-topbar-actions">

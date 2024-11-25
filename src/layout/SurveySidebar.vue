@@ -1,32 +1,19 @@
-<!-- SurveySidebar.vue -->
-<script>
-export default {
-    props: {
-        questions: Array,
-        selectedQuestionIndex: Number
-    }
-};
+<script setup>
+import SurveyMenu from './SurveyMenu.vue';
+
+defineProps({
+    questions: Array,
+    selectedQuestionIndex: Number
+});
+
+const emit = defineEmits(['selectQuestion', 'addQuestion', 'copyQuestion', 'deleteQuestion']);
 </script>
 
 <template>
     <div class="sidebar">
-        <h2>Вопросы</h2>
-        <ul>
-            <li v-for="(question, index) in questions" :key="index" :class="{ selected: index === selectedQuestionIndex }">
-                <button @click="$emit('selectQuestion', index)">{{ index + 1 }}. {{ question.text }}</button>
-                <!-- Кнопка копирования вопроса -->
-                <button @click="$emit('copyQuestion', index)" class="icon-btn">
-                    📄
-                    <!-- Иконка копирования -->
-                </button>
-                <!-- Кнопка удаления вопроса -->
-                <button @click="$emit('deleteQuestion', index)" class="icon-btn">
-                    🗑️
-                    <!-- Иконка удаления -->
-                </button>
-            </li>
-        </ul>
-        <button @click="$emit('addQuestion')" class="add-btn">+ добавить вопрос</button>
+        <!-- <h2>Вопросы</h2> -->
+        <survey-menu :questions="questions" :selectedQuestionIndex="selectedQuestionIndex" @selectQuestion="emit('selectQuestion', $event)" @copyQuestion="emit('copyQuestion', $event)" @deleteQuestion="emit('deleteQuestion', $event)" />
+        <Button @click="$emit('addQuestion')" icon="pi pi-plus" label="Добавить вопрос" severity="info" style="width: 100%"></Button>
     </div>
 </template>
 
@@ -46,8 +33,8 @@ export default {
         left var(--layout-section-transition-duration);
     background-color: var(--surface-overlay);
     border-radius: var(--content-border-radius);
-    margin: 30px;
-    padding: 1.5rem 1.5rem;
+    margin: 30px 3.5rem;
+    padding: 0 1.5rem;
 }
 
 .question-item {

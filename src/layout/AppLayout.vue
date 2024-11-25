@@ -62,8 +62,8 @@ function isOutsideClicked(event) {
             <div class="layout-main">
                 <router-view></router-view>
             </div>
-            <app-footer></app-footer>
         </div>
+        <app-footer></app-footer>
         <div class="layout-mask animate-fadein"></div>
     </div>
     <Toast />

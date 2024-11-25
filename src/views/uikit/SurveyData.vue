@@ -15,6 +15,25 @@ onMounted(() => {
         orderlistProducts.value = data;
     });
 });
+
+const displayConfirmation = ref(false);
+
+function openConfirmation() {
+    displayConfirmation.value = true;
+}
+
+function closeConfirmation() {
+    displayConfirmation.value = false;
+}
+</script>
+<script>
+export default {
+    methods: {
+        openNewTab() {
+            window.open('/pages/survey', '_blank');
+        }
+    }
+};
 </script>
 
 <template>
@@ -28,18 +47,29 @@ onMounted(() => {
             <Toolbar>
                 <template #start>
                     <Button label="Запустить" icon="pi pi-caret-right" text />
-                    <Button label="Редактировать" icon="pi pi-file-edit" severity="secondary" text />
+                    <Button label="Редактировать" :to="{ name: 'survey' }" @click="openNewTab" icon="pi pi-file-edit" severity="secondary" text />
                     <Button label="Копировать опрос" icon="pi pi-clone" severity="secondary" text />
                 </template>
 
                 <template #end>
-                    <Button label="Удалить" icon="pi pi-trash" severity="secondary" text />
+                    <Button label="Удалить" icon="pi pi-trash" severity="secondary" style="width: auto" @click="openConfirmation" text />
+                    <Dialog header="Confirmation" v-model:visible="displayConfirmation" :style="{ width: '350px' }" :modal="true">
+                        <div class="flex items-center justify-center">
+                            <i class="pi pi-exclamation-triangle mr-4" style="font-size: 2rem" />
+                            <span>Are you sure you want to proceed?</span>
+                        </div>
+                        <template #footer>
+                            <Button label="No" icon="pi pi-times" @click="closeConfirmation" text severity="secondary" />
+                            <Button label="Yes" icon="pi pi-check" @click="closeConfirmation" severity="danger" outlined autofocus />
+                        </template>
+                    </Dialog>
                 </template>
             </Toolbar>
 
             <DataView :value="products" :layout="layout">
                 <template #header>
-                    <div class="flex justify-end">
+                    <div class="flex space-between">
+                        <div class="font-semibold text-xl">Список вопросов</div>
                         <SelectButton v-model="layout" :options="options" :allowEmpty="false">
                             <template #option="{ option }">
                                 <i :class="[option === 'list' ? 'pi pi-bars' : 'pi pi-table']" />
