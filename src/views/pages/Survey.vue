@@ -75,7 +75,10 @@ export default {
 <template>
     <SurveyLayout :title="surveyTitle" :questions="questions" @goBack="goBack" @selectQuestion="selectQuestion" @addQuestion="addQuestion" @copyQuestion="copyQuestion" @deleteQuestion="deleteQuestion">
         <div v-if="currentQuestion !== null" class="card" style="height: calc(100vh - 8rem)">
-            <input v-model="currentQuestion.indexedText" placeholder="Введите текст вопроса" class="question-input" />
+            <div class="flex items-center">
+                <span class="question-number">{{ currentQuestionIndex !== null ? currentQuestionIndex + 1 : '' }}</span>
+                <input v-model="questions[currentQuestionIndex].text" placeholder="Введите текст вопроса" class="question-input" />
+            </div>
             <ul>
                 <li v-for="(option, index) in currentQuestion.options" :key="index" :class="{ selected: currentQuestion.selectedOption === index }" @click="selectOption(index)" class="option">
                     <span class="option-label">{{ ['А', 'Б', 'В', 'Г'][index] }}.</span>
@@ -115,7 +118,7 @@ export default {
 }
 
 .option.selected {
-    border: 1px solid green; /* Зеленая рамка для правильного варианта */
+    border: 1px solid #0ea5e9; /* Зеленая рамка для правильного варианта */
     border-radius: 8px;
 }
 
@@ -124,5 +127,20 @@ export default {
     padding: 8px;
     font-size: 18px;
     margin-bottom: 15px;
+    background-color: #f9f9f9;
+}
+.question-number {
+    padding: 8px 16px;
+    font-size: 20px;
+    margin-bottom: 15px;
+    margin-right: 15px;
+    font-weight: bold;
+    color: white; /* Используйте переменные темы, если нужно */
+    background-color: #0ea5e9;
+    border-radius: 3px;
+}
+.question-input:focus {
+    border-color: none !important; /* Цвет рамки при фокусе */
+    outline: none !important;
 }
 </style>

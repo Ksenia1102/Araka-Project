@@ -15,7 +15,7 @@ const { onMenuToggle } = useLayout();
 
             <!-- лого -->
             <router-link to="/" class="layout-topbar-logo">
-                <img src="/logoB.svg" alt="" />
+                <img src="/logo.svg" alt="" />
 
                 <span>EduVision</span>
             </router-link>
@@ -52,22 +52,22 @@ const { onMenuToggle } = useLayout();
                         <span>Calendar</span>
                     </button> -->
                     <!-- поиск, см в инпут док -->
-                    <IconField iconPosition="left">
-                        <InputText type="text" placeholder="Search" />
-                        <InputIcon class="pi pi-search" />
-                    </IconField>
-                    <button type="button" class="layout-topbar-action">
+                    <button v-tooltip="'Скачать карточки'" type="button" class="layout-topbar-action">
                         <i class="pi pi-download"></i>
                         <span>download</span>
                     </button>
-                    <button type="button" class="layout-topbar-action">
+                    <button v-tooltip="'Скачать приложение'" type="button" class="layout-topbar-action">
                         <i class="pi pi-android"></i>
                         <span>question</span>
                     </button>
-                    <button type="button" class="layout-topbar-action">
+                    <button v-tooltip="'Профиль'" type="button" class="layout-topbar-action">
                         <i class="pi pi-user"></i>
                         <span>user</span>
                     </button>
+                    <IconField iconPosition="left">
+                        <InputText type="text" placeholder="Поиск" />
+                        <InputIcon class="pi pi-search" />
+                    </IconField>
                 </div>
             </div>
         </div>

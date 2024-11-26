@@ -46,21 +46,21 @@ export default {
         <div class="card flex flex-col gap-4 w-full" style="padding: initial">
             <Toolbar>
                 <template #start>
-                    <Button label="Запустить" icon="pi pi-caret-right" text />
+                    <Button label="Запустить" severity="info" icon="pi pi-caret-right" text />
                     <Button label="Редактировать" :to="{ name: 'survey' }" @click="openNewTab" icon="pi pi-file-edit" severity="secondary" text />
                     <Button label="Копировать опрос" icon="pi pi-clone" severity="secondary" text />
                 </template>
 
                 <template #end>
                     <Button label="Удалить" icon="pi pi-trash" severity="secondary" style="width: auto" @click="openConfirmation" text />
-                    <Dialog header="Confirmation" v-model:visible="displayConfirmation" :style="{ width: '350px' }" :modal="true">
+                    <Dialog header="Предупреждение" v-model:visible="displayConfirmation" :style="{ width: '350px' }" :modal="true">
                         <div class="flex items-center justify-center">
                             <i class="pi pi-exclamation-triangle mr-4" style="font-size: 2rem" />
-                            <span>Are you sure you want to proceed?</span>
+                            <span>Вы действительно хотите удалить опрос?</span>
                         </div>
                         <template #footer>
-                            <Button label="No" icon="pi pi-times" @click="closeConfirmation" text severity="secondary" />
-                            <Button label="Yes" icon="pi pi-check" @click="closeConfirmation" severity="danger" outlined autofocus />
+                            <Button label="Нет" icon="pi pi-times" @click="closeConfirmation" text severity="secondary" />
+                            <Button label="Да" icon="pi pi-check" @click="closeConfirmation" severity="danger" outlined autofocus />
                         </template>
                     </Dialog>
                 </template>
@@ -93,7 +93,7 @@ export default {
                                             <Button outlined severity="secondary">A</Button>
                                             <Button outlined severity="secondary">Б</Button>
                                             <Button outlined severity="secondary">В</Button>
-                                            <Button outlined>Г</Button>
+                                            <Button outlined severity="info">Г</Button>
                                         </div>
                                     </div>
                                 </div>

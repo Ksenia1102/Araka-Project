@@ -18,6 +18,7 @@ onMounted(() => {
     NodeService.getTreeNodes().then((data) => (treeValue.value = data));
     NodeService.getTreeTableNodes().then((data) => (treeTableValue.value = data));
 });
+
 // const items = ref([
 //     { label: 'Add New', icon: 'pi pi-fw pi-plus' },
 //     { label: 'Remove', icon: 'pi pi-fw pi-trash' }
@@ -132,7 +133,7 @@ export default {
         return {
             surveys: [
                 { id: 1, name: 'Опрос 1', modified: '2023-10-16' },
-                { id: 2, name: 'Untitled Set', modified: new Date() }
+                { id: 2, name: 'Опрос 2', modified: new Date() }
                 // Добавьте другие опросы, если нужно
             ],
             selectedSurvey: null
@@ -170,16 +171,16 @@ export default {
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText placeholder="Search" style="width: 60vh" />
+                        <InputText placeholder="Поиск по опросам" style="width: 60vh" />
                     </IconField>
                 </template>
 
                 <template #end>
-                    <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-plus" class="mr-2" severity="secondary" text />
+                    <!-- <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-plus" class="mr-2" severity="secondary" text />
                     <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-print" class="mr-2" severity="secondary" text />
                     <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-upload" severity="secondary" text />
-                    <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-upload" severity="secondary" text />
-                    <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-ellipsis-v" severity="secondary" text />
+                    <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-upload" severity="secondary" text /> -->
+                    <!-- <Button v-tooltip="'Click to proceed'" :model="items" type="button" icon="pi pi-ellipsis-v" severity="secondary" text /> -->
                 </template>
             </Toolbar>
 
@@ -203,10 +204,7 @@ export default {
             </Column>
             <Column style="padding: 1.5rem" header="">
                 <template #body="slotProps">
-                    <button @click="goToSurvey(slotProps.data.id)" class="arrow-button">
-                        ➔
-                        <!-- Стрелочка для перехода -->
-                    </button>
+                    <Button @click="goToSurvey(slotProps.data.id)" icon="pi pi-chevron-right" class="back-btn" text severity="secondary"></Button>
                 </template>
             </Column>
         </DataTable>
@@ -236,6 +234,9 @@ export default {
 .section-item:hover {
     background-color: #e6f7ff; /* Цвет при наведении */
 }
+.back-btn {
+    cursor: pointer;
+}
 .arrow-button {
     background: none;
     border: none;
@@ -243,6 +244,7 @@ export default {
     font-size: 18px;
 }
 .arrow-button:hover {
-    background-color: aqua;
+    background-color: #e5e7eb;
+    border-radius: 5px;
 }
 </style>

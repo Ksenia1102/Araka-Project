@@ -1,53 +1,3 @@
-<!-- <script setup>
-import { computed } from 'vue';
-import SurveyMenuItem from './SurveyMenuItem.vue';
-
-const props = defineProps({
-    questions: {
-        type: Array,
-        required: true
-    },
-    selectedQuestionIndex: {
-        type: Number,
-        default: null
-    }
-});
-
-const emit = defineEmits(['selectQuestion', 'addQuestion', 'copyQuestion', 'deleteQuestion']);
-
-const model = computed(() => {
-    return [
-        {
-            label: 'Вопросы',
-            items: props.questions.map((question, index) => ({
-                label: `${index + 1}. ${question.text}`,
-                command: () => emit('selectQuestion', index),
-                items: [
-                    {
-                        icon: 'pi pi-copy',
-                        command: () => emit('copyQuestion', index)
-                    },
-                    {
-                        icon: 'pi pi-trash',
-                        command: () => emit('deleteQuestion', index)
-                    }
-                ]
-            }))
-        }
-    ];
-});
-</script>
-
-<template>
-    <ul class="layout-menu" style="background-color: var(--surface-overlay); border-radius: var(--content-border-radius); padding: 0.5rem; margin: 1rem 0">
-        <template v-for="(item, i) in model" :key="i">
-            <survey-menu-item :item="item" />
-        </template>
-    </ul>
-</template>
-
-<style scoped></style> -->
-
 <script setup>
 //import { ref } from 'vue';
 //import SurveyMenuItem from './SurveyMenuItem.vue';
@@ -108,10 +58,6 @@ function truncateText(text) {
 
 <template>
     <ul class="layout-menu" style="background-color: var(--surface-overlay); border-radius: var(--content-border-radius); padding: 0.5rem; margin: 1rem 0">
-        <!-- <template v-for="(item, i) in model" :key="item">
-            <app-menu-item v-if="!item.separator" :item="item" :index="i"></app-menu-item>
-            <li v-if="item.separator" class="menu-separator"></li>
-        </template> -->
         <template v-for="(item, i) in model" :key="i">
             <!-- Заголовок категории -->
             <li v-if="item.label" class="layout-menu-category">{{ item.label }}</li>
@@ -138,12 +84,14 @@ function truncateText(text) {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 1rem;
+    margin: 5px 0;
+    border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.2s ease;
 
     &:hover {
-        color: blue;
+        color: #0ea5e9;
         background-color: var(--surface-hover); /* Цвет при наведении */
     }
 
@@ -152,7 +100,8 @@ function truncateText(text) {
     }
 
     &.selected-question {
-        color: orange;
+        color: #0ea5e9;
+        font-weight: bold;
         background-color: #d9f0ff; /* Голубой цвет для выбранного вопроса */
     }
 }

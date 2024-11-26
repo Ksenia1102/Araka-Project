@@ -1,155 +1,3 @@
-<!-- <script setup>
-import { CustomerService } from '@/service/CustomerService';
-import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
-
-import { onBeforeMount, onMounted, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
-
-const route = useRoute();
-const currentClassName = ref(''); // Текущее название класса
-const filters1 = ref(null);
-const customers1 = ref(null);
-const customers2 = ref(null);
-const loading1 = ref(null);
-const customers3 = ref(null);
-
-const display = ref(false);
-
-function addStudent() {
-    display.value = true;
-}
-function close() {
-    display.value = false;
-}
-
-// Функция для извлечения имени класса из параметров маршрута
-function updateClassName() {
-    currentClassName.value = route.params.classId || 'Класс не выбран';
-}
-
-// Инициализация и наблюдение за изменениями маршрута
-onMounted(() => {
-    updateClassName();
-});
-
-onBeforeMount(() => {
-    CustomerService.getCustomersLarge().then((data) => {
-        customers1.value = data;
-        loading1.value = false;
-        customers1.value.forEach((customer) => (customer.date = new Date(customer.date)));
-    });
-    CustomerService.getCustomersLarge().then((data) => (customers2.value = data));
-    CustomerService.getCustomersMedium().then((data) => (customers3.value = data));
-
-    initFilters1();
-});
-
-function initFilters1() {
-    filters1.value = {
-        global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        name: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        'country.name': { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        representative: { value: null, matchMode: FilterMatchMode.IN },
-        date: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
-        balance: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
-        status: { operator: FilterOperator.OR, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
-        activity: { value: [0, 100], matchMode: FilterMatchMode.BETWEEN },
-        verified: { value: null, matchMode: FilterMatchMode.EQUALS }
-    };
-}
-function formatCurrency(value) {
-    return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-}
-
-watch(
-    () => route.params.classId,
-    () => {
-        updateClassName();
-    }
-);
-</script>
-
-<template>
-    <div class="card" style="height: 100vh">
-
-        <div>
-            <div class="font-semibold text-xl mb-4">Вы почти закончили с классом {{ currentClassName }}</div>
-            <p>Завершите создание, добавив учеников</p>
-            <Button label="Добавить учеников" icon="pi pi-plus" @click="addStudent" class="p-button-success" />
-            <Dialog header="Добавить учеников в {{ currentClassName }}" v-model:visible="display" :breakpoints="{ '960px': '75vw' }" :style="{ width: '50vw' }" :modal="true">
-                <p class="leading-normal m-0 mb-4">Введите имена учащихся в поле ниже. Вы также можете скопировать и вставить строки и столбцы из электронной таблицы. Убедитесь, что каждый учащийся указан в новой строке.</p>
-                <div class="form-container">
-                    <Textarea style="width: 50vh"></Textarea>
-                </div>
-                <Button label="Добавить" @click="close" class="import-btn" severity="info" icon="pi pi-plus-circle" style="width: -webkit-fill-available" />
-            </Dialog>
-        </div>
-
-
-        <div hidden>
-            <div class="flex" style="gap: 0.5rem; align-items: stretch">
-                <i class="pi pi-users" style="font-size: 2.3rem"></i>
-                <h2 class="font-semibold text-4xl mb-6">Класс {{ currentClassName }}</h2>
-            </div>
-
-            <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Ученики</div>
-
-
-            <DataTable
-                :value="customers1"
-                :paginator="true"
-                :rows="8"
-                dataKey="id"
-                :rowHover="true"
-                v-model:filters="filters1"
-                filterDisplay="menu"
-                :loading="loading1"
-                :filters="filters1"
-                :globalFilterFields="['name', 'country.name', 'representative.name', 'balance', 'status']"
-                showGridlines
-            >
-                <template #header>
-                    <div class="flex justify-between">
-                        <Button type="button" icon="pi pi-filter-slash" label="Clear" outlined @click="clearFilter()" />
-                        <IconField>
-                            <InputIcon>
-                                <i class="pi pi-search" />
-                            </InputIcon>
-                            <InputText v-model="filters1['global'].value" placeholder="Быстрый поиск" />
-                        </IconField>
-                    </div>
-                </template>
-                <template #empty> No customers found. </template>
-                <template #loading> Loading customers data. Please wait. </template>
-                <Column field="name" header="Имя">
-                    <template #body="{ data }">
-                        {{ data.name }}
-                    </template>
-                    <template #filter="{ filterModel }">
-                        <InputText v-model="filterModel.value" type="text" placeholder="Search by name" />
-                    </template>
-                </Column>
-                <Column field="name" header="Фамилия">
-                    <template #body="{ data }">
-                        {{ data.name }}
-                    </template>
-                    <template #filter="{ filterModel }">
-                        <InputText v-model="filterModel.value" type="text" placeholder="Search by name" />
-                    </template>
-                </Column>
-                <Column header="Номер карточки" filterField="balance" dataType="numeric">
-                    <template #body="{ data }">
-                        {{ formatCurrency(data.balance) }}
-                    </template>
-                    <template #filter="{ filterModel }">
-                        <InputNumber v-model="filterModel.value" mode="currency" />
-                    </template>
-                </Column>
-            </DataTable>
-        </div>
-    </div>
-</template> -->
-
 <script setup>
 import { onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -280,7 +128,7 @@ watch(
         <div v-if="!showStudentTable">
             <div class="font-semibold text-xl mb-4">Вы почти закончили с классом {{ currentClassName }}</div>
             <p>Завершите создание, добавив учеников</p>
-            <Button label="Добавить учеников" icon="pi pi-plus" @click="addStudent" class="p-button-success" />
+            <Button label="Добавить учеников" severity="info" icon="pi pi-plus" @click="addStudent" />
             <Dialog :header="`Добавить учеников в ${currentClassName}`" v-model:visible="display" :breakpoints="{ '960px': '75vw' }" :style="{ width: '60vw' }" :modal="true">
                 <p class="leading-normal m-0 mb-4">Введите имена учащихся в поле ниже. Каждый ученик должен быть указан в новой строке (например: *Иван Иванов*).</p>
                 <div class="form-container">
@@ -345,7 +193,7 @@ watch(
             <DataTable :value="students" :paginator="true" :rows="5" dataKey="id" :rowHover="true" filterDisplay="menu" :globalFilterFields="['firstName', 'lastName']" showGridlines>
                 <template #header>
                     <div class="flex justify-between items-center">
-                        <Button type="button" icon="pi pi-filter-slash" label="Очистить фильтр" outlined @click="clearFilter()" />
+                        <Button type="button" icon="pi pi-filter-slash" label="Очистить фильтр" severity="info" outlined @click="clearFilter()" />
                         <IconField>
                             <InputIcon>
                                 <i class="pi pi-search" />

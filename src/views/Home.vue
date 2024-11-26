@@ -19,7 +19,7 @@ function goToLogin() {
         <div id="home" class="landing-wrapper overflow-hidden">
             <div class="py-6 px-6 mx-0 md:mx-12 lg:mx-20 lg:px-20 flex items-center justify-between relative lg:static">
                 <a class="flex items-center" href="#">
-                    <img src="/logoB.svg" alt="" />
+                    <img src="/logo.svg" alt="" />
                     <span class="text-surface-900 dark:text-surface-0 font-medium text-2xl leading-normal mr-20">EduVision</span>
                 </a>
                 <Button
