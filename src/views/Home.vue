@@ -56,7 +56,7 @@ function goToLogin() {
                     <h1 class="text-6xl font-bold text-gray-900 leading-tight"><span class="font-light block">Проводите опросы</span></h1>
                     <h1 class="text-6xl font-bold text-gray-900 leading-tight"><span class="font-light block">быстро и просто </span>с EduVision</h1>
                     <p class="font-normal text-2xl leading-normal md:mt-4 text-gray-700">Eduvision — удобный инструмент для учителей, позволяющий быстро создавать опросы</p>
-                    <Button label="Попробовать" :to="{ name: 'login' }" as="router-link" @click="goToLogin" class="!text-xl mt-8 !px-4" severity="contrast"></Button>
+                    <Button label="Попробовать" :to="{ name: 'login' }" as="router-link" @click="goToLogin" rounded class="!text-xl mt-8 !px-4" severity="contrast"></Button>
                 </div>
                 <div class="flex justify-center md:justify-end" style="margin-top: 1.5rem; margin-bottom: 100px; margin-right: 100px; width: 30%">
                     <img src="/demo/images/landing/home.png" alt="Hero Image" class="w-9/12 md:w-auto" />

@@ -1,4 +1,3 @@
-<!-- SurveyTopbar.vue -->
 <script>
 export default {
     props: {
@@ -18,7 +17,12 @@ export default {
     methods: {
         updateTitle() {
             // Отправляем событие в родительский компонент с новым значением
-            this.$emit('update:title', this.localTitle);
+            this.$emit('update:title', this.localTitle); // Используем this.localTitle, чтобы передать обновленное значение
+        },
+        saveSurvey() {
+            console.log('Кнопка "Сохранить опрос" нажата');
+            // Отправляем событие сохранения с текущим localTitle
+            this.$emit('saveSurvey', this.localTitle); // Передаем название опроса
         }
     }
 };
@@ -27,11 +31,10 @@ export default {
 <template>
     <div class="topbar">
         <Button @click="$emit('goBack')" icon="pi pi-chevron-left" class="back-btn" text severity="secondary"></Button>
-        <!-- Используем локальную копию localTitle вместо title -->
         <div class="survey-title">
             <input v-model="localTitle" @input="updateTitle" placeholder="Название опроса" class="survey-title-input" />
         </div>
-        <Button @click="$emit('goBack')" label="Сохранить опрос" class="back-btn" text severity="info"></Button>
+        <Button @click="saveSurvey" label="Сохранить опрос" class="back-btn" text severity="info"></Button>
     </div>
 </template>
 

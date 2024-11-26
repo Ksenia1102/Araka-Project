@@ -1,12 +1,35 @@
 <script setup>
 import { ProductService } from '@/service/ProductService';
+import axios from 'axios';
 import { onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
 
 const products = ref(null);
 const picklistProducts = ref(null);
 const orderlistProducts = ref(null);
 const options = ref(['list', 'grid']);
 const layout = ref('list');
+const route = useRoute();
+const questions = ref([]); // Здесь будут храниться вопросы
+const surveyId = route.params.id;
+// Пример ID опроса. Можно заменить на динамическое значение.
+console.log('ID опроса:', surveyId);
+onMounted(async () => {
+    try {
+        // Отправка GET запроса для получения данных о опросе
+        // const surveyResponse = await axios.get('http://localhost:3000/api/questions/1'); // Здесь замените на нужный URL
+        // surveyId.value = surveyResponse.data.id; // Предположим, что ответ содержит поле id опроса
+
+        // Теперь отправляем запрос на получение вопросов для этого опроса
+        const questionsResponse = await axios.get(`http://localhost:3000/api/questions/${surveyId}`);
+        questions.value = questionsResponse.data; // Сохраняем полученные вопросы
+        console.log(questions.value);
+
+        console.log('Вопросы загружены:', questions.value);
+    } catch (error) {
+        console.error('Ошибка загрузки данных:', error);
+    }
+});
 
 onMounted(() => {
     ProductService.getProductsSmall().then((data) => {
@@ -78,22 +101,23 @@ export default {
                     </div>
                 </template>
 
-                <template #list="slotProps">
+                <template #list>
                     <div class="flex flex-col">
-                        <div v-for="(item, index) in slotProps.items" :key="index">
+                        <div v-for="(item, index) in questions" :key="index">
                             <div class="flex flex-col sm:flex-row sm:items-center p-6 gap-4" :class="{ 'border-t border-surface': index !== 0 }">
                                 <div class="flex flex-col md:flex-row justify-between md:items-center flex-1 gap-6">
                                     <div class="flex flex-row md:flex-col justify-between items-start gap-2">
                                         <div>
-                                            <div class="text-lg font-medium mt-2">Где находится ухо у кузнечика?</div>
+                                            <!-- Выводим текст вопроса -->
+                                            <div class="text-lg font-medium mt-2">{{ item.question_text }}</div>
                                         </div>
                                     </div>
                                     <div class="flex flex-col md:items-end gap-8">
                                         <div class="flex flex-row-reverse md:flex-row gap-2">
-                                            <Button outlined severity="secondary">A</Button>
-                                            <Button outlined severity="secondary">Б</Button>
-                                            <Button outlined severity="secondary">В</Button>
-                                            <Button outlined>Г</Button>
+                                            <!-- Для каждого варианта ответа выводим кнопку -->
+                                            <Button v-for="(option, optionIndex) in item.options" :key="option.option_id" :outlined="true" :severity="optionIndex === item.correct_option_id ? 'success' : 'secondary'">
+                                                {{ option.option_text }}
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>

@@ -2,6 +2,7 @@
 import { useLayout } from '@/layout/composables/layout';
 import { NodeService } from '@/service/NodeService';
 import { ProductService } from '@/service/ProductService';
+import axios from 'axios';
 import { onMounted, ref, watch } from 'vue';
 
 const { getPrimary, getSurface, isDarkTheme } = useLayout();
@@ -12,6 +13,25 @@ const chartOptions = ref(null);
 
 const treeValue = ref(null);
 const treeTableValue = ref(null);
+
+const surveys = ref([]); // Это будет хранить список опросов
+
+onMounted(async () => {
+    try {
+        // Отправка GET запроса на сервер
+        const response = await axios.get('http://localhost:3000/api/surveys1/user/1');
+        surveys.value = response.data; // Сохраняем полученные данные в переменную
+        console.log('Полученные данные:', surveys.value); // Выводим данные в консоль
+    } catch (error) {
+        console.error('Ошибка при загрузке опросов:', error);
+    }
+});
+
+// Форматирование даты
+function formatDate(date) {
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return new Date(date).toLocaleDateString('ru-RU', options);
+}
 //const selectedTreeTableValue = ref(null);
 
 onMounted(() => {
@@ -143,9 +163,10 @@ export default {
 
         //     this.$router.push(`/uikit/working/${surveyId}`);
         // },
-        goToSurvey() {
+        goToSurvey(surveyId) {
             // Логика перехода к выбранному опросу
-            this.$router.push(`/uikit/sur-data`);
+            console.log('Переход');
+            this.$router.push({ path: `/uikit/sur-data/${surveyId}` });
         },
         formatDate(date) {
             // Функция для форматирования даты
@@ -194,19 +215,24 @@ export default {
         </div>
 
         <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Опросы</div>
+        <!-- Таблица с данными -->
         <DataTable :value="surveys" class="p-datatable-sm">
-            <Column field="name" header="Имя" />
-            <Column field="modified" header="Последнее изменение">
+            <!-- Столбец для имени опроса (title) -->
+            <Column field="title" header="Имя" />
+
+            <!-- Столбец для даты создания (created_at) -->
+            <Column field="created_at" header="Дата создания">
                 <template #body="slotProps">
-                    <span>{{ formatDate(slotProps.data.modified) }}</span>
+                    <!-- Форматируем дату перед выводом -->
+                    <span>{{ formatDate(slotProps.data.created_at) }}</span>
                 </template>
             </Column>
+
+            <!-- Столбец для кнопки перехода -->
             <Column style="padding: 1.5rem" header="">
                 <template #body="slotProps">
-                    <button @click="goToSurvey(slotProps.data.id)" class="arrow-button">
-                        ➔
-                        <!-- Стрелочка для перехода -->
-                    </button>
+                    <!-- Стрелочка для перехода на детальную страницу опроса -->
+                    <button @click="goToSurvey(slotProps.data.id)" class="arrow-button">➔</button>
                 </template>
             </Column>
         </DataTable>

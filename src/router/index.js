@@ -50,7 +50,7 @@ const router = createRouter({
                     component: () => import('@/views/uikit/Working.vue')
                 },
                 {
-                    path: '/uikit/sur-data',
+                    path: '/uikit/sur-data/:id',
                     name: 'sur-data',
                     component: () => import('@/views/uikit/SurveyData.vue')
                 },
@@ -162,6 +162,11 @@ const router = createRouter({
             path: '/auth/login',
             name: 'login',
             component: () => import('@/views/pages/auth/Login.vue')
+        },
+        {
+            path: '/auth/registration',
+            name: 'registration',
+            component: () => import('@/views/pages/auth/Registration.vue')
         },
         {
             path: '/auth/access',

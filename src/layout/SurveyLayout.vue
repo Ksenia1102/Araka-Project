@@ -1,4 +1,3 @@
-<!-- SurveyLayout.vue -->
 <script>
 import SurveySidebar from './SurveySidebar.vue';
 import SurveyTopbar from './SurveyTopbar.vue';
@@ -9,15 +8,33 @@ export default {
         SurveySidebar
     },
     props: {
-        title: String,
-        questions: Array
+        // Убедитесь, что передаем эти пропсы
+        questions: Array,
+        surveyTitle: String // Заголовок опроса
+    },
+    data() {
+        return {
+            localSurveyTitle: this.surveyTitle // Локальная копия заголовка опроса
+        };
     },
     methods: {
+        updateSurveyTitle(newTitle) {
+            this.localSurveyTitle = newTitle; // Обновляем локальное название опроса
+        },
+        saveSurvey() {
+            console.log('Опрос сохранен с названием:', this.localSurveyTitle);
+
+            // Отправляем событие saveSurvey с заголовком и вопросами в родительский компонент
+            this.$emit('saveSurvey', {
+                title: this.localSurveyTitle
+            });
+        },
         goBack() {
-            this.$emit('goBack');
+            console.log('Нажата кнопка "Назад"');
+            // Логика для возвращения на предыдущую страницу
         },
         selectQuestion(index) {
-            this.$emit('selectQuestion', index);
+            console.log('Выбран вопрос:', index);
         },
         addQuestion() {
             this.$emit('addQuestion');
@@ -34,7 +51,7 @@ export default {
 
 <template>
     <div class="layout-wrapper" :class="containerClass">
-        <SurveyTopbar :title="title" @goBack="goBack" />
+        <SurveyTopbar :title="surveyTitle" @update:title="updateSurveyTitle" @saveSurvey="saveSurvey" />
         <div class="content">
             <SurveySidebar :questions="questions" @selectQuestion="selectQuestion" @addQuestion="addQuestion" @copyQuestion="copyQuestion" @deleteQuestion="deleteQuestion" />
             <div class="main-content">
