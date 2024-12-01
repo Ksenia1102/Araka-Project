@@ -49,6 +49,6 @@ const emit = defineEmits(['selectQuestion', 'addQuestion', 'copyQuestion', 'dele
 
 .selected {
     font-weight: bold;
-    color: blue;
+    color: #0ea5e9;
 }
 </style>

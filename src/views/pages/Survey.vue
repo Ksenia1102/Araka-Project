@@ -157,7 +157,11 @@ export default {
     <SurveyLayout v-model:surveyTitle="surveyTitle" :questions="questions" @saveSurvey="handleSaveSurvey" @addQuestion="addQuestion" @copyQuestion="copyQuestion" @deleteQuestion="deleteQuestion" @goBack="goBack">
         <div v-if="currentQuestion !== null" class="card" style="height: calc(100vh - 8rem)">
             <!-- Текст вопроса -->
-            <input v-model="currentQuestionText" placeholder="Введите текст вопроса" class="question-input" @input="updateQuestionText" />
+            <!-- <input v-model="currentQuestionText" placeholder="Введите текст вопроса" class="question-input" @input="updateQuestionText" /> -->
+            <div class="flex items-center">
+                <span class="question-number">{{ currentQuestionIndex !== null ? currentQuestionIndex + 1 : '' }}</span>
+                <input v-model="currentQuestionText" placeholder="Введите текст вопроса" class="question-input" @input="updateQuestionText" />
+            </div>
             <!-- Событие для обновления текста вопроса -->
 
             <!-- Список вариантов ответа -->
@@ -200,7 +204,7 @@ export default {
 }
 
 .option.selected {
-    border: 1px solid green; /* Зеленая рамка для правильного варианта */
+    border: 1px solid #0ea5e9; /* Зеленая рамка для правильного варианта */
     border-radius: 8px;
 }
 
@@ -209,5 +213,21 @@ export default {
     padding: 8px;
     font-size: 18px;
     margin-bottom: 15px;
+    background-color: #f9f9f9;
+}
+
+.question-number {
+    padding: 8px 16px;
+    font-size: 20px;
+    margin-bottom: 15px;
+    margin-right: 15px;
+    font-weight: bold;
+    color: white; /* Используйте переменные темы, если нужно */
+    background-color: #0ea5e9;
+    border-radius: 3px;
+}
+.question-input:focus {
+    border-color: none !important; /* Цвет рамки при фокусе */
+    outline: none !important;
 }
 </style>

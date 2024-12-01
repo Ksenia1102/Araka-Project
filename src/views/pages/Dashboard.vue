@@ -191,16 +191,16 @@ export default {
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText placeholder="Search" style="width: 60vh" />
+                        <InputText placeholder="Поиск по опросам" style="width: 60vh" />
                     </IconField>
                 </template>
 
                 <template #end>
-                    <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-plus" class="mr-2" severity="secondary" text />
+                    <!--<Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-plus" class="mr-2" severity="secondary" text />
                     <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-print" class="mr-2" severity="secondary" text />
                     <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-upload" severity="secondary" text />
                     <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-upload" severity="secondary" text />
-                    <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-ellipsis-v" severity="secondary" text />
+                    <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-ellipsis-v" severity="secondary" text />  -->
                 </template>
             </Toolbar>
 
@@ -232,7 +232,8 @@ export default {
             <Column style="padding: 1.5rem" header="">
                 <template #body="slotProps">
                     <!-- Стрелочка для перехода на детальную страницу опроса -->
-                    <button @click="goToSurvey(slotProps.data.id)" class="arrow-button">➔</button>
+                    <!-- <button @click="goToSurvey(slotProps.data.id)" class="arrow-button">➔</button> -->
+                    <Button @click="goToSurvey(slotProps.data.id)" icon="pi pi-chevron-right" class="back-btn" text severity="secondary"></Button>
                 </template>
             </Column>
         </DataTable>
@@ -262,6 +263,11 @@ export default {
 .section-item:hover {
     background-color: #e6f7ff; /* Цвет при наведении */
 }
+
+.back-btn {
+    cursor: pointer;
+}
+
 .arrow-button {
     background: none;
     border: none;
@@ -269,6 +275,7 @@ export default {
     font-size: 18px;
 }
 .arrow-button:hover {
-    background-color: aqua;
+    background-color: #e5e7eb;
+    border-radius: 5px;
 }
 </style>

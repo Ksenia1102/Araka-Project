@@ -5,12 +5,16 @@ import { updatePreset, updateSurfacePalette } from '@primevue/themes';
 // import Lara from '@primevue/themes/lara';
 import { ref } from 'vue';
 
-const { layoutConfig, setPrimary, setSurface, isDarkTheme, setMenuMode } = useLayout();
+const { setPrimary, setSurface, isDarkTheme, setMenuMode } = useLayout();
 
 // const presets = {
 //     Aura,
 //     Lara
 // };
+const layoutConfig = {
+    primary: 'sky', // Жестко задано
+    surface: 'slate'
+};
 const preset = ref(layoutConfig.preset);
 // const presetOptions = ref(Object.keys(presets));
 
@@ -166,13 +170,14 @@ function getPresetExt() {
 }
 
 function updateColors(type, color) {
+    // const color = primaryColors.value.find((c) => c.name === 'sky'); // Фиксируем sky
     if (type === 'primary') {
-        setPrimary(color.name);
+        setPrimary('sky'); // Устанавливаем фиксированный цвет
     } else if (type === 'surface') {
-        setSurface(color.name);
+        setSurface('slate'); // Например, фиксируем 'slate'
     }
 
-    applyTheme(type, color);
+    applyTheme(type, color); // Применяем тему
 }
 
 function applyTheme(type, color) {
