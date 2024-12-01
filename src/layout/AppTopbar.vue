@@ -1,9 +1,31 @@
 <script setup>
 import { useLayout } from '@/layout/composables/layout';
+import * as FileSaver from 'file-saver'; // Правильный способ импорта
 import AppConfigurator from './AppConfigurator.vue';
 
+async function downloadFile() {
+    try {
+        const response = await fetch('http://localhost:3000/api/cards/download', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Ошибка при скачивании файла');
+        }
+
+        const blob = await response.blob();
+
+        // Используем saveAs через FileSaver
+        FileSaver.saveAs(blob, 'Cards.pdf');
+    } catch (error) {
+        console.error('Ошибка:', error);
+    }
+}
+
 const { onMenuToggle } = useLayout();
-// const switchValue = ref(false);
 </script>
 
 <template>
@@ -13,27 +35,15 @@ const { onMenuToggle } = useLayout();
                 <i class="pi pi-bars"></i>
             </button>
 
-            <!-- лого -->
             <router-link to="/" class="layout-topbar-logo">
                 <img src="/logo.svg" alt="" />
-
                 <span>EduVision</span>
             </router-link>
         </div>
 
         <div class="layout-topbar-actions">
             <div class="layout-config-menu">
-                <!-- <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
-                    <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>
-                </button> -->
                 <div class="relative">
-                    <!-- <button
-                        v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"
-                        type="button"
-                        class="layout-topbar-action layout-topbar-action-highlight"
-                    >
-                        <i class="pi pi-palette"></i>
-                    </button> -->
                     <AppConfigurator />
                 </div>
             </div>
@@ -47,12 +57,7 @@ const { onMenuToggle } = useLayout();
 
             <div class="layout-topbar-menu hidden lg:block">
                 <div class="layout-topbar-menu-content">
-                    <!-- <button type="button" class="layout-topbar-action">
-                        <i class="pi pi-calendar"></i>
-                        <span>Calendar</span>
-                    </button> -->
-                    <!-- поиск, см в инпут док -->
-                    <button v-tooltip="'Скачать карточки'" type="button" class="layout-topbar-action">
+                    <button v-tooltip="'Скачать карточки'" type="button" class="layout-topbar-action" @click="downloadFile">
                         <i class="pi pi-download"></i>
                         <span>download</span>
                     </button>

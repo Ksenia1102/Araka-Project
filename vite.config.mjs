@@ -7,7 +7,8 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
     optimizeDeps: {
-        noDiscovery: true
+        noDiscovery: true,
+        include: ['file-saver']
     },
     plugins: [
         vue(),
@@ -17,7 +18,8 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url))
+            '@': fileURLToPath(new URL('./src', import.meta.url)),
+            'file-saver': 'file-saver/dist/FileSaver.min.js'
         }
     }
 });
