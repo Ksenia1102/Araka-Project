@@ -1,8 +1,8 @@
 <!-- меню!!! -->
 <script setup>
+import axios from 'axios';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-
 import AppMenuItem from './AppMenuItem.vue';
 
 const router = useRouter();
@@ -44,17 +44,45 @@ const model1 = ref([
 // Поля для ввода названий новых классов
 const newClassInputs = ref(Array(8).fill('')); // Поля для ввода новых классов
 
-function createClasses() {
+async function saveClass(userId, classTitle) {
+    try {
+        const response = await axios.post('http://localhost:3000/api/create-class', {
+            user_id: userId,
+            title: classTitle
+        });
+
+        alert('Класс успешно создан!');
+        console.log(response.data);
+    } catch (error) {
+        console.error('Ошибка при создании класса:', error);
+        alert('Не удалось создать класс. Попробуйте снова.');
+    }
+}
+
+async function createClasses() {
+    const userId = 1; // Пример ID пользователя (замените на динамическое значение, если доступно)
+
+    // Получить список новых классов из введенных данных
     const newClasses = newClassInputs.value.filter((name) => name.trim() !== ''); // Удаляем пустые строки
+
     if (newClasses.length > 0) {
         const classMenu = model1.value[0].items.find((item) => item.label === 'Классы');
-        newClasses.forEach((name) => {
-            classMenu.items.push({
-                label: name,
-                icon: 'pi pi-fw pi-bookmark',
-                to: `/uikit/class/${name.replace(/\s+/g, '-').toLowerCase()}` // Генерация пути
-            });
-        });
+
+        for (const name of newClasses) {
+            try {
+                // Сохраняем класс на сервере
+                await saveClass(userId, name);
+
+                // Добавляем класс в меню
+                classMenu.items.push({
+                    label: name,
+                    icon: 'pi pi-fw pi-bookmark',
+                    to: `/uikit/class/${name.replace(/\s+/g, '-').toLowerCase()}` // Генерация пути
+                });
+            } catch (error) {
+                console.error(`Ошибка при сохранении класса "${name}":`, error);
+            }
+        }
 
         // Сброс полей ввода и закрытие модального окна
         newClassInputs.value = Array(8).fill('');
@@ -62,6 +90,8 @@ function createClasses() {
 
         // Переход на первый созданный класс
         router.push(classMenu.items[classMenu.items.length - newClasses.length].to);
+    } else {
+        alert('Введите хотя бы одно название класса.');
     }
 }
 

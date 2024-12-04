@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import axios from 'axios';
 
 const route = useRoute();
 const router = useRouter();
@@ -77,7 +78,43 @@ function generatePreview() {
         .filter((student) => student);
 }
 
-function addStudentsToTable() {
+async function addStudentsToTable() {
+    const classId = route.params.classId; // ID текущего класса
+    const studentsToAdd = studentPreview.value.map((student) => ({
+        name: `${student.firstName} ${student.lastName}`
+    }));
+
+    if (!studentsToAdd.length) {
+        alert('Список для добавления пуст.');
+        return;
+    }
+
+    try {
+        const response = await axios.post('http://localhost:3000/api/save-students', {
+            class_id: classId,
+            students: studentsToAdd
+        });
+
+        alert('Студенты успешно добавлены!');
+        console.log(response.data);
+
+        // Добавляем новых студентов в список и обновляем таблицу
+        students.value.push(
+            ...studentsToAdd.map((student) => ({
+                id: studentIdCounter++,
+                ...student
+            }))
+        );
+
+        // Сбрасываем предпросмотр и закрываем окно
+        studentPreview.value = [];
+        display.value = false;
+        showStudentTable.value = true;
+        saveClassData(); // Обновляем локальное хранилище
+    } catch (error) {
+        console.error('Ошибка при добавлении студентов:', error);
+        alert('Не удалось добавить студентов. Попробуйте снова.');
+    }
     students.value = [...students.value, ...studentPreview.value];
     display.value = false;
     showStudentTable.value = true;
