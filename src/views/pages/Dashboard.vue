@@ -171,7 +171,7 @@ export default {
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText placeholder="Поиск по опросам" style="width: 60vh" />
+                        <InputText placeholder="Поиск по опросам" style="width: 100%" />
                     </IconField>
                 </template>
 

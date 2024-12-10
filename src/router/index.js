@@ -10,6 +10,11 @@ const router = createRouter({
             component: () => import('@/views/Home.vue')
         },
         {
+            path: '/uikit/quiz',
+            name: 'quiz',
+            component: () => import('@/views/uikit/Quiz.vue')
+        },
+        {
             path: '/pages/dashboard',
             component: AppLayout,
             children: [

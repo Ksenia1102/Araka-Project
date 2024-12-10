@@ -74,7 +74,7 @@ export default {
 
 <template>
     <SurveyLayout :title="surveyTitle" :questions="questions" @goBack="goBack" @selectQuestion="selectQuestion" @addQuestion="addQuestion" @copyQuestion="copyQuestion" @deleteQuestion="deleteQuestion">
-        <div v-if="currentQuestion !== null" class="card" style="height: calc(100vh - 8rem)">
+        <div v-if="currentQuestion !== null" class="card" style="height: 80vh; max-width: 120vh">
             <div class="flex items-center">
                 <span class="question-number">{{ currentQuestionIndex !== null ? currentQuestionIndex + 1 : '' }}</span>
                 <input v-model="questions[currentQuestionIndex].text" placeholder="Введите текст вопроса" class="question-input" />

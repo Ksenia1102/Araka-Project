@@ -19,8 +19,8 @@ const model = ref([
     {
         items: [
             { label: 'Библиотека', icon: 'pi pi-fw pi-home', to: '/pages/dashboard' },
-            { label: 'Отчеты', icon: 'pi pi-fw pi-home', to: '/uikit/working' },
-            { label: 'Тестовая страница', icon: 'pi pi-fw pi-home', to: '/pages/test' }
+            { label: 'Отчеты', icon: 'pi pi-fw pi-home', to: '/uikit/working' }
+            // { label: 'Тестовая страница', icon: 'pi pi-fw pi-home', to: '/pages/test' }
         ]
     }
 ]);
@@ -52,7 +52,7 @@ function createClasses() {
             classMenu.items.push({
                 label: name,
                 icon: 'pi pi-fw pi-bookmark',
-                to: `/uikit/class/${name.replace(/\s+/g, '-').toLowerCase()}` // Генерация пути
+                to: `/uikit/class/${name.replace(/\s+/g, ' ').toLowerCase()}` // Генерация пути
             });
         });
 

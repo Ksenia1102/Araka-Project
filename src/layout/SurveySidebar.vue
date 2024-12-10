@@ -13,14 +13,14 @@ const emit = defineEmits(['selectQuestion', 'addQuestion', 'copyQuestion', 'dele
     <div class="sidebar">
         <!-- <h2>Вопросы</h2> -->
         <survey-menu :questions="questions" :selectedQuestionIndex="selectedQuestionIndex" @selectQuestion="emit('selectQuestion', $event)" @copyQuestion="emit('copyQuestion', $event)" @deleteQuestion="emit('deleteQuestion', $event)" />
-        <Button @click="$emit('addQuestion')" icon="pi pi-plus" label="Добавить вопрос" severity="info" style="width: 100%"></Button>
+        <Button @click="$emit('addQuestion')" icon="pi pi-plus" label="Добавить вопрос" severity="info" style="width: 100%; margin-bottom: 10px"></Button>
     </div>
 </template>
 
 <style scoped>
 .sidebar {
     width: 20rem;
-    height: calc(100vh - 8rem);
+    height: 80vh;
     z-index: 999;
     overflow-y: auto;
     -webkit-user-select: none;

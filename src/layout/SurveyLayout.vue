@@ -41,7 +41,6 @@ export default {
                 <slot />
             </div>
         </div>
-        <AppFooter></AppFooter>
     </div>
 </template>
 
@@ -49,7 +48,7 @@ export default {
 .survey-layout {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: 80vh;
 }
 
 .content {

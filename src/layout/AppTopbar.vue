@@ -52,22 +52,23 @@ const { onMenuToggle } = useLayout();
                         <span>Calendar</span>
                     </button> -->
                     <!-- поиск, см в инпут док -->
-                    <button v-tooltip="'Скачать карточки'" type="button" class="layout-topbar-action">
+                    <button v-tooltip.bottom="'Скачать карточки'" type="button" class="layout-topbar-action">
                         <i class="pi pi-download"></i>
                         <span>download</span>
                     </button>
-                    <button v-tooltip="'Скачать приложение'" type="button" class="layout-topbar-action">
+                    <button v-tooltip.bottom="'Скачать приложение'" type="button" class="layout-topbar-action">
                         <i class="pi pi-android"></i>
                         <span>question</span>
                     </button>
-                    <button v-tooltip="'Профиль'" type="button" class="layout-topbar-action">
+
+                    <button v-tooltip.bottom="'Профиль'" type="button" class="layout-topbar-action">
                         <i class="pi pi-user"></i>
                         <span>user</span>
                     </button>
-                    <IconField iconPosition="left">
+                    <!-- <IconField iconPosition="left">
                         <InputText type="text" placeholder="Поиск" />
                         <InputIcon class="pi pi-search" />
-                    </IconField>
+                    </IconField> -->
                 </div>
             </div>
         </div>
