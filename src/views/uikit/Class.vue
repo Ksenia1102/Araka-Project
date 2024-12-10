@@ -20,7 +20,6 @@ const sections = ref([
     { id: 4, name: 'Опрос №4', link: '/section/4' }
 ]);
 
-// Функция для извлечения имени класса из параметров маршрута
 function updateClassName() {
     currentClassName.value = route.params.classId || 'Класс не выбран';
 }
