@@ -1,7 +1,7 @@
 <script setup>
+import axios from 'axios';
 import { onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import axios from 'axios';
 
 const route = useRoute();
 const router = useRouter();
@@ -20,6 +20,7 @@ const sections = ref([
     { id: 4, name: 'Опрос №4', link: '/section/4' }
 ]);
 
+// Функция для извлечения имени класса из параметров маршрута
 function updateClassName() {
     currentClassName.value = route.params.classId || 'Класс не выбран';
 }
@@ -94,48 +95,84 @@ async function addStudentsToTable() {
             students: studentsToAdd
         });
 
+        // Сообщение об успешном добавлении
         alert('Студенты успешно добавлены!');
         console.log(response.data);
 
-        // Добавляем новых студентов в список и обновляем таблицу
+        // Добавляем студентов в локальное состояние
         students.value.push(
-            ...studentsToAdd.map((student) => ({
-                id: studentIdCounter++,
-                ...student
+            ...studentPreview.value.map((student) => ({
+                id: studentIdCounter++, // Уникальный ID
+                firstName: student.firstName,
+                lastName: student.lastName
             }))
         );
 
-        // Сбрасываем предпросмотр и закрываем окно
+        // Очищаем предпросмотр и закрываем модальное окно
         studentPreview.value = [];
+        studentInput.value = '';
         display.value = false;
+
+        // Делаем таблицу видимой
         showStudentTable.value = true;
-        saveClassData(); // Обновляем локальное хранилище
+
+        // Сохраняем изменения в локальное хранилище
+        saveClassData();
     } catch (error) {
         console.error('Ошибка при добавлении студентов:', error);
         alert('Не удалось добавить студентов. Попробуйте снова.');
     }
-    students.value = [...students.value, ...studentPreview.value];
-    display.value = false;
-    showStudentTable.value = true;
-    saveClassData();
 }
 
-function quickAddStudent() {
-    const [firstName, ...lastNameParts] = quickAddInput.value.trim().split(' ');
-    if (!firstName || lastNameParts.length === 0) {
-        alert('Введите имя и фамилию ученика');
+async function quickAddStudent() {
+    const classId = route.params.classId; // ID текущего класса
+    const quickInput = quickAddInput.value.trim(); // Текст из поля быстрого добавления
+
+    if (!quickInput) {
+        alert('Введите имя и фамилию ученика.');
         return;
     }
 
-    students.value.push({
-        id: studentIdCounter++,
-        firstName,
-        lastName: lastNameParts.join(' ')
-    });
+    // Разбиваем введенную строку на имя и фамилию
+    const [firstName, ...lastNameParts] = quickInput.split(' ');
+    const lastName = lastNameParts.join(' ');
 
-    quickAddInput.value = '';
-    showStudentTable.value = true;
-    saveClassData();
+    if (!firstName || !lastName) {
+        alert('Введите полное имя и фамилию ученика.');
+        return;
+    }
+
+    const studentToAdd = { name: `${firstName} ${lastName}` };
+
+    try {
+        const response = await axios.post('http://localhost:3000/api/save-students', {
+            class_id: classId,
+            students: [studentToAdd] // Отправляем в массиве для совместимости с сервером
+        });
+
+        // Сообщение об успешном добавлении
+        alert('Ученик успешно добавлен!');
+        console.log(response.data);
+
+        // Добавляем ученика в локальное состояние
+        students.value.push({
+            id: studentIdCounter++, // Уникальный ID
+            firstName,
+            lastName
+        });
+
+        // Очищаем поле быстрого добавления
+        quickAddInput.value = '';
+
+        // Делаем таблицу видимой, если она скрыта
+        showStudentTable.value = true;
+
+        // Сохраняем изменения в локальное хранилище
+        saveClassData();
+    } catch (error) {
+        console.error('Ошибка при добавлении ученика:', error);
+        alert('Не удалось добавить ученика. Попробуйте снова.');
+    }
 }
 
 // Загрузка данных класса и обновление имени класса

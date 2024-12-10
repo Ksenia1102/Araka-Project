@@ -51,11 +51,11 @@ async function saveClass(userId, classTitle) {
             title: classTitle
         });
 
-        alert('Класс успешно создан!');
-        console.log(response.data);
+        return response.data.classId; // Возвращаем classId, который приходит в ответе
     } catch (error) {
         console.error('Ошибка при создании класса:', error);
         alert('Не удалось создать класс. Попробуйте снова.');
+        return null; // Возвращаем null в случае ошибки
     }
 }
 
@@ -70,15 +70,16 @@ async function createClasses() {
 
         for (const name of newClasses) {
             try {
-                // Сохраняем класс на сервере
-                await saveClass(userId, name);
-
-                // Добавляем класс в меню
-                classMenu.items.push({
-                    label: name,
-                    icon: 'pi pi-fw pi-bookmark',
-                    to: `/uikit/class/${name.replace(/\s+/g, '-').toLowerCase()}` // Генерация пути
-                });
+                // Сохраняем класс на сервере и получаем его ID
+                const classId = await saveClass(userId, name);
+                if (classId) {
+                    // Добавляем класс в меню с использованием classId
+                    classMenu.items.push({
+                        label: name,
+                        icon: 'pi pi-fw pi-bookmark',
+                        to: `/uikit/class/${classId}` // Путь с динамическим ID
+                    });
+                }
             } catch (error) {
                 console.error(`Ошибка при сохранении класса "${name}":`, error);
             }
@@ -89,7 +90,8 @@ async function createClasses() {
         display.value = false;
 
         // Переход на первый созданный класс
-        router.push(classMenu.items[classMenu.items.length - newClasses.length].to);
+        const firstCreatedClass = classMenu.items[classMenu.items.length - newClasses.length];
+        router.push(firstCreatedClass.to);
     } else {
         alert('Введите хотя бы одно название класса.');
     }

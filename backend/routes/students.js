@@ -45,7 +45,7 @@ router.post('/save-students', async (req, res) => {
             // Начало транзакции
             await queryAsync(connection, 'START TRANSACTION');
 
-            const studentInsertQuery = 'INSERT INTO students (class_id, name) VALUES (?, ?)';
+            const studentInsertQuery = 'INSERT INTO student (class_id, name) VALUES (?, ?)';
             for (const student of students) {
                 await queryAsync(connection, studentInsertQuery, [class_id, student.name]);
             }
