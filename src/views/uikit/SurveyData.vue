@@ -57,7 +57,7 @@ function startSur() {
     openQuiz();
 }
 function openQuiz() {
-    window.open('/uikit/quiz', '_blank');
+    window.open('/pages/quiz', '_blank');
 }
 </script>
 <script>
