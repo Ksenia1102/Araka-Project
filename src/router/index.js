@@ -24,11 +24,6 @@ const router = createRouter({
                     component: () => import('@/views/pages/Survey.vue')
                 },
                 {
-                    path: '/pages/test',
-                    name: 'test',
-                    component: () => import('@/views/pages/Test.vue')
-                },
-                {
                     path: '/uikit/class/:classId',
                     name: 'class',
                     component: () => import('@/views/uikit/Class.vue'),
@@ -49,6 +44,11 @@ const router = createRouter({
                     path: '/uikit/sur-data',
                     name: 'sur-data',
                     component: () => import('@/views/uikit/SurveyData.vue')
+                },
+                {
+                    path: '/uikit/user',
+                    name: 'user',
+                    component: () => import('@/views/uikit/User.vue')
                 },
                 {
                     path: '/pages/empty',
