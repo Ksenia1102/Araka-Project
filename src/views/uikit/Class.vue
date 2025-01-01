@@ -13,7 +13,7 @@ const showStudentTable = ref(false);
 //let studentIdCounter = 1; //не нужно!
 const quickAddInput = ref('');
 const sections = ref([
-    { id: 1, name: 'Опрос №1', link: '/section/1' },
+    { id: 1, name: 'Опрос №1', link: '/uikit/chart-sur' },
     { id: 2, name: 'Опрос №2', link: '/section/2' },
     { id: 3, name: 'Опрос №3', link: '/section/3' },
     { id: 4, name: 'Опрос №4', link: '/section/4' }
@@ -63,12 +63,12 @@ function addStudent() {
     studentPreview.value = [];
 }
 
-function addManyStudents() {
-    // display.value = true; // Открываем модальное окно
-    // studentInput.value = ''; // Очищаем ввод
-    // studentPreview.value = []; // Очищаем предпросмотр
-    alert('add');
-}
+// function addManyStudents() {
+//     // display.value = true; // Открываем модальное окно
+//     // studentInput.value = ''; // Очищаем ввод
+//     // studentPreview.value = []; // Очищаем предпросмотр
+//     alert('add');
+// }
 
 function generatePreview() {
     const lines = studentInput.value.trim().split('\n');
@@ -192,7 +192,7 @@ watch(
                     <InputText v-model="quickAddInput" placeholder="Быстрое добавление ученика" style="width: 40vh" />
                     <Button label="Добавить" icon="pi pi-plus" @click="quickAddStudent" class="p-button-info" />
                     <!-- Новая кнопка для массового добавления -->
-                    <Button label="Добавить нескольких" icon="pi pi-users" @click="addManyStudents" class="p-button-info" />
+                    <!-- <Button label="Добавить нескольких" icon="pi pi-users" @click="addManyStudents" class="p-button-info" /> -->
                 </div>
                 <!-- Кнопка добавления учеников -->
             </div>
@@ -201,12 +201,12 @@ watch(
             <DataTable :value="students" :paginator="true" :rows="10" dataKey="id" :rowHover="true" filterDisplay="menu" :globalFilterFields="['firstName', 'lastName']" showGridlines>
                 <template #header>
                     <div class="flex justify-between items-center">
-                        <Button type="button" icon="pi pi-filter-slash" label="Очистить фильтр" severity="info" outlined @click="clearFilter()" />
+                        <!-- <Button type="button" icon="pi pi-filter-slash" label="Очистить фильтр" severity="info" outlined @click="clearFilter()" /> -->
                         <IconField>
                             <InputIcon>
                                 <i class="pi pi-search" />
                             </InputIcon>
-                            <InputText placeholder="Быстрый поиск" />
+                            <InputText placeholder="Поиск" />
                         </IconField>
                     </div>
                 </template>
