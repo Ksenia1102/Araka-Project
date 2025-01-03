@@ -31,6 +31,7 @@ export default {
         },
         goBack() {
             console.log('Нажата кнопка "Назад"');
+            this.$router.push('/pages/dashboard');
             // Логика для возвращения на предыдущую страницу
         },
         selectQuestion(index) {

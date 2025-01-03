@@ -4,6 +4,7 @@ const dotenv = require('dotenv'); // Импортируем dotenv для заг
 const router = Router(); // Создаем экземпляр роутера
 const bcrypt = require('bcrypt'); // Для проверки пароля
 const jwt = require('jsonwebtoken');
+// const jwtDecode = require('jwt-express-decode');
 
 dotenv.config({ path: '../backend/.env' }); // Загружаем переменные окружения из файла .env
 
@@ -24,72 +25,42 @@ db.connect((err) => {
     }
 });
 
-// Маршрут для обработки POST-запроса на вход без хеширования
-// router.post('/login', (req, res) => {
-//     console.log('Полученные данные для входа:', req.body);
+// Middleware для проверки и декодирования JWT токена
+function verifyToken(req, res, next) {
+    const token = req.headers['authorization']; // Получаем токен из заголовка Authorization
+    if (!token) {
+        return res.status(401).send('Токен не предоставлен');
+    }
 
-//     // Извлекаем login и password из тела запроса
-//     const { login, password } = req.body;
+    const tokenString = token.split(' ')[1]; // Извлекаем сам токен из строки "Bearer <token>"
 
-//     // Проверяем, что логин и пароль указаны
-//     if (!login || !password) {
-//         return res.status(400).send('Логин и пароль обязательны');
-//     }
+    try {
+        // Используем jwt.verify для проверки токена и получения данных
+        const decoded = jwt.verify(tokenString, process.env.JWT_SECRET_KEY); // Декодируем токен и проверяем подпись
+        req.userId = decoded.id; // Присваиваем decoded id пользователя в запрос
+        next(); // Переход к следующему middleware или маршруту
+    } catch (err) {
+        console.error('Ошибка декодирования токена:', err);
+        return res.status(401).send('Неверный токен');
+    }
+}
 
-//     // SQL-запрос для поиска пользователя по логину
-//     const query = 'SELECT * FROM users WHERE login = ?';
-//     db.query(query, [login], (err, results) => {
-//         if (err) {
-//             console.error(err); // Логируем ошибку, если она произошла
-//             return res.status(500).send('Ошибка при проверке данных пользователя');
-//         }
+// Пример защищенного маршрута, для которого требуется токен
+router.get('/profile', verifyToken, (req, res) => {
+    const userId = req.userId; // Получаем id пользователя из декодированного токена
 
-//         // Если пользователь не найден
-//         if (results.length === 0) {
-//             return res.status(404).send('Пользователь не найден');
-//         }
-
-//         // Извлекаем пользователя из результата запроса
-//         const user = results[0];
-
-//         // Сравниваем введённый пароль с паролем из базы данных
-//         if (user.password === password) {
-//             // Если пароли совпали, то вход успешен
-//             res.status(200).send('Успешный вход');
-//         } else {
-//             // Если пароли не совпадают, возвращаем ошибку
-//             res.status(401).send('Неверный пароль');
-//         }
-//     });
-// });
-
-// //Вход и регистрация с хешированием, если тебе надо, Настя
-// const saltRounds = 10;
-
-// router.post('/register', (req, res) => {
-//     const { login, password } = req.body;
-
-//     if (!login || !password) {
-//         return res.status(400).send('login и пароль обязательны');
-//     }
-
-//     bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
-//         if (err) {
-//             console.error(err);
-//             return res.status(500).send('Ошибка при хешировании пароля');
-//         }
-
-//         const query = 'INSERT INTO users (login, password) VALUES (?, ?)';
-//         db.query(query, [login, hashedPassword], (err) => {
-//             if (err) {
-//                 console.error(err);
-//                 return res.status(500).send('Ошибка при добавлении пользователя');
-//             }
-//             res.status(201).send('Пользователь зарегистрирован');
-//         });
-//     });
-// });
-
+    // SQL-запрос для получения информации о пользователе по id
+    const query = 'SELECT * FROM users WHERE id = ?';
+    db.query(query, [userId], (err, results) => {
+        if (err) {
+            return res.status(500).send('Ошибка при получении данных пользователя');
+        }
+        if (results.length === 0) {
+            return res.status(404).send('Пользователь не найден');
+        }
+        res.json(results[0]); // Отправляем информацию о пользователе
+    });
+});
 // Маршрут для обработки POST-запроса на вход хеширования
 router.post('/login', (req, res) => {
     console.log('Полученные данные для входа:', req.body);
@@ -119,23 +90,12 @@ router.post('/login', (req, res) => {
 
         // Сравниваем хеш пароля с введённым паролем
         bcrypt.compare(password, user.password, (err, isMatch) => {
-            if (err) {
-                console.error(err);
-                return res.status(500).send('Ошибка при проверке пароля');
-            }
+            if (err) return res.status(500).send('Ошибка проверки пароля');
+            if (!isMatch) return res.status(401).send('Неверный пароль');
 
-            if (isMatch) {
-                // Генерация JWT
-                const payload = { id: user.id, login: user.login }; // Данные для полезной нагрузки
-                const secret = process.env.JWT_SECRET_KEY; // Секретный ключ для подписи
+            const token = jwt.sign({ id: user.id, login: user.login }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' });
 
-                const token = jwt.sign(payload, secret, { expiresIn: '1h' }); // Создаем токен, срок действия 1 час
-
-                // Отправляем токен обратно клиенту
-                res.status(200).json({ message: 'Успешный вход', token });
-            } else {
-                res.status(401).send('Неверный пароль');
-            }
+            res.json({ message: 'Успешный вход', token });
         });
     });
 });

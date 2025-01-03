@@ -23,6 +23,11 @@ export default {
             console.log('Кнопка "Сохранить опрос" нажата');
             // Отправляем событие сохранения с текущим localTitle
             this.$emit('saveSurvey', this.localTitle); // Передаем название опроса
+        },
+        goBack() {
+            console.log('1212');
+            // Используем Vue Router для перехода на предыдущую страницу
+            window.close();
         }
     }
 };
@@ -30,7 +35,7 @@ export default {
 
 <template>
     <div class="topbar">
-        <Button @click="$emit('goBack')" icon="pi pi-chevron-left" class="back-btn" text severity="secondary"></Button>
+        <Button @click="goBack" icon="pi pi-chevron-left" class="back-btn" text severity="secondary"></Button>
         <div class="survey-title">
             <input v-model="localTitle" @input="updateTitle" placeholder="Название опроса" class="survey-title-input" />
         </div>

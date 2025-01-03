@@ -3,7 +3,7 @@ const express = require('express');
 
 // Импортируем bodyParser для обработки JSON-данных из тела запросов
 const bodyParser = require('body-parser');
-
+const jwt = require('jsonwebtoken');
 // Импортируем dotenv для работы с переменными окружения
 const dotenv = require('dotenv');
 
@@ -24,9 +24,24 @@ const app = express(); // Создаем экземпляр express-прилож
 app.use(bodyParser.json()); // Настраиваем обработку запросов с телом в формате JSON
 app.use(cors()); // Включаем CORS для разрешения запросов с других доменов
 
-// app.get('/', (req, res) => {
-//     res.send('<h1>Home page</h1>');
-// });
+/// Middleware для декодирования JWT
+const jwtMiddleware = (req, res, next) => {
+    const token = req.headers['token']; // Получаем токен из заголовков
+    if (!token) {
+        return res.status(401).send('Token not provided');
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
+        // Верификация токена
+        if (err) {
+            return res.status(401).send('Invalid or expired token');
+        }
+        req.decodedToken = decoded; // Добавляем декодированные данные в объект запроса
+        next(); // Переходим к следующему middleware или маршруту
+    });
+};
+
+app.use('/api', jwtMiddleware);
 
 // Подключаем маршруты для обработки запросов по пути /registration
 app.use('/registration', registrationRoutes);

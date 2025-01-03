@@ -3,7 +3,10 @@ import { ProductService } from '@/service/ProductService';
 import axios from 'axios';
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 
+// const router = useRoute(); // Используем роутер для навигации
+const router = useRouter();
 const products = ref(null);
 const picklistProducts = ref(null);
 const orderlistProducts = ref(null);
@@ -12,8 +15,66 @@ const layout = ref('list');
 const route = useRoute();
 const questions = ref([]); // Здесь будут храниться вопросы
 const surveyId = route.params.id;
+const surveyName = ref('');
+const lastModified = ref('');
+const formattedDate = ref('');
 // Пример ID опроса. Можно заменить на динамическое значение.
 console.log('ID опроса:', surveyId);
+
+const copySurvey = async () => {
+    try {
+        const token = localStorage.getItem('authToken'); // Получаем токен из localStorage
+        const response = await axios.post(
+            `http://localhost:3000/api/surveys/${surveyId}/copy`,
+            {},
+            {
+                headers: {
+                    token: token // Отправляем токен авторизации
+                }
+            }
+        );
+
+        // После успешного копирования перенаправляем пользователя на страницу нового опроса
+        const newSurvey = response.data;
+        alert(`Опрос "${newSurvey.survey_name}" успешно скопирован!`);
+        router.push(`/survey/${newSurvey._id}`); // Перенаправляем на страницу нового опроса
+    } catch (error) {
+        console.error('Ошибка при копировании опроса:', error);
+        alert('Произошла ошибка при копировании опроса.');
+    }
+};
+
+const deleteSurvey = async () => {
+    try {
+        // Получаем ID опроса из параметров маршрута
+        const surveyId = route.params.id;
+
+        // Отправляем DELETE запрос на сервер для удаления опроса
+        const token = localStorage.getItem('authToken');
+        await axios.delete(`http://localhost:3000/api/surveys/${surveyId}`, {
+            headers: {
+                token: token // Токен авторизации
+            }
+        });
+
+        // После успешного удаления, можно перенаправить на страницу с опросами
+        // Например, на главную страницу опросов или перечень всех опросов
+        // alert('Опрос успешно удален!');
+
+        router
+            .push({ name: 'dashboard' }) // Навигация по маршруту в ту же вкладку
+            .then(() => {
+                console.log('Перенаправление выполнено');
+            })
+            .catch((error) => {
+                console.error('Ошибка при перенаправлении:', error);
+            });
+    } catch (error) {
+        console.error('Ошибка при удалении опроса:', error);
+        alert('Произошла ошибка при удалении опроса.');
+    }
+};
+
 onMounted(async () => {
     try {
         // Отправка GET запроса для получения данных о опросе
@@ -21,10 +82,29 @@ onMounted(async () => {
         // surveyId.value = surveyResponse.data.id; // Предположим, что ответ содержит поле id опроса
 
         // Теперь отправляем запрос на получение вопросов для этого опроса
-        const questionsResponse = await axios.get(`http://localhost:3000/api/questions/${surveyId}`);
-        questions.value = questionsResponse.data; // Сохраняем полученные вопросы
+        const token = localStorage.getItem('authToken');
+
+        const questionsResponse = await axios.get(`http://localhost:3000/api/questions/${surveyId}`, {
+            headers: {
+                token: token // Добавляем токен в заголовки
+            }
+        });
+        const data = questionsResponse.data;
+        console.log(data);
+        surveyName.value = data.survey_name; // Название опроса
+        console.log(surveyName.value);
+        lastModified.value = data.survey_date; // Дата опроса
+        questions.value = data.questions; // Список вопросов
         console.log(questions.value);
 
+        // Преобразуем строку в объект Date
+        formattedDate.value = new Date(lastModified.value).toLocaleDateString('ru-RU', {
+            // weekday: 'long', // День недели (например, понедельник)
+            year: 'numeric', // Год
+            month: 'long', // Месяц (например, ноябрь)
+            day: 'numeric' // Число
+        });
+        console.log(formattedDate);
         console.log('Вопросы загружены:', questions.value);
     } catch (error) {
         console.error('Ошибка загрузки данных:', error);
@@ -62,8 +142,8 @@ export default {
 <template>
     <div className="card">
         <div class="flex" style="flex-direction: column">
-            <h2 class="font-semibold text-4xl mb-6">Опрос 1</h2>
-            <h3 style="margin-bottom: 1em">Изменено 16 окт. 2023 г.</h3>
+            <h2 class="font-semibold text-4xl mb-6">{{ surveyName }}</h2>
+            <h3 style="margin-bottom: 1em">{{ formattedDate }}</h3>
         </div>
 
         <div class="card flex flex-col gap-4 w-full" style="padding: initial">
@@ -71,7 +151,7 @@ export default {
                 <template #start>
                     <Button label="Запустить" severity="info" icon="pi pi-caret-right" text />
                     <Button label="Редактировать" :to="{ name: 'survey' }" @click="openNewTab" icon="pi pi-file-edit" severity="secondary" text />
-                    <Button label="Копировать опрос" icon="pi pi-clone" severity="secondary" text />
+                    <Button label="Копировать опрос" icon="pi pi-clone" severity="secondary" text @click="copySurvey" />
                 </template>
 
                 <template #end>
@@ -83,7 +163,7 @@ export default {
                         </div>
                         <template #footer>
                             <Button label="Нет" icon="pi pi-times" @click="closeConfirmation" text severity="secondary" />
-                            <Button label="Да" icon="pi pi-check" @click="closeConfirmation" severity="danger" outlined autofocus />
+                            <Button label="Да" icon="pi pi-check" @click="deleteSurvey" severity="danger" outlined autofocus />
                         </template>
                     </Dialog>
                 </template>

@@ -2,6 +2,7 @@ const express = require('express');
 const mysql = require('mysql');
 const router = express.Router();
 const dotenv = require('dotenv');
+// const jwt = require('jsonwebtoken');
 
 // Подключаем .env файл
 dotenv.config({ path: '../backend/.env' });
@@ -28,6 +29,82 @@ const queryAsync = (query, params) => {
     });
 };
 
+const getUserId = async (token, survey_id) => {
+    let userId;
+
+    // Если нет user_id из токена, получаем его из базы данных
+    if (!userId) {
+        const query = 'SELECT user_id FROM surveys WHERE id = ?';
+        const result = await queryAsync(query, [survey_id]);
+
+        if (result.length === 0) {
+            throw new Error('Survey not found');
+        }
+
+        userId = result[0].user_id; // Извлекаем user_id из опроса
+    }
+
+    return userId;
+};
+
+// Удаление опроса с зависимыми данными
+router.delete('/surveys/:survey_id', async (req, res) => {
+    const { survey_id } = req.params;
+
+    if (!survey_id || isNaN(survey_id)) {
+        console.error(`Invalid or missing survey_id: ${survey_id}`);
+        return res.status(400).json({ error: 'Invalid or missing survey_id' });
+    }
+
+    // Получаем соединение из пула
+    db.getConnection(async (err, connection) => {
+        if (err) {
+            console.error('Error getting connection:', err);
+            return res.status(500).json({ error: 'Database connection error' });
+        }
+
+        try {
+            // Начинаем транзакцию
+            await connection.beginTransaction();
+
+            // Проверяем, существует ли опрос
+            const checkQuery = `SELECT * FROM surveys WHERE id = ?`;
+            const survey = await queryAsync(checkQuery, [survey_id]);
+
+            if (survey.length === 0) {
+                console.error(`Survey with ID ${survey_id} not found.`);
+                return res.status(404).json({ error: 'Survey not found' });
+            }
+
+            // Удаляем все варианты ответов, связанные с вопросами данного опроса
+            const deleteOptionsQuery = `DELETE FROM options WHERE question_id IN (SELECT id FROM questions WHERE survey_id = ?)`;
+            await queryAsync(deleteOptionsQuery, [survey_id]);
+
+            // Удаляем все вопросы, связанные с данным опросом
+            const deleteQuestionsQuery = `DELETE FROM questions WHERE survey_id = ?`;
+            await queryAsync(deleteQuestionsQuery, [survey_id]);
+
+            // Теперь удаляем сам опрос
+            const deleteSurveyQuery = `DELETE FROM surveys WHERE id = ?`;
+            await queryAsync(deleteSurveyQuery, [survey_id]);
+
+            // Подтверждаем транзакцию
+            await connection.commit();
+
+            console.log(`Survey with ID ${survey_id} successfully deleted`);
+            res.status(200).json({ message: 'Survey deleted successfully' });
+        } catch (error) {
+            // Откатываем транзакцию в случае ошибки
+            await connection.rollback();
+            console.error('Error deleting survey:', error);
+            res.status(500).json({ error: 'Failed to delete survey' });
+        } finally {
+            // Освобождаем соединение
+            connection.release();
+        }
+    });
+});
+
 // Маршрут для получения опросов пользователя по его ID
 router.get('/questions/:survey_id', async (req, res) => {
     const { survey_id } = req.params;
@@ -37,20 +114,24 @@ router.get('/questions/:survey_id', async (req, res) => {
     }
 
     try {
-        // Запрос для получения вопросов и их вариантов
+        // Запрос для получения данных об опросе и вопросов
         const query = `
             SELECT
+                s.title AS survey_name,
+                s.created_at AS survey_date,
                 q.id AS question_id,
                 q.text AS question_text,
                 o.id AS option_id,
                 o.text AS option_text,
                 q.correct_option AS correct_option_id
             FROM
-                questions q
+                surveys s
+            LEFT JOIN
+                questions q ON s.id = q.survey_id
             LEFT JOIN
                 options o ON q.id = o.question_id
             WHERE
-                q.survey_id = ?;
+                s.id = ?;
         `;
 
         const data = await queryAsync(query, [survey_id]);
@@ -59,23 +140,27 @@ router.get('/questions/:survey_id', async (req, res) => {
             return res.status(404).json({ message: 'No questions found for this survey' });
         }
 
-        // Форматируем результат: группируем варианты ответа по вопросам
-        const result = data.reduce((acc, row) => {
-            const question = acc.get(row.question_id);
+        // Извлекаем данные об опросе
+        const surveyInfo = {
+            survey_name: data[0].survey_name,
+            survey_date: data[0].survey_date
+        };
+
+        // Форматируем вопросы
+        const questions = data.reduce((acc, row) => {
+            let question = acc.find((q) => q.question_id === row.question_id);
 
             if (!question) {
-                acc.set(row.question_id, {
+                question = {
                     question_id: row.question_id,
                     question_text: row.question_text,
                     correct_option_id: row.correct_option_id,
-                    options: [
-                        {
-                            option_id: row.option_id,
-                            option_text: row.option_text
-                        }
-                    ]
-                });
-            } else {
+                    options: []
+                };
+                acc.push(question);
+            }
+
+            if (row.option_id) {
                 question.options.push({
                     option_id: row.option_id,
                     option_text: row.option_text
@@ -83,16 +168,119 @@ router.get('/questions/:survey_id', async (req, res) => {
             }
 
             return acc;
-        }, new Map());
+        }, []);
 
-        // Преобразуем Map в массив
-        const finalResult = Array.from(result.values());
+        // Формируем итоговый ответ
+        const response = {
+            ...surveyInfo,
+            questions
+        };
 
-        res.status(200).json(finalResult);
+        res.status(200).json(response);
     } catch (error) {
         console.error('Error retrieving questions:', error);
         res.status(500).json({ error: 'Failed to retrieve questions' });
     }
+});
+
+// Маршрут для копирования опроса
+router.post('/surveys/:survey_id/copy', async (req, res) => {
+    const { survey_id } = req.params;
+    const token = req.headers['token'];
+    if (!survey_id || isNaN(survey_id)) {
+        console.error(`Invalid or missing survey_id: ${survey_id}`);
+        return res.status(400).json({ error: 'Invalid or missing survey_id' });
+    }
+
+    // Получаем соединение из пула
+    db.getConnection(async (err, connection) => {
+        if (err) {
+            console.error('Error getting connection:', err);
+            return res.status(500).json({ error: 'Database connection error' });
+        }
+
+        try {
+            // Начинаем транзакцию
+            await connection.beginTransaction();
+
+            // Проверяем, существует ли опрос
+            const checkSurveyQuery = `SELECT * FROM surveys WHERE id = ?`;
+            const survey = await queryAsync(checkSurveyQuery, [survey_id]);
+
+            if (survey.length === 0) {
+                console.error(`Survey with ID ${survey_id} not found.`);
+                return res.status(404).json({ error: 'Survey not found' });
+            }
+
+            // Копируем данные об опросе
+            const newSurvey = {
+                title: `${survey[0].title} (Копия)`, // Добавляем "(Копия)" к названию
+                created_at: new Date() // Новая дата создания
+            };
+
+            // Вставляем новый опрос в таблицу
+            const user_id = await getUserId(token, survey_id); // Например, если пользователь залогинен
+
+            const insertSurveyQuery = `INSERT INTO surveys (title, created_at, user_id) VALUES (?, ?, ?)`;
+            const result = await queryAsync(insertSurveyQuery, [newSurvey.title, newSurvey.created_at, user_id]);
+
+            // Получаем ID нового опроса
+            const newSurveyId = result.insertId;
+
+            // Копируем все вопросы, связанные с этим опросом
+            const copyQuestionsQuery = `SELECT * FROM questions WHERE survey_id = ?`;
+            const questions = await queryAsync(copyQuestionsQuery, [survey_id]);
+
+            if (questions.length > 0) {
+                // Вставляем все вопросы в новый опрос
+                const insertQuestionsQuery = `INSERT INTO questions (survey_id, text, correct_option) VALUES ?`;
+                const questionValues = questions.map((q) => [newSurveyId, q.text, q.correct_option]);
+
+                // Вставляем вопросы и получаем результат
+                const result = await queryAsync(insertQuestionsQuery, [questionValues]);
+
+                // Получаем новые question_id, которые были вставлены в новый опрос
+                const getNewQuestionIdsQuery = `SELECT id FROM questions WHERE survey_id = ?`;
+                const newQuestions = await queryAsync(getNewQuestionIdsQuery, [newSurveyId]);
+
+                // Теперь у нас есть новые question_id
+                const newQuestionIds = newQuestions.map((q) => q.id);
+
+                // Копируем все варианты ответов для этих вопросов
+                const insertOptionsQuery = `INSERT INTO options (question_id, text) VALUES ?`;
+
+                // Получаем старые варианты ответов, которые принадлежат старым вопросам
+                const options = await queryAsync(`SELECT * FROM options WHERE question_id IN (SELECT id FROM questions WHERE survey_id = ?)`, [survey_id]);
+
+                // Сопоставляем старые варианты ответов с новыми question_id
+                const optionValues = options.map((o, index) => {
+                    // Используем индекс для соответствия старым и новым question_id
+                    const newQuestionId = newQuestionIds[index % newQuestionIds.length]; // Преобразуем индекс для избежания null
+                    return [newQuestionId, o.text];
+                });
+
+                // Вставляем новые варианты ответов в новый опрос
+                await queryAsync(insertOptionsQuery, [optionValues]);
+            }
+
+            // Подтверждаем транзакцию
+            await connection.commit();
+
+            console.log(`Survey with ID ${survey_id} successfully copied to new survey with ID ${newSurveyId}`);
+            res.status(201).json({
+                message: 'Survey copied successfully',
+                new_survey_id: newSurveyId
+            });
+        } catch (error) {
+            // Откатываем транзакцию в случае ошибки
+            await connection.rollback();
+            console.error('Error copying survey:', error);
+            res.status(500).json({ error: 'Failed to copy survey' });
+        } finally {
+            // Освобождаем соединение
+            connection.release();
+        }
+    });
 });
 
 module.exports = router;

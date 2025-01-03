@@ -4,6 +4,7 @@ import { NodeService } from '@/service/NodeService';
 import { ProductService } from '@/service/ProductService';
 import axios from 'axios';
 import { onMounted, ref, watch } from 'vue';
+import jwtDecode from 'jwt-decode';
 
 const { getPrimary, getSurface, isDarkTheme } = useLayout();
 
@@ -16,10 +17,35 @@ const treeTableValue = ref(null);
 
 const surveys = ref([]); // Это будет хранить список опросов
 
+function getUserIdFromToken() {
+    const token = localStorage.getItem('authToken'); // Или другой способ получения токена
+    console.log(token);
+    if (!token) return null;
+
+    try {
+        const decoded = jwtDecode(token);
+        return decoded.id; // Зависит от структуры вашего токена
+    } catch (error) {
+        console.error('Ошибка декодирования токена:', error);
+        return null;
+    }
+}
+
 onMounted(async () => {
+    const userId = getUserIdFromToken();
+    if (!userId) {
+        console.error('ID пользователя не найден.');
+        return;
+    }
+    const token = localStorage.getItem('authToken');
+    console.log(userId);
     try {
         // Отправка GET запроса на сервер
-        const response = await axios.get('http://localhost:3000/api/surveys1/user/1');
+        const response = await axios.get(`http://localhost:3000/api/surveys1/user/${userId}`, {
+            headers: {
+                token: token // Добавляем токен в заголовки
+            }
+        });
         surveys.value = response.data; // Сохраняем полученные данные в переменную
         console.log('Полученные данные:', surveys.value); // Выводим данные в консоль
     } catch (error) {

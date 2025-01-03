@@ -1,7 +1,8 @@
 <script>
 import SurveyLayout from '@/layout/SurveyLayout.vue';
 import axios from 'axios'; // Используем axios для запросов на сервер
-
+import jwtDecode from 'jwt-decode';
+//import Toastify from 'toastify-js'; // Библиотека для уведомлений
 export default {
     components: {
         SurveyLayout
@@ -14,7 +15,7 @@ export default {
             currentQuestionText: '', // Локальная переменная для текста вопроса
             responseMessage: '', // Сообщение от сервера
             responseClass: '', // Класс для отображения успеха или ошибки
-            userId: 1 // ID пользователя (инициализируйте здесь или получайте из других данных)
+            userId: null // ID пользователя (инициализируйте здесь или получайте из других данных)
         };
     },
     // created() {
@@ -98,20 +99,17 @@ export default {
             console.log('surveyTitle:', this.surveyTitle);
             console.log('questions:', this.questions); // Убедитесь, что данные вопросов передаются
 
-            // Если title пустой, то возвращаем ошибку
             if (!this.surveyTitle.trim()) {
                 this.responseMessage = 'Название опроса не может быть пустым.';
                 this.responseClass = 'error';
                 return;
             }
 
-            // Обновляем текст вопроса
             this.questions[this.currentQuestionIndex].text = this.currentQuestionText;
-
-            // Формирование данных опроса для отправки на сервер
+            console.log(this.userId);
             const surveyData = {
-                user_id: this.userId, // Пользовательский ID
-                title: this.surveyTitle.trim(), // Название опроса
+                user_id: this.userId,
+                title: this.surveyTitle.trim(),
                 questions: this.questions.map((q, index) => ({
                     text: q.text.trim() || `Вопрос ${index + 1}`,
                     correct_option: q.selectedOption,
@@ -119,9 +117,8 @@ export default {
                 }))
             };
 
-            console.log('Survey Data перед отправкой:', surveyData); // Логируем данные перед отправкой
+            console.log('Survey Data перед отправкой:', surveyData);
 
-            // Проверка на валидность вопросов
             const invalidQuestions = surveyData.questions.filter((q) => !q.text || q.correct_option === null || q.options.some((opt) => !opt));
             if (invalidQuestions.length > 0) {
                 this.responseMessage = 'Убедитесь, что все вопросы заполнены и у каждого есть правильный вариант.';
@@ -129,10 +126,15 @@ export default {
                 console.log('Invalid questions:', invalidQuestions);
                 return;
             }
+            const token = localStorage.getItem('authToken');
 
-            // Отправка данных на сервер
+            // Отправляем запрос с токеном в заголовке
             axios
-                .post('http://localhost:3000/api/surveys/create', surveyData)
+                .post('http://localhost:3000/api/surveys/create', surveyData, {
+                    headers: {
+                        token: token // Добавляем токен в заголовки
+                    }
+                })
                 .then((response) => {
                     console.log('Ответ сервера:', response.data);
                     this.responseMessage = 'Опрос успешно сохранён.';
@@ -146,8 +148,29 @@ export default {
         }
     },
     mounted() {
+        const token = localStorage.getItem('authToken'); // Извлекаем токен из localStorage
+        if (!token) {
+            console.error('Пользователь не авторизован');
+            this.$router.push({ name: 'login' }); // Перенаправление на страницу входа
+            return;
+        }
+
+        try {
+            // Используем jwt-decode для извлечения данных из токена
+            const decoded = jwtDecode(token);
+            if (decoded && decoded.id) {
+                console.log(decoded.id);
+                this.userId = decoded.id; // Устанавливаем userId из токена
+            } else {
+                throw new Error('ID пользователя отсутствует в токене');
+            }
+        } catch (err) {
+            console.error('Ошибка декодирования токена:', err);
+            this.$router.push({ name: 'login' }); // Перенаправление на страницу входа
+        }
+
         if (this.questions.length === 0) {
-            this.addQuestion(); // Добавляем начальный вопрос
+            this.addQuestion();
         }
     }
 };
