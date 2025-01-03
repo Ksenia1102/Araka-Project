@@ -3,8 +3,8 @@ import { useLayout } from '@/layout/composables/layout';
 import { NodeService } from '@/service/NodeService';
 import { ProductService } from '@/service/ProductService';
 import axios from 'axios';
-import { onMounted, ref, watch } from 'vue';
 import jwtDecode from 'jwt-decode';
+import { onMounted, ref, watch } from 'vue';
 
 const { getPrimary, getSurface, isDarkTheme } = useLayout();
 
@@ -217,7 +217,7 @@ export default {
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText placeholder="Поиск по опросам" style="width: 60vh" />
+                        <InputText placeholder="Поиск по опросам" style="width: 100%" />
                     </IconField>
                 </template>
 

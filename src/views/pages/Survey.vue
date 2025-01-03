@@ -178,7 +178,7 @@ export default {
 
 <template>
     <SurveyLayout v-model:surveyTitle="surveyTitle" :questions="questions" @saveSurvey="handleSaveSurvey" @addQuestion="addQuestion" @copyQuestion="copyQuestion" @deleteQuestion="deleteQuestion" @goBack="goBack">
-        <div v-if="currentQuestion !== null" class="card" style="height: calc(100vh - 8rem)">
+        <div v-if="currentQuestion !== null" class="card" style="height: 80vh; max-width: 120vh">
             <!-- Текст вопроса -->
             <!-- <input v-model="currentQuestionText" placeholder="Введите текст вопроса" class="question-input" @input="updateQuestionText" /> -->
             <div class="flex items-center">

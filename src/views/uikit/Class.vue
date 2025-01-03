@@ -10,7 +10,7 @@ const studentInput = ref('');
 const studentPreview = ref([]);
 const students = ref([]);
 const showStudentTable = ref(false);
-let studentIdCounter = 1;
+//let studentIdCounter = 1;
 const quickAddInput = ref('');
 const sections = ref([
     { id: 1, name: 'Опрос №1', link: '/section/1' },
@@ -56,8 +56,7 @@ function loadClassData() {
         showStudentTable.value = false; // Скрываем таблицу
     }
 
-    // Сбрасываем счётчик ID для нового класса
-    studentIdCounter = students.value.length > 0 ? students.value.length + 1 : 1;
+
 }
 
 function addStudent() {
@@ -66,13 +65,21 @@ function addStudent() {
     studentPreview.value = [];
 }
 
+function addManyStudents() {
+    // display.value = true; // Открываем модальное окно
+    // studentInput.value = ''; // Очищаем ввод
+    // studentPreview.value = []; // Очищаем предпросмотр
+    alert('add');
+}
+
+
 function generatePreview() {
     const lines = studentInput.value.trim().split('\n');
     studentPreview.value = lines
-        .map((line) => {
+        .map((line, index) => {
             const [firstName, ...lastNameParts] = line.trim().split(' ');
             if (!firstName || lastNameParts.length === 0) return null;
-            return { id: studentIdCounter++, firstName, lastName: lastNameParts.join(' ') };
+            return { id: students.value.length + index + 1, firstName, lastName: lastNameParts.join(' ') };
         })
         .filter((student) => student);
 }
@@ -92,7 +99,7 @@ function quickAddStudent() {
     }
 
     students.value.push({
-        id: studentIdCounter++,
+        id: students.value.length + 1, //длинна массива
         firstName,
         lastName: lastNameParts.join(' ')
     });
@@ -123,27 +130,31 @@ watch(
 </script>
 
 <template>
-    <div class="card" style="height: 110vh">
+    <div class="card">
         <!-- блок с созданием учеников -->
         <div v-if="!showStudentTable">
-            <div class="font-semibold text-xl mb-4">Вы почти закончили с классом {{ currentClassName }}</div>
-            <p>Завершите создание, добавив учеников</p>
-            <Button label="Добавить учеников" severity="info" icon="pi pi-plus" @click="addStudent" />
+            <div style="margin: 30px">
+                <h1 class="font-semibold text-4xl mb-6">
+                    Вы почти закончили с классом <span style="color: #0ea5e9">{{ currentClassName }}</span>
+                </h1>
+                <p class="font-semibold text-xl mb-4">Завершите создание, добавив учеников</p>
+                <Button label="Добавить учеников" severity="info" icon="pi pi-plus" @click="addStudent" />
+            </div>
             <Dialog :header="`Добавить учеников в ${currentClassName}`" v-model:visible="display" :breakpoints="{ '960px': '75vw' }" :style="{ width: '60vw' }" :modal="true">
                 <p class="leading-normal m-0 mb-4">Введите имена учащихся в поле ниже. Каждый ученик должен быть указан в новой строке (например: *Иван Иванов*).</p>
                 <div class="form-container">
                     <!-- Первая колонка -->
                     <div class="form-column">
-                        <Textarea style="width: 100%; height: 200px" v-model="studentInput" placeholder="Введите имена и фамилии учеников..." @input="generatePreview" />
+                        <Textarea rows="23" style="width: 100%" v-model="studentInput" placeholder="Введите имена и фамилии учеников..." @input="generatePreview" />
                     </div>
 
                     <!-- Вторая колонка - предпросмотр -->
                     <div class="form-column">
-                        <p v-if="!studentPreview.length">Предпросмотр пуст.</p>
+                        <p class="font-semibold text-xl mb-4" style="margin-left: auto; margin-right: auto; width: 10em; margin-top: 10em" v-if="!studentPreview.length">Предпросмотр пуст</p>
                         <table v-else class="preview-table">
                             <thead>
                                 <tr>
-                                    <th>#</th>
+                                    <th>№</th>
                                     <th>Имя</th>
                                     <th>Фамилия</th>
                                 </tr>
@@ -184,13 +195,13 @@ watch(
                     <InputText v-model="quickAddInput" placeholder="Быстрое добавление ученика" style="width: 40vh" />
                     <Button label="Добавить" icon="pi pi-plus" @click="quickAddStudent" class="p-button-info" />
                     <!-- Новая кнопка для массового добавления -->
-                    <Button label="Добавить нескольких" icon="pi pi-users" class="p-button-info" />
+                    <Button label="Добавить нескольких" icon="pi pi-users" @click="addManyStudents" class="p-button-info" />
                 </div>
                 <!-- Кнопка добавления учеников -->
             </div>
 
             <!-- Таблица учеников -->
-            <DataTable :value="students" :paginator="true" :rows="5" dataKey="id" :rowHover="true" filterDisplay="menu" :globalFilterFields="['firstName', 'lastName']" showGridlines>
+            <DataTable :value="students" :paginator="true" :rows="10" dataKey="id" :rowHover="true" filterDisplay="menu" :globalFilterFields="['firstName', 'lastName']" showGridlines>
                 <template #header>
                     <div class="flex justify-between items-center">
                         <Button type="button" icon="pi pi-filter-slash" label="Очистить фильтр" severity="info" outlined @click="clearFilter()" />

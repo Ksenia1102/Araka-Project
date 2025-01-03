@@ -1,7 +1,7 @@
 <script setup>
 import { ProductService } from '@/service/ProductService';
 import axios from 'axios';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { useRouter } from 'vue-router';
 
@@ -128,6 +128,40 @@ function openConfirmation() {
 function closeConfirmation() {
     displayConfirmation.value = false;
 }
+
+// Список классов
+const classes = ref([
+    { id: 1, name: '1А', studentsCount: 25 },
+    { id: 2, name: '1Б', studentsCount: 20 },
+    { id: 3, name: '2А', studentsCount: 23 },
+    { id: 4, name: '2Б', studentsCount: 22 }
+]);
+// Выбранный класс
+const selectedClass = ref(null);
+// Функция для выбора класса
+function selectClass(classId) {
+    selectedClass.value = classId;
+}
+// Название выбранного класса
+const selectedClassName = computed(() => {
+    const selected = classes.value.find((classItem) => classItem.id === selectedClass.value);
+    return selected ? selected.name : 'Не выбран';
+});
+
+const displaySur = ref(false);
+function openSurvey() {
+    displaySur.value = true;
+}
+
+function startSur() {
+    displaySur.value = false;
+    openQuiz();
+}
+function openQuiz() {
+    window.open('/uikit/quiz', '_blank');
+}
+
+
 </script>
 <script>
 export default {
@@ -149,9 +183,26 @@ export default {
         <div class="card flex flex-col gap-4 w-full" style="padding: initial">
             <Toolbar>
                 <template #start>
-                    <Button label="Запустить" severity="info" icon="pi pi-caret-right" text />
+                    <Button label="Запустить" severity="info" icon="pi pi-caret-right" text @click="openSurvey" />
                     <Button label="Редактировать" :to="{ name: 'survey' }" @click="openNewTab" icon="pi pi-file-edit" severity="secondary" text />
                     <Button label="Копировать опрос" icon="pi pi-clone" severity="secondary" text @click="copySurvey" />
+                    <Dialog header="Выберите класс, в котором будет запущен опрос Опрос 1" v-model:visible="displaySur" :style="{ width: '350px' }" :modal="true">
+                        <div v-if="selectedClass">
+                            <p>Выбранный класс: {{ selectedClassName }}</p>
+                        </div>
+                        <div>
+                            <div class="border-t">
+                                <ul style="margin: 10px">
+                                    <li v-for="classItem in classes" :key="classItem.id" :class="{ selected: selectedClass === classItem.id }" @click="selectClass(classItem.id)" style="cursor: pointer; margin: 10px">
+                                        {{ classItem.name }} (Ученики: {{ classItem.studentsCount }})
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <template #footer>
+                            <Button label="Начать опрос" @click="startSur" :to="{ name: 'quiz' }" text severity="info" />
+                        </template>
+                    </Dialog>
                 </template>
 
                 <template #end>
@@ -234,3 +285,11 @@ export default {
         </div>
     </div>
 </template>
+
+
+<style scoped>
+.selected {
+    font-weight: bold;
+    color: #0ea5e9;
+}
+</style>

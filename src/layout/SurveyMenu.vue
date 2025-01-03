@@ -60,7 +60,7 @@ function truncateText(text) {
     <ul class="layout-menu" style="background-color: var(--surface-overlay); border-radius: var(--content-border-radius); padding: 0.5rem; margin: 1rem 0">
         <template v-for="(item, i) in model" :key="i">
             <!-- Заголовок категории -->
-            <li v-if="item.label" class="layout-menu-category">{{ item.label }}</li>
+            <li v-if="item.label" class="layout-menu-category font-semibold text-xl mb-4">{{ item.label }}</li>
 
             <!-- Вопросы -->
             <template v-for="(subItem, j) in item.items" :key="j">
