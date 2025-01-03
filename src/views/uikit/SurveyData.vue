@@ -158,10 +158,8 @@ function startSur() {
     openQuiz();
 }
 function openQuiz() {
-    window.open('/uikit/quiz', '_blank');
+    window.open('/pages/quiz', '_blank');
 }
-
-
 </script>
 <script>
 export default {
@@ -285,7 +283,6 @@ export default {
         </div>
     </div>
 </template>
-
 
 <style scoped>
 .selected {

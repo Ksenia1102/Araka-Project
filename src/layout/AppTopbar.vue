@@ -2,6 +2,12 @@
 import { useLayout } from '@/layout/composables/layout';
 import * as FileSaver from 'file-saver'; // Правильный способ импорта
 import AppConfigurator from './AppConfigurator.vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+function goToUser() {
+    router.push({ name: 'user' });
+}
 
 async function downloadFile() {
     try {
@@ -65,7 +71,7 @@ const { onMenuToggle } = useLayout();
                         <i class="pi pi-android"></i>
                         <span>question</span>
                     </button>
-                    <button v-tooltip.bottom="'Профиль'" type="button" class="layout-topbar-action">
+                    <button v-tooltip.bottom="'Профиль'" type="button" class="layout-topbar-action" :to="{ name: 'user' }" as="router-link" @click="goToUser">
                         <i class="pi pi-user"></i>
                         <span>user</span>
                     </button>
