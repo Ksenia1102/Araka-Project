@@ -1,5 +1,11 @@
 <script setup>
-import { ref } from 'vue';
+import axios from 'axios'; // Для работы с запросами
+import jwtDecode from 'jwt-decode';
+import { onMounted, ref } from 'vue';
+// import { useRouter } from 'vue-router'; // Импортируйте useRouter
+
+// const router = useRouter(); // Получите доступ к роутеру
+
 const displayConfirmation = ref(false);
 function openConfirmation() {
     displayConfirmation.value = true;
@@ -11,23 +17,121 @@ function closeConfirmation() {
 const username = ref('Иван');
 const lastname = ref('Конов');
 const login = ref('ivanov@ex.com');
-const pass = ref('123');
+const pass = ref('*****');
+
+// const newPassword = ref('');
+// const oldPassword = ref('');
 // Флаг режима редактирования
 const isEditingName = ref(false);
 const isEditingAuth = ref(false);
 // Название кнопки
 const buttonLabelName = ref('Изменить данные о пользователе');
 const buttonLabelAuth = ref('Изменить данные аутентификации');
+function getUserIdFromToken() {
+    const token = localStorage.getItem('authToken'); // Или другой способ получения токена
+    console.log(token);
+    if (!token) return null;
+
+    try {
+        const decoded = jwtDecode(token);
+        return decoded.id; // Зависит от структуры вашего токена
+    } catch (error) {
+        console.error('Ошибка декодирования токена:', error);
+        return null;
+    }
+}
+async function fetchUserData() {
+    try {
+        const userId = getUserIdFromToken();
+        const token = localStorage.getItem('authToken');
+        const response = await axios.get(`http://localhost:3000/api/profile/${userId}`, {
+            headers: {
+                token: token // Добавляем токен в заголовки
+            }
+        }); // Запрос к вашему API
+        const user = response.data;
+        username.value = user.username || 'Имя';
+        console.log(user.username);
+        lastname.value = user.lastname || 'Фамилия';
+        login.value = user.login || ''; // Предполагаем, что email используется как login
+        pass.value = '*****'; // Пароль обычно не передается, оставляем пустым
+    } catch (error) {
+        console.error('Ошибка загрузки данных пользователя:', error);
+    }
+}
+
+// Сохранение измененных данных имени и фамилии
+async function saveUserData() {
+    try {
+        const userId = getUserIdFromToken();
+        const token = localStorage.getItem('authToken');
+        await axios.put(`http://localhost:3000/api/profile/${userId}`, { name: username.value, lastname: lastname.value }, { headers: { token } });
+        isEditingName.value = false;
+        buttonLabelName.value = 'Изменить данные о пользователе';
+        console.log('Данные успешно сохранены');
+    } catch (error) {
+        console.error('Ошибка сохранения данных пользователя:', error);
+    }
+}
+
+// Сохранение данных аутентификации
+async function saveAuthData() {
+    try {
+        const userId = getUserIdFromToken();
+        const token = localStorage.getItem('authToken');
+        await axios.put(
+            `http://localhost:3000/api/profile_auth/${userId}`,
+            {
+                login: login.value,
+                password: pass.value
+            },
+            { headers: { token } }
+        );
+        isEditingAuth.value = false;
+        buttonLabelAuth.value = 'Изменить данные аутентификации';
+        fetchUserData();
+    } catch (error) {
+        console.error('Ошибка сохранения данных аутентификации:', error);
+    }
+}
+
 // Функция для переключения режима для имени
 function toggleEditNameMode() {
-    isEditingName.value = !isEditingName.value; // Переключаем флаг
-    buttonLabelName.value = isEditingName.value ? 'Сохранить' : 'Изменить данные о пользователе'; // Меняем текст кнопки
+    if (isEditingName.value) {
+        saveUserData(); // Сохранение изменений при выключении режима редактирования
+    } else {
+        isEditingName.value = true; // Включение режима редактирования
+        buttonLabelName.value = 'Сохранить';
+    }
 }
 // Функция для переключения режима для пароля\логина
 function toggleEditAuthMode() {
-    isEditingAuth.value = !isEditingAuth.value; // Переключаем флаг
-    buttonLabelAuth.value = isEditingAuth.value ? 'Сохранить' : 'Изменить данные аутентификации'; // Меняем текст кнопки
+    if (isEditingAuth.value) {
+        saveAuthData(); // Сохраняем изменения
+    } else {
+        isEditingAuth.value = true;
+        buttonLabelAuth.value = 'Сохранить';
+    }
 }
+
+async function deleteAccount() {
+    const userId = getUserIdFromToken();
+    const token = localStorage.getItem('authToken');
+
+    try {
+        await axios.delete(`http://localhost:3000/api/profile/${userId}`, {
+            headers: { token: token }
+        });
+        // Перенаправление пользователя на страницу логина или главную после удаления аккаунта
+        window.location.replace('/auth/login'); // Замените на путь, куда нужно отправить пользователя
+    } catch (error) {
+        console.error('Ошибка удаления аккаунта:', error);
+    }
+}
+
+onMounted(() => {
+    fetchUserData();
+});
 </script>
 <template>
     <div class="card">
@@ -44,7 +148,7 @@ function toggleEditAuthMode() {
             </div>
             <div class="flex flex-col grow basis-0 gap-2">
                 <label for="lastName">Фамилия</label>
-                <InputText type="text" placeholder="Какая-то фамилия" id="lastname" v-model="lastname" :disabled="!isEditing" />
+                <InputText type="text" placeholder="Какая-то фамилия" id="lastname" v-model="lastname" :disabled="!isEditingName" />
             </div>
         </div>
         <Button severity="info" :label="buttonLabelName" @click="toggleEditNameMode" style="margin-bottom: 10px" outlined></Button>
@@ -71,7 +175,7 @@ function toggleEditAuthMode() {
             </div>
             <template #footer>
                 <Button label="Нет" icon="pi pi-times" @click="closeConfirmation" text severity="secondary" />
-                <Button label="Да" icon="pi pi-check" @click="closeConfirmation" severity="danger" outlined autofocus />
+                <Button label="Да" icon="pi pi-check" @click="deleteAccount" severity="danger" outlined autofocus />
             </template>
         </Dialog>
     </div>

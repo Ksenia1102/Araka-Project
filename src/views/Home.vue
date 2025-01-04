@@ -1,7 +1,34 @@
 <script setup>
 import { useRouter } from 'vue-router';
+import * as FileSaver from 'file-saver'; // Правильный способ импорта
 
 const router = useRouter();
+
+function goToRegistration() {
+    router.push({ name: 'registration' });
+}
+
+async function downloadFile() {
+    try {
+        const response = await fetch('http://localhost:3000/cards/download', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Ошибка при скачивании файла');
+        }
+
+        const blob = await response.blob();
+
+        // Используем saveAs через FileSaver
+        FileSaver.saveAs(blob, 'Cards.pdf');
+    } catch (error) {
+        console.error('Ошибка:', error);
+    }
+}
 
 function goToLogin() {
     router.push({ name: 'login' });
@@ -39,14 +66,14 @@ function goToLogin() {
                             </a>
                         </li>
                         <li>
-                            <a class="px-0 py-4 text-surface-900 dark:text-surface-0 font-medium text-xl">
+                            <a @click="downloadFile" class="px-0 py-4 text-surface-900 dark:text-surface-0 font-medium text-xl">
                                 <span>Получить карточки для опросов</span>
                             </a>
                         </li>
                     </ul>
                     <div class="flex border-t lg:border-t-0 border-surface py-4 lg:py-0 mt-4 lg:mt-0 gap-2">
                         <Button label="Авторизация" text as="router-link" to="/auth/login" severity="info"></Button>
-                        <Button label="Регистрация" to="/auth/login" severity="info"></Button>
+                        <Button label="Регистрация" @click="goToRegistration" severity="info"></Button>
                     </div>
                 </div>
             </div>

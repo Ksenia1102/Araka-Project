@@ -11,7 +11,7 @@ function goToUser() {
 
 async function downloadFile() {
     try {
-        const response = await fetch('http://localhost:3000/api/cards/download', {
+        const response = await fetch('http://localhost:3000/cards/download', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'

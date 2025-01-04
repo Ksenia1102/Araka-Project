@@ -14,6 +14,8 @@ const surveyRoutes = require('./routes/surveys');
 const surveyRoutes1 = require('./routes/get_surveys');
 const questionsRoutes = require('./routes/get_questions');
 const downloadCardsRoutes = require('./routes/download_cards');
+const downloadCardsRoutes1 = require('./routes/download_cards_1');
+const profileRoutes = require('./routes/profile');
 
 const cors = require('cors'); // Импортируем CORS для обеспечения кросс-доменных запросов
 
@@ -50,6 +52,8 @@ app.use('/api/surveys', surveyRoutes);
 app.use('/api', surveyRoutes1);
 app.use('/api', questionsRoutes);
 app.use('/api', downloadCardsRoutes);
+app.use('/api', profileRoutes);
+app.use('/cards', downloadCardsRoutes1);
 
 // Запуск сервера на порту 3000
 app.listen(3000, () => {
