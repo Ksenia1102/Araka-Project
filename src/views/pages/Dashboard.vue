@@ -4,7 +4,7 @@ import { NodeService } from '@/service/NodeService';
 import { ProductService } from '@/service/ProductService';
 import axios from 'axios';
 import jwtDecode from 'jwt-decode';
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch, computed } from 'vue';
 
 const { getPrimary, getSurface, isDarkTheme } = useLayout();
 
@@ -16,6 +16,7 @@ const treeValue = ref(null);
 const treeTableValue = ref(null);
 
 const surveys = ref([]); // Это будет хранить список опросов
+const searchQuery = ref(''); // Введённый текст для поиска
 
 function getUserIdFromToken() {
     const token = localStorage.getItem('authToken'); // Или другой способ получения токена
@@ -52,6 +53,9 @@ onMounted(async () => {
         console.error('Ошибка при загрузке опросов:', error);
     }
 });
+
+// Вычисляемое свойство для фильтрации данных
+const filteredSurveys = computed(() => surveys.value.filter((survey) => survey.title.toLowerCase().includes(searchQuery.value.toLowerCase())));
 
 // Форматирование даты
 function formatDate(date) {
@@ -210,6 +214,7 @@ export default {
             <h2 class="font-semibold text-4xl mb-6">Библиотека</h2>
         </div>
 
+        <!-- Поле для поиска -->
         <div class="card flex flex-col gap-4 w-full" style="padding: initial">
             <Toolbar>
                 <template #start>
@@ -217,32 +222,16 @@ export default {
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText placeholder="Поиск по опросам" style="width: 100%" />
+                        <!-- Привязываем v-model -->
+                        <InputText v-model="searchQuery" placeholder="Поиск по опросам" style="width: 100%" />
                     </IconField>
                 </template>
-
-                <template #end>
-                    <!--<Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-plus" class="mr-2" severity="secondary" text />
-                    <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-print" class="mr-2" severity="secondary" text />
-                    <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-upload" severity="secondary" text />
-                    <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-upload" severity="secondary" text />
-                    <Button v-tooltip="'Click to proceed'" type="button" icon="pi pi-ellipsis-v" severity="secondary" text />  -->
-                </template>
             </Toolbar>
-
-            <!-- <div class="font-semibold text-xl" style="border-bottom: 1px solid var(--surface-border)">Разделы</div>
-
-            <div class="sections-list">
-                <div v-for="section in sections" :key="section.id" class="section-item" @click="goToSection(section.link)">
-                    {{ section.name }}
-                    <i class="pi pi-fw pi-angle-right" />
-                </div>
-            </div> -->
         </div>
 
         <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Опросы</div>
         <!-- Таблица с данными -->
-        <DataTable :value="surveys" class="p-datatable-sm">
+        <DataTable :value="filteredSurveys" class="p-datatable-sm">
             <!-- Столбец для имени опроса (title) -->
             <Column field="title" header="Имя" />
 
