@@ -44,9 +44,9 @@ const router = createRouter({
                     props: true
                 },
                 {
-                    path: '/uikit/working',
-                    name: 'working',
-                    component: () => import('@/views/uikit/Working.vue')
+                    path: '/uikit/charts',
+                    name: 'charts',
+                    component: () => import('@/views/uikit/Charts.vue')
                 },
                 {
                     path: '/uikit/sur-data',

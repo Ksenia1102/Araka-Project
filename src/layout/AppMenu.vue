@@ -19,7 +19,7 @@ const model = ref([
     {
         items: [
             { label: 'Библиотека', icon: 'pi pi-fw pi-home', to: '/pages/dashboard' },
-            { label: 'Отчеты', icon: 'pi pi-fw pi-chart-bar', to: '/uikit/working' }
+            { label: 'Отчеты', icon: 'pi pi-fw pi-chart-bar', to: '/uikit/charts' }
             // { label: 'Тестовая страница', icon: 'pi pi-fw pi-home', to: '/pages/test' }
         ]
     }
