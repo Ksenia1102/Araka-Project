@@ -93,7 +93,7 @@ router.post('/login', (req, res) => {
             if (err) return res.status(500).send('Ошибка проверки пароля');
             if (!isMatch) return res.status(401).send('Неверный пароль');
 
-            const token = jwt.sign({ id: user.id, login: user.login }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' });
+            const token = jwt.sign({ id: user.id, login: user.login }, process.env.JWT_SECRET_KEY, { expiresIn: '10h' });
 
             res.json({ message: 'Успешный вход', token });
         });

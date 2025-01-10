@@ -54,4 +54,28 @@ router.post('/create-class', async (req, res) => {
         }
     });
 });
+
+// Маршрут для получения списка классов гет запрос перед запуском вопроса, не знаю подойдет ли для других целей!
+router.get('/classes', (req, res) => {
+    db.getConnection(async (err, connection) => {
+        if (err) {
+            console.error('Ошибка подключения к базе данных:', err);
+            return res.status(500).json({ error: 'Ошибка при подключении к базе данных' });
+        }
+
+        try {
+            // SQL-запрос для получения классов
+            const classesQuery = 'SELECT id, title, (SELECT COUNT(*) FROM student WHERE class_id = class.id) AS studentsCount FROM class';
+            const classes = await queryAsync(connection, classesQuery);
+
+            res.status(200).json(classes);
+        } catch (error) {
+            console.error('Ошибка выполнения запроса:', error);
+            res.status(500).json({ error: 'Ошибка при получении данных' });
+        } finally {
+            connection.release();
+        }
+    });
+});
+
 module.exports = router;

@@ -20,6 +20,22 @@ const formattedDate = ref('');
 // Пример ID опроса. Можно заменить на динамическое значение.
 console.log('ID опроса:', surveyId);
 
+// Функция загрузки классов
+const fetchClasses = async () => {
+    try {
+        const token = localStorage.getItem('authToken'); // Получаем токен авторизации
+        const response = await axios.get('http://localhost:3000/api/classes', {
+            headers: {
+                token: token
+            }
+        });
+        classes.value = response.data; // Загружаем данные в `ref`
+        console.log('Классы загружены:', classes.value);
+    } catch (error) {
+        console.error('Ошибка при загрузке классов:', error);
+    }
+};
+
 const copySurvey = async () => {
     try {
         const token = localStorage.getItem('authToken'); // Получаем токен из localStorage
@@ -76,6 +92,7 @@ const deleteSurvey = async () => {
 
 onMounted(async () => {
     try {
+        fetchClasses();
         // Отправка GET запроса для получения данных о опросе
         // const surveyResponse = await axios.get('http://localhost:3000/api/questions/1'); // Здесь замените на нужный URL
         // surveyId.value = surveyResponse.data.id; // Предположим, что ответ содержит поле id опроса
@@ -144,7 +161,7 @@ function selectClass(classId) {
 // Название выбранного класса
 const selectedClassName = computed(() => {
     const selected = classes.value.find((classItem) => classItem.id === selectedClass.value);
-    return selected ? selected.name : 'Не выбран';
+    return selected ? selected.title : 'Не выбран';
 });
 
 const displaySur = ref(false);
@@ -152,12 +169,16 @@ function openSurvey() {
     displaySur.value = true;
 }
 
-function startSur() {
+function startSur(classId) {
+    if (!classId) {
+        alert('Пожалуйста, выберите класс');
+        return;
+    }
     displaySur.value = false;
-    openQuiz();
+    openQuiz(classId);
 }
-function openQuiz() {
-    window.open('/pages/quiz', '_blank');
+function openQuiz(classId) {
+    window.open(`/pages/quiz/${classId}/${surveyId}`, '_blank');
 }
 function openNewTab() {
     console.log('start'); // Получаем ID опроса из текущего маршрута
@@ -180,7 +201,7 @@ function openNewTab() {
                     <Button label="Запустить" severity="info" icon="pi pi-caret-right" text @click="openSurvey" />
                     <Button label="Редактировать" @click="openNewTab" icon="pi pi-file-edit" severity="secondary" text />
                     <Button label="Копировать опрос" icon="pi pi-clone" severity="secondary" text @click="copySurvey" />
-                    <Dialog header="Выберите класс, в котором будет запущен опрос Опрос 1" v-model:visible="displaySur" :style="{ width: '350px' }" :modal="true">
+                    <Dialog header="Выберите класс, в котором будет запущен опрос" v-model:visible="displaySur" :style="{ width: '350px' }" :modal="true">
                         <div v-if="selectedClass">
                             <p>Выбранный класс: {{ selectedClassName }}</p>
                         </div>
@@ -188,13 +209,13 @@ function openNewTab() {
                             <div class="border-t">
                                 <ul style="margin: 10px">
                                     <li v-for="classItem in classes" :key="classItem.id" :class="{ selected: selectedClass === classItem.id }" @click="selectClass(classItem.id)" style="cursor: pointer; margin: 10px">
-                                        {{ classItem.name }} (Ученики: {{ classItem.studentsCount }})
+                                        {{ classItem.title }} (Ученики: {{ classItem.studentsCount }})
                                     </li>
                                 </ul>
                             </div>
                         </div>
                         <template #footer>
-                            <Button label="Начать опрос" @click="startSur" :to="{ name: 'quiz' }" text severity="info" />
+                            <Button label="Начать опрос" @click="startSur(selectedClass)" text severity="info" :disabled="!selectedClass" />
                         </template>
                     </Dialog>
                 </template>
@@ -253,21 +274,21 @@ function openNewTab() {
 
                 <template #grid="slotProps">
                     <div class="grid grid-cols-12 gap-4">
-                        <div v-for="(item, index) in slotProps.items" :key="index" class="col-span-12 sm:col-span-6 lg:col-span-4 p-2">
+                        <div v-for="(item, index) in questions" :key="index" class="col-span-12 sm:col-span-6 lg:col-span-4 p-2">
                             <div class="p-6 border border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900 rounded flex flex-col">
                                 <div class="pt-6">
                                     <div class="flex flex-row justify-between items-start gap-2">
                                         <div>
-                                            <!-- <div class="text-lg font-medium mt-1">{{ item.name }}</div> -->
-                                            <div class="text-lg font-medium mt-1">Где находится ухо у кузнечика?</div>
+                                            <!-- Отображение текста вопроса -->
+                                            <div class="text-lg font-medium mt-1">{{ item.question_text }}</div>
                                         </div>
                                     </div>
                                     <div class="flex flex-col gap-6 mt-6">
                                         <div class="flex gap-2" style="flex-direction: row">
-                                            <Button outlined>A</Button>
-                                            <Button outlined>A</Button>
-                                            <Button outlined>A</Button>
-                                            <Button outlined>A</Button>
+                                            <!-- Кнопки для отображения вариантов ответа -->
+                                            <Button v-for="(option, optionIndex) in item.options" :key="option.option_id" :outlined="true" :severity="optionIndex === item.correct_option_id ? 'success' : 'secondary'">
+                                                {{ option.option_text }}
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>

@@ -7,22 +7,17 @@ import jwtDecode from 'jwt-decode';
 import { onMounted, ref, watch, computed } from 'vue';
 
 const { getPrimary, getSurface, isDarkTheme } = useLayout();
-
 const products = ref(null);
 const chartData = ref(null);
 const chartOptions = ref(null);
-
 const treeValue = ref(null);
 const treeTableValue = ref(null);
-
 const surveys = ref([]); // Это будет хранить список опросов
 const searchQuery = ref(''); // Введённый текст для поиска
-
 function getUserIdFromToken() {
     const token = localStorage.getItem('authToken'); // Или другой способ получения токена
     console.log(token);
     if (!token) return null;
-
     try {
         const decoded = jwtDecode(token);
         return decoded.id; // Зависит от структуры вашего токена

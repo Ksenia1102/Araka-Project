@@ -149,6 +149,7 @@ async function quickAddStudent() {
     }
     const studentToAdd = { name: `${firstName} ${lastName}` };
     try {
+        console.log(studentToAdd);
         const response = await axios.post('http://localhost:3000/api/save-students', {
             class_id: classId,
             students: [studentToAdd] // Отправляем в массиве для совместимости с сервером
@@ -178,7 +179,7 @@ async function quickAddStudent() {
 // Загрузка данных класса и обновление имени класса
 function handleClassChange() {
     updateClassName(); // Обновляем имя класса
-    loadClassData(); // Загружаем данные для класса
+    loadClassData(); // Загружаем данные для класс
 }
 
 // Вызываем handleClassChange при загрузке компонента

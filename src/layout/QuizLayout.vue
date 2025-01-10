@@ -1,116 +1,8 @@
-<!-- <script setup>
-import { computed, ref } from 'vue';
-// export default {
-//     props: {
-//         title: {
-//             type: String,
-//             default: 'Заголовок страницы'
-//         }
-//     },
-//     methods: {
-//         goBack() {
-//             this.$emit('goBack');
-//         }
-//     }
-// };
-const sections = ref([
-    { id: 0, name: 'На ноге' },
-    { id: 1, name: 'На руке' },
-    { id: 2, name: 'На носу' },
-    { id: 3, name: 'На спине' }
-]);
-const model = computed(() => {
-    return [
-        {
-            label: 'Участники',
-            items: [
-                { label: 'Алексей Прохоров' },
-                { label: 'Анна Ахматовававав' },
-                { label: 'Алексей Проerereхоров' },
-                { label: 'Алексей Прохerereоров' },
-                { label: 'Алексей Прохоров' },
-                { label: 'Алексей Прохоров' },
-                { label: 'Алексей Проdfdfdхоров' },
-                { label: 'Алексей Прохоров' },
-                { label: 'Алексей Прохоров' },
-                { label: 'Алексей Прохоров' },
-                { label: 'Алексей Прохоров' },
-                { label: 'Алексей Прохоров' },
-                { label: 'Алексей Прохоров' },
-                { label: 'Алексей Прохоров' }
-            ]
-        }
-    ];
-});
-</script>
-<template>
-    <div class="quiz-layout">
-        <div class="topbar">
-            <Button @click="$emit('goBack')" icon="pi pi-chevron-left" class="back-btn" text severity="secondary"></Button>
-            <div class="survey-title">
-                <h1 class="survey-title-input">Опрос</h1>
-            </div>
-            <div class="flex items-center">
-                <Button label="ЗАПУСТИТЬ" class="back-btn" severity="info" style="margin-right: 5px"></Button>
-                <h2>ДЛЯ 10В</h2>
-            </div>
-        </div>
-        <div class="content">
-            <div class="sidebar">
-                <ul class="layout-menu" style="background-color: var(--surface-overlay); border-radius: var(--content-border-radius); padding: 0.5rem; margin: 1rem 0">
-                    <template v-for="(item, i) in model" :key="i">
-                        <li v-if="item.label" class="layout-menu-category font-semibold text-xl mb-4">{{ item.label }}</li>
-                        <template v-for="(subItem, j) in item.items" :key="j">
-                            <li class="layout-menuitem" :class="{ 'active-menuitem': isHovered === j, 'selected-question': selectedQuestionIndex === j }" @mouseenter="isHovered = j" @mouseleave="isHovered = null">
-                                <div class="layout-menuitem-link">
-                                    <span class="layout-menuitem-text">{{ subItem.label }}</span>
-                                </div>
-                                <div class="layout-menuitem-actions">
-                                    <span class="question-number">1</span>
-                                </div>
-                            </li>
-                        </template>
-                    </template>
-                </ul>
-            </div>
-            <div class="main-content">
-                <div class="flex flex-col md:flex-row">
-                    <div>
-                        <div class="card" style="height: 80vh; width: 120vh; margin-right: 30px">
-                            <div>
-                                <span class="font-semibold text-xl">Вопрос 18/20</span>
-                                <div class="flex flex-col">
-                                    <h2 class="layout-menu-category font-bold text-xl mb-7">Вопрос</h2>
-                                    <div>
-                                        <ul class="sections-list">
-                                            <li v-for="section in sections" :key="section.id" class="section-item">
-                                                <span class="option-label">{{ ['А', 'Б', 'В', 'Г'][section.id] }}.</span>
-                                                <div>
-                                                    {{ section.name }}
-                                                </div>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="card">
-                            <span class="text-muted-color">since last week</span>
-                        </div>
-                        <div class="card">
-                            <span class="text-muted-color">since last week</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</template> -->
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-// Фейковые данные для опроса
+import axios from 'axios';
+// import { useRoute } from 'vue-router';
+
 const quizData = ref({
     questions: [
         {
@@ -131,30 +23,95 @@ const quizData = ref({
         }
     ]
 });
-// Данные для учеников
-const studentModel = computed(() => {
-    return [
-        {
-            label: 'Участники',
-            items: [
-                { label: 'Алексей Прохоров', cardNumber: 1 },
-                { label: 'Анна Ахматова', cardNumber: 2 },
-                { label: 'Владимир Маяковский', cardNumber: 3 },
-                { label: 'Марина Цветаева', cardNumber: 4 },
-                { label: 'Сергей Есенин', cardNumber: 5 }
-            ]
-        }
-    ];
-});
 // Состояние
 const currentQuestionIndex = ref(0);
-const currentQuestion = ref(quizData.value.questions[0]);
+let currentQuestion = ref(quizData.value.questions[0]);
 const timeRemaining = ref(10); // Секунд до конца вопроса
 const answersReceived = ref(0); // Количество ответов
 const correctAnswers = ref(0); // Количество правильных ответов
 const quizFinished = ref(false); // Флаг завершения опроса
 // Таймер
 const QUESTION_DURATION = 10; // 30 секунд
+// Получаем переданные props
+const props = defineProps({
+    classId: {
+        type: [Number], // Зависит от типа вашего id
+        required: true
+    },
+    surveyId: {
+        type: [Number], // Зависит от типа вашего id
+        required: true
+    }
+});
+
+// Получаем параметры из маршрута
+// const route = useRoute();
+const classId = ref(props.classId);
+const surveyId = ref(props.surveyId);
+
+// Данные о классе и опросе
+const classData = ref(null);
+const surveyData = ref(null);
+
+// Получаем данные о классе
+const fetchClassData = async () => {
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await axios.get(`http://localhost:3000/api/class/${classId.value}`, {
+            headers: {
+                token: token // Добавляем токен в заголовки
+            }
+        });
+        classData.value = response.data; // Данные о классе
+    } catch (error) {
+        console.error('Ошибка получения данных о классе:', error);
+    }
+};
+
+// Получаем данные об опросе
+const fetchSurveyData = async () => {
+    try {
+        const token = localStorage.getItem('authToken');
+        console.log(token);
+        const response = await axios.get(`http://localhost:3000/api/survey1/${surveyId.value}`, {
+            headers: {
+                token: token // Добавляем токен в заголовки
+            }
+        });
+        surveyData.value = response.data; // Данные об опросе
+        console.log('fdvadfvfdv', surveyData.value.questions);
+        quizData.value.questions = surveyData.value.questions;
+        currentQuestion.value = quizData.value.questions[0];
+        console.log(quizData.value.questions);
+    } catch (error) {
+        console.error('Ошибка получения данных об опросе:', error);
+    }
+};
+
+// Загрузить данные при монтировании компонента
+onMounted(() => {
+    fetchClassData();
+    fetchSurveyData();
+});
+// Фейковые данные для опроса
+
+// Данные для учеников
+const studentModel = computed(() => {
+    // Если данные о классе и студентах уже получены
+    if (classData.value && classData.value.students) {
+        return [
+            {
+                label: 'Участники',
+                items: classData.value.students.map((student) => ({
+                    label: student.name, // Имя студента
+                    cardNumber: student.id // Номер карточки, который равен id студента
+                }))
+            }
+        ];
+    }
+    // Возвращаем пустой массив, если данных нет
+    return [];
+});
 let interval = null;
 const startQuiz = () => {
     quizFinished.value = false;
@@ -205,11 +162,11 @@ onUnmounted(() => {
         <div class="topbar">
             <Button @click="$emit('goBack')" icon="pi pi-chevron-left" class="back-btn" text severity="secondary"></Button>
             <div class="survey-title">
-                <h1 class="survey-title-input">Опрос</h1>
+                <h1 class="survey-title-input">{{ surveyData?.title }}</h1>
             </div>
             <div class="flex items-center">
                 <Button label="ЗАПУЩЕН" class="back-btn" severity="info" style="margin-right: 5px"></Button>
-                <h2>ДЛЯ КЛАССА ID: {{ quizData.classId }}</h2>
+                <h2>ДЛЯ КЛАССА: {{ classData?.class.title }}</h2>
             </div>
         </div>
         <!-- Основное содержимое -->

@@ -18,6 +18,7 @@ const downloadCardsRoutes1 = require('./routes/download_cards_1');
 const profileRoutes = require('./routes/profile');
 const createClassRouter = require('./routes/classes');
 const saveStudentsRouter = require('./routes/students');
+const quizRouter = require('./routes/quiz');
 
 const cors = require('cors'); // Импортируем CORS для обеспечения кросс-доменных запросов
 
@@ -58,6 +59,7 @@ app.use('/api', profileRoutes);
 app.use('/cards', downloadCardsRoutes1);
 app.use('/api', createClassRouter);
 app.use('/api', saveStudentsRouter);
+app.use('/api', quizRouter);
 
 // Запуск сервера на порту 3000
 app.listen(3000, () => {

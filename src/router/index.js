@@ -75,7 +75,7 @@ const router = createRouter({
             props: true // Для передачи параметров маршрута
         },
         {
-            path: '/pages/quiz',
+            path: '/pages/quiz/:classId/:surveyId',
             name: 'quiz',
             component: () => import('@/views/pages/Quiz.vue')
         },
