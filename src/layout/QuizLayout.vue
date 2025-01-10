@@ -142,9 +142,20 @@ onMounted(() => {
             <!-- Основной контент -->
             <div class="main-content">
                 <!-- width: 120vh; -->
-                <div v-if="quizFinished" class="card" style="height: 80vh; margin-right: 30px; text-align: center">
-                    <h2 class="font-bold mb-6 text-max" style="margin-bottom: 2em">Опрос закончен!</h2>
-                    <Button label="Сохранить ответы и перейти к результатам опроса" severity="info" class="p-button-success text-xl" @click="$emit('goToResults')"></Button>
+                <div v-if="quizFinished" class="flex flex-col md:flex-row">
+                    <div>
+                        <div class="card" style="height: 80vh; width: 120vh; margin-right: 30px; text-align: center">
+                            <h2 class="font-bold mb-6 text-max" style="margin-bottom: 2em">Опрос закончен!</h2>
+                            <Button label="Сохранить ответы и перейти к результатам опроса" severity="info" class="p-button-success text-xl" @click="$emit('goToResults')"></Button>
+                        </div>
+                    </div>
+                    <!-- дублирование карточки??? как то это исправить-->
+                    <div>
+                        <div class="card" style="text-align: center">
+                            <p style="margin-bottom: 1em">Получено ответов: <br /><span class="question-number">нет ответов</span></p>
+                            <p>Правильных ответов: <br /><span class="question-number">нет ответов</span></p>
+                        </div>
+                    </div>
                 </div>
                 <div v-else>
                     <div class="flex flex-col md:flex-row">
