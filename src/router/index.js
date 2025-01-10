@@ -69,6 +69,12 @@ const router = createRouter({
             component: () => import('@/views/pages/Survey.vue')
         },
         {
+            path: '/pages/modify_survey',
+            name: 'modifySurvey',
+            component: () => import('@/views/pages/Modify_Survey.vue'),
+            props: true // Для передачи параметров маршрута
+        },
+        {
             path: '/pages/quiz',
             name: 'quiz',
             component: () => import('@/views/pages/Quiz.vue')

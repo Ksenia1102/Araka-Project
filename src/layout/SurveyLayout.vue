@@ -36,6 +36,7 @@ export default {
         },
         selectQuestion(index) {
             console.log('Выбран вопрос:', index);
+            this.$emit('selectQuestion', index);
         },
         addQuestion() {
             this.$emit('addQuestion');
@@ -59,7 +60,6 @@ export default {
                 <slot />
             </div>
         </div>
-
     </div>
 </template>
 

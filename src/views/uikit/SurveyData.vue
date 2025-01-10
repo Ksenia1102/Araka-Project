@@ -2,8 +2,7 @@
 import { ProductService } from '@/service/ProductService';
 import axios from 'axios';
 import { computed, onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 // const router = useRoute(); // Используем роутер для навигации
 const router = useRouter();
@@ -160,16 +159,13 @@ function startSur() {
 function openQuiz() {
     window.open('/pages/quiz', '_blank');
 }
+function openNewTab() {
+    console.log('start'); // Получаем ID опроса из текущего маршрута
+    const newTabUrl = `/pages/modify_survey?id=${surveyId}`;
+    window.open(newTabUrl, '_blank'); // Открываем новую вкладку
+}
 </script>
-<script>
-export default {
-    methods: {
-        openNewTab() {
-            window.open('/pages/survey', '_blank');
-        }
-    }
-};
-</script>
+<script></script>
 
 <template>
     <div className="card">
@@ -182,7 +178,7 @@ export default {
             <Toolbar>
                 <template #start>
                     <Button label="Запустить" severity="info" icon="pi pi-caret-right" text @click="openSurvey" />
-                    <Button label="Редактировать" :to="{ name: 'survey' }" @click="openNewTab" icon="pi pi-file-edit" severity="secondary" text />
+                    <Button label="Редактировать" @click="openNewTab" icon="pi pi-file-edit" severity="secondary" text />
                     <Button label="Копировать опрос" icon="pi pi-clone" severity="secondary" text @click="copySurvey" />
                     <Dialog header="Выберите класс, в котором будет запущен опрос Опрос 1" v-model:visible="displaySur" :style="{ width: '350px' }" :modal="true">
                         <div v-if="selectedClass">

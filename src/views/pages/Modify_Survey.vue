@@ -47,9 +47,8 @@ export default {
             this.$router.push('/pages/dashboard'); // Возврат на страницу dashboard
         },
         selectQuestion(index) {
-            console.log('res');
             this.currentQuestionIndex = index;
-            this.currentQuestionText = this.questions[index].text; // Устанавливаем текст текущего вопроса в локальную переменную
+            this.currentQuestionText = this.questions[index].text; // Устанавливаем текст текущего вопроса
         },
         addQuestion() {
             const newQuestion = {
@@ -86,7 +85,9 @@ export default {
         },
         handleSaveSurvey(data) {
             console.log('Data received in Survey.vue:', data); // Данные, полученные от компонента SurveyLayout
-            this.surveyTitle = data.title; // Только обновляем заголовок
+            if (!this.surveyTitle.trim()) {
+                this.surveyTitle = data.title;
+            } // Только обновляем заголовок
             this.submitSurvey(); // Отправляем опрос
         },
         updateQuestionText() {
@@ -127,25 +128,81 @@ export default {
                 console.log('Invalid questions:', invalidQuestions);
                 return;
             }
+
             const token = localStorage.getItem('authToken');
+            const surveyId = this.$route.query.id; // Получаем ID опроса из маршрута (если есть)
+
+            // Если surveyId существует, то редактируем опрос
+            const url = surveyId
+                ? `http://localhost:3000/api/surveys/update/${surveyId}` // Используем PUT запрос
+                : 'http://localhost:3000/api/surveys/create'; // Если ID нет, то создаем новый опрос
 
             // Отправляем запрос с токеном в заголовке
             axios
-                .post('http://localhost:3000/api/surveys/create', surveyData, {
+                .post(url, surveyData, {
                     headers: {
                         token: token // Добавляем токен в заголовки
                     }
                 })
                 .then((response) => {
                     console.log('Ответ сервера:', response.data);
-                    this.responseMessage = 'Опрос успешно сохранён.';
+                    this.responseMessage = surveyId ? 'Опрос успешно обновлён.' : 'Опрос успешно сохранён.';
                     this.responseClass = 'success';
                 })
                 .catch((error) => {
-                    console.error('Ошибка при создании опроса:', error.response?.data || error.message);
+                    console.error('Ошибка при сохранении опроса:', error.response?.data || error.message);
                     this.responseMessage = 'Произошла ошибка при сохранении опроса.';
                     this.responseClass = 'error';
                 });
+        },
+        async loadSurvey(surveyId) {
+            try {
+                console.log(`Загрузка данных для опроса с ID: ${surveyId}`);
+
+                const token = localStorage.getItem('authToken'); // Получаем токен из локального хранилища
+                if (!token) {
+                    console.error('Токен отсутствует. Необходимо авторизоваться.');
+                    this.responseMessage = 'Ошибка авторизации. Пожалуйста, войдите заново.';
+                    this.responseClass = 'error';
+                    return;
+                }
+
+                // Запрос данных с сервера
+                const response = await axios.get(`http://localhost:3000/api/surveys/${surveyId}`, {
+                    headers: { token } // Передаём токен в заголовках
+                });
+
+                // Обработка успешного ответа
+                const survey = response.data;
+                console.log('Данные опроса успешно загружены:', response.data);
+
+                // Устанавливаем заголовок опроса
+                this.surveyTitle = survey.title || 'Без названия';
+                console.log(this.surveyTitle, 'заголовок');
+                console.log(survey.title);
+                // Устанавливаем вопросы опроса
+                this.questions = survey.questions.map((q, index) => ({
+                    text: q.text || `Вопрос ${index + 1}`,
+                    options: q.options.length > 0 ? q.options : ['', '', '', ''], // Обеспечиваем 4 варианта
+                    selectedOption: q.correct_option !== undefined ? q.correct_option : null
+                }));
+
+                // Если вопросов нет, создаём один новый
+                if (this.questions.length === 0) {
+                    this.addQuestion();
+                }
+
+                // Устанавливаем текущий вопрос
+                this.selectQuestion(0);
+
+                this.responseMessage = 'Данные опроса успешно загружены.';
+                this.responseClass = 'success';
+            } catch (error) {
+                // Обработка ошибок
+                console.error('Ошибка загрузки данных опроса:', error.response?.data || error.message);
+                this.responseMessage = 'Ошибка загрузки данных опроса. Попробуйте позже.';
+                this.responseClass = 'error';
+            }
         }
     },
     mounted() {
@@ -164,6 +221,14 @@ export default {
                 this.userId = decoded.id; // Устанавливаем userId из токена
             } else {
                 throw new Error('ID пользователя отсутствует в токене');
+            }
+
+            const surveyId = this.$route.query.id; // Получаем ID опроса из маршрута
+            if (surveyId) {
+                this.loadSurvey(surveyId); // Загружаем данные
+            } else {
+                console.error('ID опроса отсутствует. Перенаправление на главную страницу.');
+                this.$router.push('/pages/dashboard'); // Перенаправление на дашборд
             }
         } catch (err) {
             console.error('Ошибка декодирования токена:', err);

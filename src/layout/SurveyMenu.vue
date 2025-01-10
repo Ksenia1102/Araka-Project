@@ -7,6 +7,7 @@ const isHovered = ref(null);
 const selectedQuestionIndex = ref(null); // Индекс выбранного вопроса
 
 function selectQuestion(index) {
+    console.log('установка');
     selectedQuestionIndex.value = index; // Устанавливаем выбранный вопрос
     emit('selectQuestion', index); // Уведомляем родителя о выборе
 }
@@ -64,7 +65,7 @@ function truncateText(text) {
 
             <!-- Вопросы -->
             <template v-for="(subItem, j) in item.items" :key="j">
-                <li class="layout-menuitem" :class="{ 'active-menuitem': isHovered === j, 'selected-question': selectedQuestionIndex === j }" @mouseenter="(isHovered = j)" @mouseleave="(isHovered = null)">
+                <li class="layout-menuitem" :class="{ 'active-menuitem': isHovered === j, 'selected-question': selectedQuestionIndex === j }" @mouseenter="isHovered = j" @mouseleave="isHovered = null">
                     <!-- Основной текст вопроса -->
                     <div class="layout-menuitem-link" @click="selectQuestion(j)">
                         <span class="layout-menuitem-text">{{ subItem.label }}</span>
