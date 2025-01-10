@@ -25,7 +25,7 @@ const router = createRouter({
                     component: () => import('@/views/pages/Survey.vue')
                 },
                 {
-                    path: '/uikit/class/:classId',
+                    path: '/uikit/class/:classId/:title',
                     name: 'class',
                     component: () => import('@/views/uikit/Class.vue'),
                     props: true

@@ -6,7 +6,7 @@ const app = express();
 // Настройка CORS
 app.use(
     cors({
-        origin: 'http://localhost:5173' // Укажите порт, где работает Vite (например, фронтенд)
+        origin: 'http://localhost:5173' // Укажите порт, где работает Vite
     })
 );
 

@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import axios from 'axios';
 
 const route = useRoute();
 const router = useRouter();
@@ -10,7 +11,7 @@ const studentInput = ref('');
 const studentPreview = ref([]);
 const students = ref([]);
 const showStudentTable = ref(false);
-//let studentIdCounter = 1;
+let studentIdCounter = 1;
 const quickAddInput = ref('');
 const sections = ref([
     { id: 1, name: 'Опрос №1', link: '/uikit/chart-sur' },
@@ -21,7 +22,7 @@ const sections = ref([
 
 // Функция для извлечения имени класса из параметров маршрута
 function updateClassName() {
-    currentClassName.value = route.params.classId || 'Класс не выбран';
+    currentClassName.value = route.params.title || 'Класс не выбран';
 }
 
 function goToSection(link) {
@@ -81,29 +82,97 @@ function generatePreview() {
         .filter((student) => student);
 }
 
-function addStudentsToTable() {
-    students.value = [...students.value, ...studentPreview.value];
-    display.value = false;
-    showStudentTable.value = true;
-    saveClassData();
+async function addStudentsToTable() {
+    const classId = route.params.classId; // ID текущего класса
+    // const classTitle = route.params.title;
+    const studentsToAdd = studentPreview.value.map((student) => ({
+        name: `${student.firstName} ${student.lastName}`
+    }));
+    if (!studentsToAdd.length) {
+        alert('Список для добавления пуст.');
+        return;
+    }
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await axios.post(
+            'http://localhost:3000/api/save-students',
+            {
+                class_id: classId,
+                students: studentsToAdd
+            },
+            {
+                headers: {
+                    token: token // Добавляем токен в заголовки
+                }
+            }
+        );
+        // Сообщение об успешном добавлении
+        alert('Студенты успешно добавлены!');
+        console.log(response.data);
+        // Добавляем студентов в локальное состояние
+        students.value.push(
+            ...studentPreview.value.map((student) => ({
+                id: studentIdCounter++, // Уникальный ID
+                firstName: student.firstName,
+                lastName: student.lastName
+            }))
+        );
+        // Очищаем предпросмотр и закрываем модальное окно
+        studentPreview.value = [];
+        studentInput.value = '';
+        display.value = false;
+
+        // Делаем таблицу видимой
+        showStudentTable.value = true;
+        // Сохраняем изменения в локальное хранилище
+        saveClassData();
+    } catch (error) {
+        console.error('Ошибка при добавлении студентов:', error);
+        alert('Не удалось добавить студентов. Попробуйте снова.');
+    }
 }
 
-function quickAddStudent() {
-    const [firstName, ...lastNameParts] = quickAddInput.value.trim().split(' ');
-    if (!firstName || lastNameParts.length === 0) {
-        alert('Введите имя и фамилию ученика');
+async function quickAddStudent() {
+    const classId = route.params.classId; // ID текущего класса
+    const quickInput = quickAddInput.value.trim(); // Текст из поля быстрого добавления
+    if (!quickInput) {
+        alert('Введите имя и фамилию ученика.');
         return;
     }
 
-    students.value.push({
-        id: students.value.length + 1, //длинна массива
-        firstName,
-        lastName: lastNameParts.join(' ')
-    });
+    // Разбиваем введенную строку на имя и фамилию
+    const [firstName, ...lastNameParts] = quickInput.split(' ');
+    const lastName = lastNameParts.join(' ');
+    if (!firstName || !lastName) {
+        alert('Введите полное имя и фамилию ученика.');
+        return;
+    }
+    const studentToAdd = { name: `${firstName} ${lastName}` };
+    try {
+        const response = await axios.post('http://localhost:3000/api/save-students', {
+            class_id: classId,
+            students: [studentToAdd] // Отправляем в массиве для совместимости с сервером
+        });
+        // Сообщение об успешном добавлении
+        alert('Ученик успешно добавлен!');
+        console.log(response.data);
+        // Добавляем ученика в локальное состояние
+        students.value.push({
+            id: studentIdCounter++, // Уникальный ID
+            firstName,
+            lastName
+        });
+        // Очищаем поле быстрого добавления
+        quickAddInput.value = '';
+        // Делаем таблицу видимой, если она скрыта
+        showStudentTable.value = true;
 
-    quickAddInput.value = '';
-    showStudentTable.value = true;
-    saveClassData();
+        // Сохраняем изменения в локальное хранилище
+        saveClassData();
+    } catch (error) {
+        console.error('Ошибка при добавлении ученика:', error);
+        alert('Не удалось добавить ученика. Попробуйте снова.');
+    }
 }
 
 // Загрузка данных класса и обновление имени класса
