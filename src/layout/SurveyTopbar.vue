@@ -27,11 +27,10 @@ export default {
 <template>
     <div class="topbar">
         <Button @click="$emit('goBack')" icon="pi pi-chevron-left" class="back-btn" text severity="secondary"></Button>
-        <!-- Используем локальную копию localTitle вместо title -->
-        <div class="survey-title">
+        <div class="survey-title" style="width: -webkit-fill-available">
             <input v-model="localTitle" @input="updateTitle" placeholder="Название опроса" class="survey-title-input" />
         </div>
-        <Button @click="$emit('goBack')" label="Сохранить опрос" class="back-btn" text severity="info"></Button>
+        <Button @click="$emit('goBack')" label="Сохранить" class="back-btn" text severity="info"></Button>
     </div>
 </template>
 

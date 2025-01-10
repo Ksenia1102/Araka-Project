@@ -1,150 +1,112 @@
 <script setup>
-import { onMounted, ref } from 'vue';
-// import { useRoute, useRouter } from 'vue-router';
+import { computed, ref } from 'vue';
+import { useRoute } from 'vue-router';
 
-// Данные для графиков
-const barData = ref(null);
-const barOptions = ref(null);
+// Получение параметров маршрута и данных из query
+const route = useRoute();
+const className = route.query.className || 'Класс не указан';
 
-// Фейковые данные для правильных ответов
-const correctAnswersData = [
-    { question: 'Вопрос 1', correct: 3 },
-    { question: 'Вопрос 2', correct: 4 },
-    { question: 'Вопрос 3', correct: 2 },
-    { question: 'Вопрос 4', correct: 5 },
-    { question: 'Вопрос 5', correct: 5 },
-    { question: 'Вопрос 6', correct: 5 },
-    { question: 'Вопрос 7', correct: 5 },
-    { question: 'Вопрос 8', correct: 5 },
-    { question: 'Вопрос 9', correct: 5 },
-    { question: 'Вопрос 10', correct: 5 },
-    { question: 'Вопрос 11', correct: 5 },
-    { question: 'Вопрос 12', correct: 5 },
-    { question: 'Вопрос 13', correct: 5 },
-    { question: 'Вопрос 14', correct: 25 }
-];
-
-onMounted(() => {
-    setColorOptions();
-});
-
-function setColorOptions() {
-    const documentStyle = getComputedStyle(document.documentElement);
-    const textColor = documentStyle.getPropertyValue('--text-color');
-    const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
-    const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
-    const primaryColor = documentStyle.getPropertyValue('--p-primary-500');
-
-    // Данные для столбчатого графика
-    barData.value = {
-        labels: correctAnswersData.map((data) => data.question), // Метки — номера вопросов
-        datasets: [
-            {
-                label: 'Правильные ответы',
-                backgroundColor: primaryColor,
-                borderColor: primaryColor,
-                data: correctAnswersData.map((data) => data.correct) // Значения — количество правильных ответов
-            }
-        ]
-    };
-
-    // Опции для графика
-    barOptions.value = {
-        plugins: {
-            legend: {
-                labels: {
-                    color: textColor
-                }
-            }
-        },
-        scales: {
-            x: {
-                ticks: {
-                    color: textColorSecondary
-                },
-                grid: {
-                    color: surfaceBorder,
-                    drawBorder: false
-                }
-            },
-            y: {
-                ticks: {
-                    color: textColorSecondary,
-                    beginAtZero: true // Начало оси Y с 0
-                },
-                grid: {
-                    color: surfaceBorder,
-                    drawBorder: false
-                }
-            }
-        }
-    };
+// Получаем опросы (surveys) из query
+const surveys = ref([]);
+if (route.query.surveys) {
+    try {
+        surveys.value = JSON.parse(route.query.surveys);
+    } catch (error) {
+        console.error('Ошибка при разборе данных опросов:', error);
+    }
 }
 
-// Наблюдаем за изменением маршрута (смена класса)
-// watch(
-//     () => route.params.classId,
-//     () => {
-//         handleClassChange(); // Обновляем данные и имя класса
-//     }
-// );
+// Получаем surveyId из параметров маршрута
+const surveyId = route.params.surveyId;
+
+// Находим текущий опрос по surveyId
+const currentSurvey = computed(() => {
+    return surveys.value.find((survey) => survey.id === parseInt(surveyId));
+});
+
+// Парсим список студентов из query
+const students = ref([]);
+if (route.query.students) {
+    try {
+        students.value = JSON.parse(route.query.students);
+    } catch (error) {
+        console.error('Ошибка при разборе данных студентов:', error);
+    }
+}
+
+// Количество вопросов в опросе
+const questionCount = 26;
+
+// Генерация фейковых ответов
+const surveyResults = computed(() => {
+    return students.value.map((student) => {
+        const answers = Array.from({ length: questionCount }, () => {
+            const options = ['А', 'Б', 'В', 'Г'];
+            const correctOption = options[Math.floor(Math.random() * options.length)];
+            const studentAnswer = options[Math.floor(Math.random() * options.length)];
+            const isCorrect = studentAnswer === correctOption;
+
+            return { studentAnswer, correctOption, isCorrect };
+        });
+
+        const correctAnswersCount = answers.filter((a) => a.isCorrect).length;
+        const completionRate = Math.round((correctAnswersCount / questionCount) * 100) + '%';
+
+        return {
+            fullName: `${student.firstName} ${student.lastName}`,
+            answers,
+            completionRate
+        };
+    });
+});
 </script>
 
 <template>
     <div class="card">
         <div class="flex" style="gap: 0.5rem; align-items: stretch">
             <i class="pi pi-users" style="font-size: 2.3rem"></i>
-            <h2 class="font-semibold text-4xl mb-6">Класс IDClass</h2>
+            <h2 class="font-semibold text-4xl mb-6">Класс {{ className }}</h2>
         </div>
-        <div class="grid grid-cols-12 gap-8">
-            <!-- График правильных ответов -->
-            <div class="col-span-12">
-                <div class="card">
-                    <div class="font-semibold text-xl mb-4">Статистика правильных ответов</div>
-                    <Chart type="bar" :data="barData" :options="barOptions"></Chart>
+
+        <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Результаты: {{ currentSurvey.name }} - {{ currentSurvey.completion }}%</div>
+
+        <DataTable :value="surveyResults" :paginator="true" :rows="10" showGridlines>
+            <template #header>
+                <div class="flex justify-between items-center">
+                    <!-- <Button type="button" icon="pi pi-filter-slash" label="Очистить фильтр" severity="info" outlined @click="clearFilter()" /> -->
+                    <IconField>
+                        <InputIcon>
+                            <i class="pi pi-search" />
+                        </InputIcon>
+                        <InputText placeholder="Поиск" />
+                    </IconField>
                 </div>
-            </div>
-        </div>
+            </template>
+            <template #empty>Нет данных для отображения</template>
+
+            <Column field="fullName" header="Ученик" style="min-width: 15rem" />
+
+            <Column v-for="(question, index) in questionCount" :key="index" :header="`Вопрос ${index + 1}`" style="min-width: 8rem">
+                <template #body="slotProps">
+                    <span
+                        :style="{
+                            display: 'inline-block',
+                            padding: '0.2rem 0.7rem',
+                            borderRadius: '4px',
+                            color: 'white',
+                            textAlign: 'center',
+                            width: '100%',
+                            backgroundColor: slotProps.data.answers[index].isCorrect ? 'var(--p-primary-color)' : '#F44336'
+                        }"
+                    >
+                        {{ slotProps.data.answers[index].studentAnswer }}
+                    </span>
+                </template>
+            </Column>
+
+            <Column field="completionRate" header="Итог по тесту" style="min-width: 9rem; text-align: center" />
+        </DataTable>
     </div>
 </template>
 
-<style scoped>
-.sections-list {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* Две колонки */
-    gap: 1rem; /* Отступы между элементами */
-    padding: 1rem;
-}
-
-.section-item {
-    padding: 1rem;
-    text-align: center;
-    cursor: pointer;
-    background-color: #f9f9f9;
-    transition: background-color 0.3s ease;
-}
-
-.section-item:hover {
-    background-color: #e6f7ff; /* Цвет при наведении */
-}
-.form-container {
-    display: flex;
-    gap: 1rem;
-}
-
-.form-column {
-    flex: 1;
-}
-
-.preview-table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: left;
-}
-
-.preview-table th,
-.preview-table td {
-    padding: 0.5rem;
-    border: 1px solid #ddd;
-}
-</style>
+<style scoped></style>

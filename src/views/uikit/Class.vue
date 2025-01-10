@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
@@ -10,22 +10,52 @@ const studentInput = ref('');
 const studentPreview = ref([]);
 const students = ref([]);
 const showStudentTable = ref(false);
-//let studentIdCounter = 1; //не нужно!
 const quickAddInput = ref('');
-const sections = ref([
-    { id: 1, name: 'Опрос №1', link: '/uikit/chart-sur' },
-    { id: 2, name: 'Опрос №2', link: '/section/2' },
-    { id: 3, name: 'Опрос №3', link: '/section/3' },
-    { id: 4, name: 'Опрос №4', link: '/section/4' }
+
+// Фейковые данные опросов
+const surveys = ref([
+    { id: 1, name: 'Опрос №1', link: '/uikit/chart-sur/1', completion: 85, month: 'Октябрь', isRecent: true },
+    { id: 2, name: 'Опрос №2', link: '/uikit/chart-sur/2', completion: 90, month: 'Октябрь', isRecent: true },
+    { id: 3, name: 'Опрос №3', link: '/uikit/chart-sur/3', completion: 70, month: 'Сентябрь', isRecent: false },
+    { id: 4, name: 'Опрос №4', link: '/uikit/chart-sur/4', completion: 50, month: 'Сентябрь', isRecent: false },
+    { id: 5, name: 'Опрос №5', link: '/uikit/chart-sur/5', completion: 95, month: 'Август', isRecent: false }
 ]);
+
+// Фильтруем последние опросы
+const recentSurveys = computed(() => surveys.value.filter((survey) => survey.isRecent));
+
+function goToSection(surveyId) {
+    router.push({
+        name: 'chart-sur',
+        params: {
+            classId: route.params.classId, // classId
+            surveyId: surveyId // surveyId
+        },
+        query: {
+            className: currentClassName.value, // className
+            students: JSON.stringify(students.value), // список студентов
+            surveys: JSON.stringify(surveys.value) // передаем surveys
+        }
+    });
+}
+
+// Переход к списку опросов
+function goToSurveys(classId) {
+    router.push({
+        name: 'sur-class', // маршрут для просмотра опросов
+        params: {
+            classId: classId // передаем id класса
+        },
+        query: {
+            className: currentClassName.value, // className
+            surveys: JSON.stringify(surveys.value) // передаем список опросов как query-параметр
+        }
+    });
+}
 
 // Функция для извлечения имени класса из параметров маршрута
 function updateClassName() {
     currentClassName.value = route.params.classId || 'Класс не выбран';
-}
-
-function goToSection(link) {
-    router.push(link);
 }
 
 // Получить уникальный ключ для localStorage на основе ID класса
@@ -112,6 +142,17 @@ function handleClassChange() {
     loadClassData(); // Загружаем данные для класса
 }
 
+// Удаление ученика
+const displayConfirmation = ref(false);
+
+function deletetudent() {
+    displayConfirmation.value = true;
+}
+
+function closeConfirmation() {
+    displayConfirmation.value = false;
+}
+
 // Вызываем handleClassChange при загрузке компонента
 onMounted(() => {
     handleClassChange();
@@ -176,12 +217,25 @@ watch(
                 <i class="pi pi-users" style="font-size: 2.3rem"></i>
                 <h2 class="font-semibold text-4xl mb-6">Класс {{ currentClassName }}</h2>
             </div>
-            <div class="font-semibold text-xl" style="border-bottom: 1px solid var(--surface-border)">Последние проведенные тесты</div>
 
-            <div class="sections-list">
-                <div v-for="section in sections" :key="section.id" class="section-item" @click="goToSection(section.link)">
-                    {{ section.name }}
-                    <i class="pi pi-fw pi-angle-right" />
+            <!-- последние проведенные тесты -->
+            <div>
+                <div class="flex items-center justify-between" style="border-bottom: 1px solid var(--surface-border)">
+                    <div class="font-semibold text-xl">Последние проведенные опросы</div>
+                    <Button text severity="info" @click="goToSurveys(classId)">Смотреть все опросы</Button>
+                </div>
+                <!-- если нет недавних опросов -->
+                <div v-if="recentSurveys.length === 0" class="font-semibold text-xl" style="margin: 20px; text-align: center">Недавние опросы отсутствуют</div>
+
+                <!-- Список последних опросов -->
+                <div v-else class="sections-list">
+                    <div v-for="survey in recentSurveys" :key="survey.id" class="section-item" @click="goToSection(survey.id)">
+                        <div class="survey-details">
+                            <div class="survey-name">{{ survey.name }}</div>
+                            <div class="survey-completion">Завершено: {{ survey.completion }}%</div>
+                        </div>
+                        <i class="pi pi-fw pi-angle-right" />
+                    </div>
                 </div>
             </div>
 
@@ -210,10 +264,28 @@ watch(
                         </IconField>
                     </div>
                 </template>
-                <template #empty>Список учеников пуст.</template>
-                <Column field="id" header="Номер карточки" />
+                <template #empty>Список учеников пуст</template>
+                <Column field="id" header="Номер карточки" style="width: 10%; text-align: center" />
                 <Column field="firstName" header="Имя" />
                 <Column field="lastName" header="Фамилия" />
+                <!-- Последняя колонка с кнопкой -->
+                <Column style="width: 5%">
+                    <!-- <template #body="slotProps">
+                        <Button icon="pi pi-trash" @click="deletetudent(slotProps.data.id)" -->
+                    <template #body="slotProps">
+                        <Button icon="pi pi-trash" @click="deletetudent(slotProps.data.id)" class="p-button-outlined p-button-info" />
+                        <Dialog header="Предупреждение" v-model:visible="displayConfirmation" :style="{ width: '350px' }" :modal="true">
+                            <div class="flex items-center justify-center">
+                                <i class="pi pi-exclamation-triangle mr-4" style="font-size: 2rem" />
+                                <span>Вы действительно хотите удалить данные об этом ученике?</span>
+                            </div>
+                            <template #footer>
+                                <Button label="Нет" icon="pi pi-times" @click="closeConfirmation" text severity="secondary" />
+                                <Button label="Да" icon="pi pi-check" @click="closeConfirmation" severity="danger" outlined autofocus />
+                            </template>
+                        </Dialog>
+                    </template>
+                </Column>
             </DataTable>
         </div>
     </div>
@@ -223,20 +295,44 @@ watch(
 .sections-list {
     display: grid;
     grid-template-columns: 1fr 1fr; /* Две колонки */
-    gap: 1rem; /* Отступы между элементами */
+    gap: 1rem;
     padding: 1rem;
 }
 
 .section-item {
     padding: 1rem;
-    text-align: center;
+    margin: 1em 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
     cursor: pointer;
     background-color: #f9f9f9;
-    transition: background-color 0.3s ease;
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    transition:
+        background-color 0.3s ease,
+        box-shadow 0.3s ease;
 }
 
 .section-item:hover {
-    background-color: #e6f7ff; /* Цвет при наведении */
+    background-color: #e6f7ff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.survey-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.survey-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.survey-completion {
+    font-size: 0.9rem;
+    color: var(--text-color-secondary);
 }
 .form-container {
     display: flex;

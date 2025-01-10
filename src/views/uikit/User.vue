@@ -51,7 +51,7 @@ function toggleEditAuthMode() {
             </div>
             <div class="flex flex-col grow basis-0 gap-2">
                 <label for="lastName">Фамилия</label>
-                <InputText type="text" placeholder="Какая-то фамилия" id="lastname" v-model="lastname" :disabled="!isEditing" />
+                <InputText type="text" placeholder="Какая-то фамилия" id="lastname" v-model="lastname" :disabled="!isEditingName" />
             </div>
         </div>
         <Button severity="info" :label="buttonLabelName" @click="toggleEditNameMode" style="margin-bottom: 10px" outlined></Button>

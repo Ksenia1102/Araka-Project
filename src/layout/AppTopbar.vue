@@ -71,6 +71,10 @@ const { onMenuToggle } = useLayout();
                         <i class="pi pi-user"></i>
                         <span>user</span>
                     </button>
+                    <button v-tooltip.bottom="'Выйти'" type="button" class="layout-topbar-action">
+                        <i class="pi pi-sign-out"></i>
+                        <span>exit</span>
+                    </button>
                     <!-- <IconField iconPosition="left">
                         <InputText type="text" placeholder="Поиск" />
                         <InputIcon class="pi pi-search" />

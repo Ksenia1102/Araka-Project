@@ -5,7 +5,6 @@ import { computed, onMounted, ref } from 'vue';
 const products = ref(null);
 const picklistProducts = ref(null);
 const orderlistProducts = ref(null);
-const options = ref(['list', 'grid']);
 const layout = ref('list');
 
 onMounted(() => {
@@ -121,11 +120,6 @@ export default {
                 <template #header>
                     <div class="flex space-between">
                         <div class="font-semibold text-xl">Список вопросов</div>
-                        <SelectButton v-model="layout" :options="options" :allowEmpty="false">
-                            <template #option="{ option }">
-                                <i :class="[option === 'list' ? 'pi pi-bars' : 'pi pi-table']" />
-                            </template>
-                        </SelectButton>
                     </div>
                 </template>
 

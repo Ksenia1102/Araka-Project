@@ -24,15 +24,23 @@ const router = createRouter({
                     component: () => import('@/views/pages/Survey.vue')
                 },
                 {
+                    // параметр
                     path: '/uikit/class/:classId',
                     name: 'class',
                     component: () => import('@/views/uikit/Class.vue'),
                     props: true
                 },
                 {
-                    path: '/uikit/chart-sur',
+                    // параметр
+                    path: '/uikit/chart-sur/:surveyId',
                     name: 'chart-sur',
                     component: () => import('@/views/uikit/ChartSur.vue'),
+                    props: true
+                },
+                {
+                    path: '/uikit/sur-class/:classId',
+                    name: 'sur-class',
+                    component: () => import('@/views/uikit/SurClass.vue'),
                     props: true
                 },
                 {
