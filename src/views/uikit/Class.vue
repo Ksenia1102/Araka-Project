@@ -99,38 +99,32 @@ function generatePreview() {
 }
 
 async function addStudentsToTable() {
-    const classId = route.params.classId; // ID текущего класса
-    // const classTitle = route.params.title;
+    const classId = route.params.classId;
     const studentsToAdd = studentPreview.value.map((student) => ({
         name: `${student.firstName} ${student.lastName}`
     }));
+
     if (!studentsToAdd.length) {
         alert('Список для добавления пуст.');
         return;
     }
+
     try {
         const token = localStorage.getItem('authToken');
-        const response = await axios.post(
+        await axios.post(
             'http://localhost:3000/api/save-students',
             {
                 class_id: classId,
                 students: studentsToAdd
             },
             {
-                headers: {
-                    token: token // Добавляем токен в заголовки
-                }
+                headers: { token }
             }
         );
-        console.log(response.data);
-        // Добавляем студентов в локальное состояние
-        students.value.push(
-            ...studentPreview.value.map((student) => ({
-                id: studentIdCounter++, // Уникальный ID
-                firstName: student.firstName,
-                lastName: student.lastName
-            }))
-        );
+
+        // Обновляем список студентов после добавления
+        await fetchStudents();
+
         // Очищаем предпросмотр и закрываем модальное окно
         studentPreview.value = [];
         studentInput.value = '';
@@ -138,7 +132,6 @@ async function addStudentsToTable() {
 
         // Делаем таблицу видимой
         showStudentTable.value = true;
-        // Сохраняем изменения в локальное хранилище
         saveClassData();
     } catch (error) {
         console.error('Ошибка при добавлении студентов:', error);
@@ -147,50 +140,43 @@ async function addStudentsToTable() {
 }
 
 async function quickAddStudent() {
-    const classId = route.params.classId; // ID текущего класса
-    const quickInput = quickAddInput.value.trim(); // Текст из поля быстрого добавления
+    const classId = route.params.classId;
+    const quickInput = quickAddInput.value.trim();
+
     if (!quickInput) {
         alert('Введите имя и фамилию ученика.');
         return;
     }
 
-    // Разбиваем введенную строку на имя и фамилию
     const [firstName, ...lastNameParts] = quickInput.split(' ');
     const lastName = lastNameParts.join(' ');
+
     if (!firstName || !lastName) {
         alert('Введите полное имя и фамилию ученика.');
         return;
     }
+
     const studentToAdd = { name: `${firstName} ${lastName}` };
+
     try {
-        const token = localStorage.getItem('authToken'); // Получаем токен из локального хранилища
-        console.log(studentToAdd);
-        const response = await axios.post(
+        const token = localStorage.getItem('authToken');
+        await axios.post(
             'http://localhost:3000/api/save-students',
             {
                 class_id: classId,
-                students: [studentToAdd] // Отправляем в массиве для совместимости с сервером
+                students: [studentToAdd]
             },
             {
-                headers: {
-                    token: token // Добавляем токен в заголовки
-                }
+                headers: { token }
             }
         );
-        console.log(response.data);
 
-        // Добавляем ученика в локальное состояние
-        students.value.push({
-            id: studentIdCounter++, // Уникальный ID
-            firstName,
-            lastName
-        });
+        // Обновляем список студентов после добавления
+        await fetchStudents();
+
         // Очищаем поле быстрого добавления
         quickAddInput.value = '';
-        // Делаем таблицу видимой, если она скрыта
         showStudentTable.value = true;
-
-        // Сохраняем изменения в локальное хранилище
         saveClassData();
     } catch (error) {
         console.error('Ошибка при добавлении ученика:', error);
@@ -208,11 +194,11 @@ async function fetchStudents() {
             headers: { token }
         });
 
-        // Обновляем данные
-        students.value = response.data.map((student, index) => {
+        // Обновляем данные, включая aruco_num
+        students.value = response.data.map((student) => {
             const [firstName, ...lastNameParts] = student.name.split(' ');
             return {
-                id: student.id || index + 1,
+                id: student.aruco_num, // Используем aruco_num как уникальный ID
                 firstName: firstName || '',
                 lastName: lastNameParts.join(' ') || ''
             };
@@ -227,8 +213,7 @@ async function fetchStudents() {
 }
 
 onMounted(() => {
-    handleClassChange();
-    fetchStudents(); // Загружаем список студентов
+    fetchStudents();
 });
 
 // Обработка изменения класса
@@ -271,6 +256,7 @@ async function deleteStudent(studentId) {
             // Удаляем ученика из локального состояния
             students.value = students.value.filter((student) => student.id !== studentId);
             saveClassData(); // Сохраняем изменения
+            alert('Студент успешно удалён.');
         } else {
             alert('Не удалось удалить ученика. Сервер вернул ошибку.');
         }
