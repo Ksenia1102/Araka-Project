@@ -3,6 +3,18 @@ import axios from 'axios';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+// Локальное состояние поиска
+const searchQuery = ref('');
+const filters = ref({ global: { value: null, matchMode: 'contains' } });
+
+// Слежение за изменением `searchQuery`
+watch(searchQuery, (newValue) => {
+    filters.value.global.value = newValue || null; // Присваиваем значение для глобального фильтра
+});
+
+// Ссылка на DataTable
+const dataTableRef = ref(null);
+
 const route = useRoute();
 const router = useRouter();
 const currentClassName = ref('');
@@ -11,7 +23,6 @@ const studentInput = ref('');
 const studentPreview = ref([]);
 const students = ref([]);
 const showStudentTable = ref(false);
-let studentIdCounter = 1;
 const quickAddInput = ref('');
 // Фейковые данные опросов
 const surveys = ref([
@@ -369,18 +380,17 @@ function proceedWithDeletion() {
             </div>
 
             <!-- Таблица учеников -->
-            <DataTable :value="students" :paginator="true" :rows="10" dataKey="id" :rowHover="true" filterDisplay="menu" :globalFilterFields="['firstName', 'lastName']" showGridlines>
+            <DataTable ref="dataTableRef" :value="students" :paginator="true" :rows="10" dataKey="id" :rowHover="true" :filters="filters" :globalFilterFields="['firstName', 'lastName']" showGridlines>
                 <template #header>
                     <div class="flex justify-between items-center">
-                        <!-- <Button type="button" icon="pi pi-filter-slash" label="Очистить фильтр" severity="info" outlined @click="clearFilter()" /> -->
-                        <IconField>
-                            <InputIcon>
-                                <i class="pi pi-search" />
-                            </InputIcon>
-                            <InputText placeholder="Поиск" />
-                        </IconField>
+                        <!-- Поле для поиска -->
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-search" />
+                            <InputText v-model="searchQuery" placeholder="Поиск по имени или фамилии" style="width: 40vh" />
+                        </div>
                     </div>
                 </template>
+
                 <template #empty>Список учеников пуст</template>
                 <Column field="id" header="Номер карточки" style="width: 10%; text-align: center" />
                 <Column field="firstName" header="Имя" />
