@@ -2,7 +2,7 @@
 <script setup>
 import axios from 'axios';
 import jwtDecode from 'jwt-decode';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import AppMenuItem from './AppMenuItem.vue';
 
@@ -126,7 +126,29 @@ async function createClasses() {
         alert('Введите хотя бы одно название класса.');
     }
 }
+async function fetchClasses() {
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await axios.get('http://localhost:3000/api/classes', {
+            headers: { token }
+        });
 
+        const classes = response.data;
+        const classMenu = model1.value[0].items.find((item) => item.label === 'Классы');
+        classMenu.items = classes.map((classItem) => ({
+            label: classItem.title,
+            icon: 'pi pi-fw pi-bookmark',
+            to: `/uikit/class/${classItem.id}/${classItem.title}`
+        }));
+    } catch (error) {
+        console.error('Ошибка при загрузке классов:', error);
+        alert('Не удалось загрузить классы. Попробуйте снова.');
+    }
+}
+
+onMounted(() => {
+    fetchClasses();
+});
 // const model1 = ref([
 //     {
 //         items: [

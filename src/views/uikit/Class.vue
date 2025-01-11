@@ -38,6 +38,7 @@ function goToSection(surveyId) {
         }
     });
 }
+
 // Переход к списку опросов
 function goToSurveys(classId) {
     router.push({
@@ -52,12 +53,12 @@ function goToSurveys(classId) {
     });
 }
 
-// Функция для извлечения имени класса из параметров маршрута
+// Обновление имени класса
 function updateClassName() {
     currentClassName.value = route.params.title || 'Класс не выбран';
 }
 
-// Получить уникальный ключ для localStorage на основе ID класса
+// Получение уникального ключа для localStorage
 function getStorageKey() {
     return `class_${route.params.classId}`;
 }
@@ -71,19 +72,6 @@ function saveClassData() {
             showStudentTable: showStudentTable.value
         })
     );
-}
-
-// Загрузка состояния для текущего класса
-function loadClassData() {
-    const savedData = localStorage.getItem(getStorageKey());
-    if (savedData) {
-        const { students: savedStudents, showStudentTable: savedShowTable } = JSON.parse(savedData);
-        students.value = savedStudents || []; // Загружаем список учеников
-        showStudentTable.value = !!savedShowTable; // Устанавливаем состояние таблицы
-    } else {
-        students.value = []; // Если данных нет, сбрасываем список учеников
-        showStudentTable.value = false; // Скрываем таблицу
-    }
 }
 
 function addStudent() {
@@ -134,8 +122,6 @@ async function addStudentsToTable() {
                 }
             }
         );
-        // Сообщение об успешном добавлении
-        alert('Студенты успешно добавлены!');
         console.log(response.data);
         // Добавляем студентов в локальное состояние
         students.value.push(
@@ -177,14 +163,22 @@ async function quickAddStudent() {
     }
     const studentToAdd = { name: `${firstName} ${lastName}` };
     try {
+        const token = localStorage.getItem('authToken'); // Получаем токен из локального хранилища
         console.log(studentToAdd);
-        const response = await axios.post('http://localhost:3000/api/save-students', {
-            class_id: classId,
-            students: [studentToAdd] // Отправляем в массиве для совместимости с сервером
-        });
-        // Сообщение об успешном добавлении
-        alert('Ученик успешно добавлен!');
+        const response = await axios.post(
+            'http://localhost:3000/api/save-students',
+            {
+                class_id: classId,
+                students: [studentToAdd] // Отправляем в массиве для совместимости с сервером
+            },
+            {
+                headers: {
+                    token: token // Добавляем токен в заголовки
+                }
+            }
+        );
         console.log(response.data);
+
         // Добавляем ученика в локальное состояние
         students.value.push({
             id: studentIdCounter++, // Уникальный ID
@@ -204,33 +198,106 @@ async function quickAddStudent() {
     }
 }
 
-// Загрузка данных класса и обновление имени класса
+// Получение данных студентов с сервера
+async function fetchStudents() {
+    const classId = route.params.classId;
+
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await axios.get(`http://localhost:3000/api/get-students/${classId}`, {
+            headers: { token }
+        });
+
+        // Обновляем данные
+        students.value = response.data.map((student, index) => {
+            const [firstName, ...lastNameParts] = student.name.split(' ');
+            return {
+                id: student.id || index + 1,
+                firstName: firstName || '',
+                lastName: lastNameParts.join(' ') || ''
+            };
+        });
+        showStudentTable.value = students.value.length > 0;
+    } catch (error) {
+        console.error('Ошибка при загрузке студентов:', error);
+        alert('Не удалось загрузить список студентов.');
+        students.value = [];
+        showStudentTable.value = false;
+    }
+}
+
+onMounted(() => {
+    handleClassChange();
+    fetchStudents(); // Загружаем список студентов
+});
+
+// Обработка изменения класса
 function handleClassChange() {
     updateClassName(); // Обновляем имя класса
-    loadClassData(); // Загружаем данные для класс
+    fetchStudents(); // Загружаем список студентов с сервера
 }
 
 // Удаление ученика
 const displayConfirmation = ref(false);
-function deletetudent() {
-    displayConfirmation.value = true;
-}
-function closeConfirmation() {
-    displayConfirmation.value = false;
-}
 
-// Вызываем handleClassChange при загрузке компонента
+// Инициализация
 onMounted(() => {
     handleClassChange();
 });
 
-// Наблюдаем за изменением маршрута (смена класса)
+// Наблюдение за изменением маршрута
 watch(
     () => route.params.classId,
     () => {
-        handleClassChange(); // Обновляем данные и имя класса
+        handleClassChange(); // Загружаем данные при смене класса
     }
 );
+
+// Удаление ученика
+const studentToDelete = ref(null); // Держим ссылку на удаляемого ученика
+
+async function deleteStudent(studentId) {
+    const classId = route.params.classId;
+    const token = localStorage.getItem('authToken');
+
+    try {
+        const response = await axios.delete(`http://localhost:3000/api/delete-student/${classId}/${studentId}`, {
+            headers: {
+                token: token
+            }
+        });
+
+        if (response.status === 200) {
+            // Удаляем ученика из локального состояния
+            students.value = students.value.filter((student) => student.id !== studentId);
+            saveClassData(); // Сохраняем изменения
+        } else {
+            alert('Не удалось удалить ученика. Сервер вернул ошибку.');
+        }
+    } catch (error) {
+        console.error('Ошибка при удалении ученика:', error);
+        alert('Не удалось удалить ученика. Попробуйте снова.');
+    } finally {
+        closeConfirmation(); // Закрываем окно подтверждения
+    }
+}
+
+function confirmDeletion(studentId) {
+    studentToDelete.value = studentId; // Сохраняем ID удаляемого ученика
+    displayConfirmation.value = true;
+}
+
+function closeConfirmation() {
+    displayConfirmation.value = false;
+    studentToDelete.value = null; // Сбрасываем выбранного ученика
+}
+
+function proceedWithDeletion() {
+    if (studentToDelete.value !== null) {
+        deleteStudent(studentToDelete.value);
+    }
+    closeConfirmation();
+}
 </script>
 
 <template>
@@ -337,7 +404,7 @@ watch(
                     <!-- <template #body="slotProps">
                         <Button icon="pi pi-trash" @click="deletetudent(slotProps.data.id)" -->
                     <template #body="slotProps">
-                        <Button icon="pi pi-trash" @click="deletetudent(slotProps.data.id)" class="p-button-outlined p-button-info" />
+                        <Button icon="pi pi-trash" @click="confirmDeletion(slotProps.data.id)" class="p-button-outlined p-button-info" />
                         <Dialog header="Предупреждение" v-model:visible="displayConfirmation" :style="{ width: '350px' }" :modal="true">
                             <div class="flex items-center justify-center">
                                 <i class="pi pi-exclamation-triangle mr-4" style="font-size: 2rem" />
@@ -345,7 +412,7 @@ watch(
                             </div>
                             <template #footer>
                                 <Button label="Нет" icon="pi pi-times" @click="closeConfirmation" text severity="secondary" />
-                                <Button label="Да" icon="pi pi-check" @click="closeConfirmation" severity="danger" outlined autofocus />
+                                <Button label="Да" icon="pi pi-check" @click="proceedWithDeletion" severity="danger" outlined autofocus />
                             </template>
                         </Dialog>
                     </template>
