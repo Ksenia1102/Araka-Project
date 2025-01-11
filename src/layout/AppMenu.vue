@@ -1,10 +1,10 @@
 <!-- меню!!! -->
 <script setup>
+import axios from 'axios';
+import jwtDecode from 'jwt-decode';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import axios from 'axios';
 import AppMenuItem from './AppMenuItem.vue';
-import jwtDecode from 'jwt-decode';
 
 const router = useRouter();
 const display = ref(false);
@@ -44,7 +44,7 @@ const model = ref([
     {
         items: [
             { label: 'Библиотека', icon: 'pi pi-fw pi-home', to: '/pages/dashboard' },
-            { label: 'Отчеты', icon: 'pi pi-fw pi-home', to: '/uikit/working' }
+            { label: 'Отчеты', icon: 'pi pi-fw pi-chart-bar', to: '/uikit/charts' }
             //{ label: 'Тестовая страница', icon: 'pi pi-fw pi-home', to: '/pages/test' }
         ]
     }

@@ -1,8 +1,8 @@
 <script setup>
 import { useLayout } from '@/layout/composables/layout';
 import * as FileSaver from 'file-saver'; // Правильный способ импорта
-import AppConfigurator from './AppConfigurator.vue';
 import { useRouter } from 'vue-router';
+import AppConfigurator from './AppConfigurator.vue';
 
 const router = useRouter();
 function goToUser() {
@@ -74,6 +74,10 @@ const { onMenuToggle } = useLayout();
                     <button v-tooltip.bottom="'Профиль'" type="button" class="layout-topbar-action" :to="{ name: 'user' }" as="router-link" @click="goToUser">
                         <i class="pi pi-user"></i>
                         <span>user</span>
+                    </button>
+                    <button v-tooltip.bottom="'Выйти'" type="button" class="layout-topbar-action">
+                        <i class="pi pi-sign-out"></i>
+                        <span>exit</span>
                     </button>
                     <!-- <IconField iconPosition="left">
                         <InputText type="text" placeholder="Поиск" />

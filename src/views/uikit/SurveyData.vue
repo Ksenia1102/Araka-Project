@@ -9,7 +9,7 @@ const router = useRouter();
 const products = ref(null);
 const picklistProducts = ref(null);
 const orderlistProducts = ref(null);
-const options = ref(['list', 'grid']);
+// const options = ref(['list', 'grid']);
 const layout = ref('list');
 const route = useRoute();
 const questions = ref([]); // Здесь будут храниться вопросы
@@ -239,11 +239,11 @@ function openNewTab() {
                 <template #header>
                     <div class="flex space-between">
                         <div class="font-semibold text-xl">Список вопросов</div>
-                        <SelectButton v-model="layout" :options="options" :allowEmpty="false">
+                        <!-- <SelectButton v-model="layout" :options="options" :allowEmpty="false">
                             <template #option="{ option }">
                                 <i :class="[option === 'list' ? 'pi pi-bars' : 'pi pi-table']" />
                             </template>
-                        </SelectButton>
+                        </SelectButton> -->
                     </div>
                 </template>
 

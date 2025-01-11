@@ -31,15 +31,22 @@ const router = createRouter({
                     props: true
                 },
                 {
-                    path: '/uikit/chart-sur',
+                    // параметр
+                    path: '/uikit/chart-sur/:surveyId',
                     name: 'chart-sur',
                     component: () => import('@/views/uikit/ChartSur.vue'),
                     props: true
                 },
                 {
-                    path: '/uikit/working',
-                    name: 'working',
-                    component: () => import('@/views/uikit/Working.vue')
+                    path: '/uikit/sur-class/:classId',
+                    name: 'sur-class',
+                    component: () => import('@/views/uikit/SurClass.vue'),
+                    props: true
+                },
+                {
+                    path: '/uikit/charts',
+                    name: 'charts',
+                    component: () => import('@/views/uikit/Charts.vue')
                 },
                 {
                     path: '/uikit/sur-data/:id',

@@ -204,6 +204,11 @@ export default {
 
 <template>
     <div class="card">
+        <!-- если не было опросов -->
+        <div style="margin: 30px" hidden>
+            <h1 class="font-semibold text-4xl mb-6">Вы еще не создавали опросы</h1>
+            <p class="font-semibold text-xl mb-4">Проведите свой первый опрос и вы увидите их здесь!</p>
+        </div>
         <div class="flex" style="gap: 0.5rem; align-items: stretch">
             <i class="pi pi-book" style="font-size: 2.3rem"></i>
             <h2 class="font-semibold text-4xl mb-6">Библиотека</h2>

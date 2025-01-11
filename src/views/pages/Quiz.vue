@@ -1,17 +1,3 @@
-<!-- <script setup></script>
-<template>
-    <div class="card">
-        <div class="font-semibold text-xl mb-4">Опрос</div>
-        <p>Здесь будет проигрыватся опрос</p>
-    </div>
-</template>
-<style scoped>
-.card {
-    margin: 30px;
-    height: auto;
-}
-</style> -->
-
 <script>
 import QuizLayout from '@/layout/QuizLayout.vue';
 
@@ -45,14 +31,7 @@ export default {
 </script>
 
 <template>
-    <QuizLayout :classId="classId" :surveyId="surveyId" @goBack="goBack">
-        <!-- <div class="card" style="height: 80vh; max-width: 120vh">
-            <div class="font-semibold text-xl mb-4">Опрос</div>
-            <p>Здесь будет проигрыватся опрос</p>
-        </div> -->
-    </QuizLayout>
+    <QuizLayout :classId="classId" :surveyId="surveyId" @goBack="goBack"> </QuizLayout>
 </template>
 
-<style scoped>
-/* При необходимости стили для страницы Quiz */
-</style>
+<style scoped></style>
