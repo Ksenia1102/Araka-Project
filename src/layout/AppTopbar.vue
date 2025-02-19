@@ -3,7 +3,7 @@ import { useLayout } from '@/layout/composables/layout';
 import * as FileSaver from 'file-saver'; // Правильный способ импорта
 import { useRouter } from 'vue-router';
 import AppConfigurator from './AppConfigurator.vue';
-
+const apiUrl = import.meta.env.VITE_API_URL;
 const router = useRouter();
 function goToUser() {
     router.push({ name: 'user' });
@@ -11,7 +11,7 @@ function goToUser() {
 
 async function downloadFile() {
     try {
-        const response = await fetch('http://localhost:3000/cards/download', {
+        const response = await fetch(`${apiUrl}/cards/download`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -29,6 +29,12 @@ async function downloadFile() {
     } catch (error) {
         console.error('Ошибка:', error);
     }
+}
+function logout() {
+    // Удаляем токен из localStorage (или sessionStorage)
+    localStorage.removeItem('token');
+    // Перенаправляем пользователя на главную страницу
+    router.push({ name: 'Home' });
 }
 
 const { onMenuToggle } = useLayout();
@@ -75,7 +81,7 @@ const { onMenuToggle } = useLayout();
                         <i class="pi pi-user"></i>
                         <span>user</span>
                     </button>
-                    <button v-tooltip.bottom="'Выйти'" type="button" class="layout-topbar-action">
+                    <button v-tooltip.bottom="'Выйти'" type="button" class="layout-topbar-action" @click="logout">
                         <i class="pi pi-sign-out"></i>
                         <span>exit</span>
                     </button>

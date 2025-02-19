@@ -1,29 +1,30 @@
 const { Router } = require('express'); // Импортируем роутер из express для создания маршрутов
-const mysql = require('mysql'); // Импортируем библиотеку для работы с MySQL
+// const mysql = require('mysql'); // Импортируем библиотеку для работы с MySQL
 const dotenv = require('dotenv'); // Импортируем dotenv для загрузки переменных окружения
 const router = Router(); // Создаем экземпляр роутера
 const bcrypt = require('bcrypt'); // Для проверки пароля
 const jwt = require('jsonwebtoken');
+const { queryAsync } = require('./db');
 // const jwtDecode = require('jwt-express-decode');
 
 dotenv.config({ path: '../backend/.env' }); // Загружаем переменные окружения из файла .env
 
 // Настраиваем соединение с базой данных MySQL
-const db = mysql.createConnection({
-    host: process.env.DATABASE_HOST, // Хост базы данных из переменных окружения
-    user: process.env.DATABASE_USER, // Пользователь базы данных
-    password: process.env.DATABASE_PASSWORD, // Пароль базы данных
-    database: process.env.DATABASE // Имя базы данных
-});
+// const db = mysql.createConnection({
+//     host: process.env.DATABASE_HOST, // Хост базы данных из переменных окружения
+//     user: process.env.DATABASE_USER, // Пользователь базы данных
+//     password: process.env.DATABASE_PASSWORD, // Пароль базы данных
+//     database: process.env.DATABASE // Имя базы данных
+// });
 
-// Подключаемся к базе данных
-db.connect((err) => {
-    if (err) {
-        console.log(err); // Выводим ошибку, если не удалось подключиться
-    } else {
-        console.log('MySQL Connected...'); // Успешное подключение
-    }
-});
+// // Подключаемся к базе данных
+// db.connect((err) => {
+//     if (err) {
+//         console.log(err); // Выводим ошибку, если не удалось подключиться
+//     } else {
+//         console.log('MySQL Connected...'); // Успешное подключение
+//     }
+// });
 
 // Middleware для проверки и декодирования JWT токена
 function verifyToken(req, res, next) {
@@ -46,23 +47,25 @@ function verifyToken(req, res, next) {
 }
 
 // Пример защищенного маршрута, для которого требуется токен
-router.get('/profile', verifyToken, (req, res) => {
+router.get('/profile', verifyToken, async (req, res) => {
     const userId = req.userId; // Получаем id пользователя из декодированного токена
 
-    // SQL-запрос для получения информации о пользователе по id
-    const query = 'SELECT * FROM users WHERE id = ?';
-    db.query(query, [userId], (err, results) => {
-        if (err) {
-            return res.status(500).send('Ошибка при получении данных пользователя');
-        }
+    try {
+        // SQL-запрос для получения информации о пользователе по id
+        const query = 'SELECT * FROM users WHERE id = ?';
+        const results = await queryAsync(query, [userId]);
+
         if (results.length === 0) {
             return res.status(404).send('Пользователь не найден');
         }
         res.json(results[0]); // Отправляем информацию о пользователе
-    });
+    } catch (err) {
+        return res.status(500).send('Ошибка при получении данных пользователя');
+    }
 });
-// Маршрут для обработки POST-запроса на вход хеширования
-router.post('/login', (req, res) => {
+
+// Маршрут для обработки POST-запроса на вход
+router.post('/login', async (req, res) => {
     console.log('Полученные данные для входа:', req.body);
 
     // Извлекаем login и password из тела запроса
@@ -73,13 +76,11 @@ router.post('/login', (req, res) => {
         return res.status(400).send('login и пароль обязательны');
     }
 
-    // SQL-запрос для поиска пользователя по логину
-    const query = 'SELECT * FROM users WHERE login = ?';
-    db.query(query, [login], (err, results) => {
-        if (err) {
-            console.error(err); // Логируем ошибку, если она произошла
-            return res.status(500).send('Ошибка при проверке данных пользователя');
-        }
+    try {
+        // SQL-запрос для поиска пользователя по логину
+        const query = 'SELECT * FROM users WHERE login = ?';
+        const results = await queryAsync(query, [login]);
+
         // Если пользователь не найден
         if (results.length === 0) {
             return res.status(404).send('Пользователь не найден');
@@ -97,7 +98,10 @@ router.post('/login', (req, res) => {
 
             res.json({ message: 'Успешный вход', token });
         });
-    });
+    } catch (err) {
+        console.error(err); // Логируем ошибку, если она произошла
+        return res.status(500).send('Ошибка при проверке данных пользователя');
+    }
 });
 
 module.exports = router;

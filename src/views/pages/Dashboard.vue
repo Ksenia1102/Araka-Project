@@ -5,7 +5,7 @@ import { ProductService } from '@/service/ProductService';
 import axios from 'axios';
 import jwtDecode from 'jwt-decode';
 import { onMounted, ref, watch, computed } from 'vue';
-
+const apiUrl = import.meta.env.VITE_API_URL;
 const { getPrimary, getSurface, isDarkTheme } = useLayout();
 const products = ref(null);
 const chartData = ref(null);
@@ -16,7 +16,6 @@ const surveys = ref([]); // Это будет хранить список опр
 const searchQuery = ref(''); // Введённый текст для поиска
 function getUserIdFromToken() {
     const token = localStorage.getItem('authToken'); // Или другой способ получения токена
-    console.log(token);
     if (!token) return null;
     try {
         const decoded = jwtDecode(token);
@@ -34,16 +33,14 @@ onMounted(async () => {
         return;
     }
     const token = localStorage.getItem('authToken');
-    console.log(userId);
     try {
         // Отправка GET запроса на сервер
-        const response = await axios.get(`http://localhost:3000/api/surveys1/user/${userId}`, {
+        const response = await axios.get(`${apiUrl}/api/surveys1/user/${userId}`, {
             headers: {
                 token: token // Добавляем токен в заголовки
             }
         });
         surveys.value = response.data; // Сохраняем полученные данные в переменную
-        console.log('Полученные данные:', surveys.value); // Выводим данные в консоль
     } catch (error) {
         console.error('Ошибка при загрузке опросов:', error);
     }
@@ -190,7 +187,6 @@ export default {
         // },
         goToSurvey(surveyId) {
             // Логика перехода к выбранному опросу
-            console.log('Переход');
             this.$router.push({ path: `/uikit/sur-data/${surveyId}` });
         },
         formatDate(date) {

@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { computed, onMounted, ref } from 'vue';
 // import { useRoute } from 'vue-router';
-
+const apiUrl = import.meta.env.VITE_API_URL;
 const quizData = ref({
     questions: [
         {
@@ -57,7 +57,7 @@ const surveyData = ref(null);
 const fetchClassData = async () => {
     try {
         const token = localStorage.getItem('authToken');
-        const response = await axios.get(`http://localhost:3000/api/class/${classId.value}`, {
+        const response = await axios.get(`${apiUrl}/api/class/${classId.value}`, {
             headers: {
                 token: token // Добавляем токен в заголовки
             }
@@ -72,17 +72,14 @@ const fetchClassData = async () => {
 const fetchSurveyData = async () => {
     try {
         const token = localStorage.getItem('authToken');
-        console.log(token);
-        const response = await axios.get(`http://localhost:3000/api/survey1/${surveyId.value}`, {
+        const response = await axios.get(`${apiUrl}/api/survey1/${surveyId.value}`, {
             headers: {
                 token: token // Добавляем токен в заголовки
             }
         });
         surveyData.value = response.data; // Данные об опросе
-        console.log('fdvadfvfdv', surveyData.value.questions);
         quizData.value.questions = surveyData.value.questions;
         currentQuestion.value = quizData.value.questions[0];
-        console.log(quizData.value.questions);
     } catch (error) {
         console.error('Ошибка получения данных об опросе:', error);
     }
@@ -104,7 +101,7 @@ const studentModel = computed(() => {
                 label: 'Участники',
                 items: classData.value.students.map((student) => ({
                     label: student.name, // Имя студента
-                    cardNumber: student.id // Номер карточки, который равен id студента
+                    cardNumber: student.aruco_num // Номер карточки, который равен id студента
                 }))
             }
         ];
@@ -206,7 +203,7 @@ onMounted(() => {
                     <div>
                         <div class="card" style="height: 80vh; width: 120vh; margin-right: 30px; text-align: center">
                             <h2 class="font-bold mb-6 text-max" style="margin-bottom: 2em">Опрос закончен!</h2>
-                            <Button label="Сохранить ответы и перейти к результатам опроса" severity="info" class="p-button-success text-xl" @click="$emit('goToResults')"></Button>
+                            <Button label="Сохранить ответы и перейти к результатам опроса" severity="info" class="p-button-success text-xl" @click="$emit('goBack')"></Button>
                         </div>
                     </div>
                     <!-- дублирование карточки??? как то это исправить-->

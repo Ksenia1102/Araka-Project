@@ -5,7 +5,7 @@ import jwtDecode from 'jwt-decode';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import AppMenuItem from './AppMenuItem.vue';
-
+const apiUrl = import.meta.env.VITE_API_URL;
 const router = useRouter();
 const display = ref(false);
 
@@ -73,7 +73,7 @@ async function saveClass(userId, classTitle) {
     try {
         const token = localStorage.getItem('authToken');
         const response = await axios.post(
-            'http://localhost:3000/api/create-class',
+            `${apiUrl}/api/create-class`,
             {
                 user_id: userId,
                 title: classTitle
@@ -99,7 +99,6 @@ async function createClasses() {
         const classMenu = model1.value[0].items.find((item) => item.label === 'Классы');
         for (const name of newClasses) {
             try {
-                console.log('class', name);
                 // Сохраняем класс на сервере и получаем его ID
                 const { classId, title } = await saveClass(userId, name);
                 if (classId) {
@@ -126,10 +125,38 @@ async function createClasses() {
         alert('Введите хотя бы одно название класса.');
     }
 }
+
+function getUserID() {
+    const token = localStorage.getItem('authToken'); // Извлекаем токен из localStorage
+    if (!token) {
+        console.error('Пользователь не авторизован');
+        this.$router.push({ name: 'login' }); // Перенаправление на страницу входа
+        return;
+    }
+
+    try {
+        // Используем jwt-decode для извлечения данных из токена
+        const decoded = jwtDecode(token);
+        if (decoded && decoded.id) {
+            return decoded.id; // Устанавливаем userId из токена
+        } else {
+            throw new Error('ID пользователя отсутствует в токене');
+        }
+    } catch (err) {
+        console.error('Ошибка декодирования токена:', err);
+        this.$router.push({ name: 'login' }); // Перенаправление на страницу входа
+    }
+
+    if (this.questions.length === 0) {
+        this.addQuestion();
+    }
+}
+
 async function fetchClasses() {
     try {
         const token = localStorage.getItem('authToken');
-        const response = await axios.get('http://localhost:3000/api/classes', {
+        const UserId1 = getUserID();
+        const response = await axios.get(`${apiUrl}/api/classes/${UserId1}`, {
             headers: { token }
         });
 

@@ -1,9 +1,10 @@
 <script setup>
 import { ProductService } from '@/service/ProductService';
 import axios from 'axios';
+import jwtDecode from 'jwt-decode';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-
+const apiUrl = import.meta.env.VITE_API_URL;
 // const router = useRoute(); // Используем роутер для навигации
 const router = useRouter();
 const products = ref(null);
@@ -18,19 +19,44 @@ const surveyName = ref('');
 const lastModified = ref('');
 const formattedDate = ref('');
 // Пример ID опроса. Можно заменить на динамическое значение.
-console.log('ID опроса:', surveyId);
+
+function getUserID() {
+    const token = localStorage.getItem('authToken'); // Извлекаем токен из localStorage
+    if (!token) {
+        console.error('Пользователь не авторизован');
+        this.$router.push({ name: 'login' }); // Перенаправление на страницу входа
+        return;
+    }
+
+    try {
+        // Используем jwt-decode для извлечения данных из токена
+        const decoded = jwtDecode(token);
+        if (decoded && decoded.id) {
+            return decoded.id; // Устанавливаем userId из токена
+        } else {
+            throw new Error('ID пользователя отсутствует в токене');
+        }
+    } catch (err) {
+        console.error('Ошибка декодирования токена:', err);
+        this.$router.push({ name: 'login' }); // Перенаправление на страницу входа
+    }
+
+    if (this.questions.length === 0) {
+        this.addQuestion();
+    }
+}
 
 // Функция загрузки классов
 const fetchClasses = async () => {
     try {
         const token = localStorage.getItem('authToken'); // Получаем токен авторизации
-        const response = await axios.get('http://localhost:3000/api/classes', {
+        const UserId1 = getUserID();
+        const response = await axios.get(`${apiUrl}/api/classes/${UserId1}`, {
             headers: {
                 token: token
             }
         });
         classes.value = response.data; // Загружаем данные в `ref`
-        console.log('Классы загружены:', classes.value);
     } catch (error) {
         console.error('Ошибка при загрузке классов:', error);
     }
@@ -40,7 +66,7 @@ const copySurvey = async () => {
     try {
         const token = localStorage.getItem('authToken'); // Получаем токен из localStorage
         const response = await axios.post(
-            `http://localhost:3000/api/surveys/${surveyId}/copy`,
+            `${apiUrl}/api/surveys/${surveyId}/copy`,
             {},
             {
                 headers: {
@@ -52,7 +78,7 @@ const copySurvey = async () => {
         // После успешного копирования перенаправляем пользователя на страницу нового опроса
         const newSurvey = response.data;
         alert(`Опрос "${newSurvey.survey_name}" успешно скопирован!`);
-        router.push(`/survey/${newSurvey._id}`); // Перенаправляем на страницу нового опроса
+        router.push({ name: 'dashboard' }); // Перенаправляем на страницу нового опроса
     } catch (error) {
         console.error('Ошибка при копировании опроса:', error);
         alert('Произошла ошибка при копировании опроса.');
@@ -66,7 +92,7 @@ const deleteSurvey = async () => {
 
         // Отправляем DELETE запрос на сервер для удаления опроса
         const token = localStorage.getItem('authToken');
-        await axios.delete(`http://localhost:3000/api/surveys/${surveyId}`, {
+        await axios.delete(`${apiUrl}/api/surveys/${surveyId}`, {
             headers: {
                 token: token // Токен авторизации
             }
@@ -100,18 +126,15 @@ onMounted(async () => {
         // Теперь отправляем запрос на получение вопросов для этого опроса
         const token = localStorage.getItem('authToken');
 
-        const questionsResponse = await axios.get(`http://localhost:3000/api/questions/${surveyId}`, {
+        const questionsResponse = await axios.get(`${apiUrl}/api/questions/${surveyId}`, {
             headers: {
                 token: token // Добавляем токен в заголовки
             }
         });
         const data = questionsResponse.data;
-        console.log(data);
         surveyName.value = data.survey_name; // Название опроса
-        console.log(surveyName.value);
         lastModified.value = data.survey_date; // Дата опроса
         questions.value = data.questions; // Список вопросов
-        console.log(questions.value);
 
         // Преобразуем строку в объект Date
         formattedDate.value = new Date(lastModified.value).toLocaleDateString('ru-RU', {
@@ -120,8 +143,6 @@ onMounted(async () => {
             month: 'long', // Месяц (например, ноябрь)
             day: 'numeric' // Число
         });
-        console.log(formattedDate);
-        console.log('Вопросы загружены:', questions.value);
     } catch (error) {
         console.error('Ошибка загрузки данных:', error);
     }
@@ -181,9 +202,8 @@ function openQuiz(classId) {
     window.open(`/pages/quiz/${classId}/${surveyId}`, '_blank');
 }
 function openNewTab() {
-    console.log('start'); // Получаем ID опроса из текущего маршрута
     const newTabUrl = `/pages/modify_survey?id=${surveyId}`;
-    window.open(newTabUrl, '_blank'); // Открываем новую вкладку
+    router.push(newTabUrl);
 }
 </script>
 <script></script>

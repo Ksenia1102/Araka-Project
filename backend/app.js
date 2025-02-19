@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 // Импортируем dotenv для работы с переменными окружения
 const dotenv = require('dotenv');
 
-// Импортируем маршруты для обработки регистрации
+// Импортируем маршруты для  всего
 const registrationRoutes = require('./routes/registration');
 const loginRoutes = require('./routes/login');
 const surveyRoutes = require('./routes/surveys');
@@ -62,6 +62,13 @@ app.use('/api', saveStudentsRouter);
 app.use('/api', quizRouter);
 
 // Запуск сервера на порту 3000
-app.listen(3000, () => {
-    console.log('SERVER START'); // Логирование успешного запуска сервера
+//
+const PORT = process.env.APP_PORT || 3000;
+const HOST = process.env.APP_HOST;
+console.log(PORT, HOST);
+
+app.listen(PORT, () => {
+    console.log(`Server running on http://${HOST}:${PORT}`);
 });
+
+module.exports = app;

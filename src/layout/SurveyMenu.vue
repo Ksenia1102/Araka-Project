@@ -7,7 +7,6 @@ const isHovered = ref(null);
 const selectedQuestionIndex = ref(null); // Индекс выбранного вопроса
 
 function selectQuestion(index) {
-    console.log('установка');
     selectedQuestionIndex.value = index; // Устанавливаем выбранный вопрос
     emit('selectQuestion', index); // Уведомляем родителя о выборе
 }

@@ -44,7 +44,7 @@ router.get('/class/:classId', async (req, res) => {
 
         // Получаем студентов, которые принадлежат данному классу
         const studentsQuery = `
-            SELECT student.id, student.name
+            SELECT student.aruco_num, student.name
             FROM student
             JOIN class ON class.id = student.class_id
             WHERE class.id = ?`;

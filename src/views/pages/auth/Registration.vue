@@ -1,11 +1,11 @@
 <script setup>
-import FloatingConfigurator from '@/components/FloatingConfigurator.vue'; // Импорт компонента FloatingConfigurator
+// import FloatingConfigurator from '@/components/FloatingConfigurator.vue'; // Импорт компонента FloatingConfigurator
 import axios from 'axios'; // Импорт библиотеки axios для работы с HTTP-запросами
 import { ref } from 'vue'; // Импорт функции ref для создания реактивных переменных
 import { useRouter } from 'vue-router'; // Импорт функции для навигации между маршрутами
 
 const router = useRouter(); // Создаем экземпляр маршрутизатора
-
+const apiUrl = import.meta.env.VITE_API_URL;
 // Функция для перехода на страницу логина
 function goToLogin() {
     router.push({ name: 'login' }); // Редирект на маршрут с именем 'login'
@@ -34,7 +34,7 @@ async function registerUser() {
 
     try {
         // Отправляем POST-запрос на сервер с логином и паролем
-        const response = await axios.post('http://localhost:3000/registration/register', {
+        const response = await axios.post(`${apiUrl}/registration/register`, {
             login: login.value,
             password: password.value
         });
@@ -50,7 +50,7 @@ async function registerUser() {
 </script>
 
 <template>
-    <FloatingConfigurator />
+    <!-- <FloatingConfigurator /> -->
     <div class="bg-surface-50 dark:bg-surface-950 flex items-center justify-center min-h-screen min-w-[100vw] overflow-hidden">
         <div class="flex flex-col items-center justify-center">
             <div style="border-radius: 56px; padding: 0.3rem; background: linear-gradient(180deg, var(--primary-color) 10%, rgba(33, 150, 243, 0) 30%)">
@@ -62,21 +62,21 @@ async function registerUser() {
                     </div>
                     <div>
                         <label for="login1" class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2">
-                            Email
+                            Логин
                             <span class="text-red-500">*</span>
                         </label>
                         <p v-if="errors.login" class="text-red-500 text-sm">{{ errors.login }}</p>
-                        <InputText id="login1" type="text" placeholder="Login" class="w-full md:w-[30rem] mb-8" v-model="login" />
+                        <InputText id="login1" type="text" placeholder="Логин" class="w-full md:w-[30rem] mb-8" v-model="login" />
                         <!-- Сообщение об ошибке -->
 
-                        <label for="password1" class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2"> Password <span class="text-red-500">*</span> </label>
+                        <label for="password1" class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2"> Пароль <span class="text-red-500">*</span> </label>
                         <p v-if="errors.password" class="text-red-500 text-sm">{{ errors.password }}</p>
-                        <Password id="password1" v-model="password" placeholder="Password" :toggleMask="true" :class="{ 'border-red-500': errors.password }" class="mb-2" fluid :feedback="false"></Password>
+                        <Password id="password1" v-model="password" placeholder="Пароль" :toggleMask="true" :class="{ 'border-red-500': errors.password }" class="mb-2" fluid :feedback="false"></Password>
                         <!-- Сообщение об ошибке -->
 
                         <Button :to="{ name: 'login' }" label="Уже есть аккаунт" class="w-full" severity="secondary" text @click="goToLogin"></Button>
 
-                        <Button label="Зарегистрироваться" class="w-full" @click="registerUser"></Button>
+                        <Button label="Зарегистрироваться" class="w-full" @click="registerUser" severity="info"></Button>
                     </div>
                 </div>
             </div>

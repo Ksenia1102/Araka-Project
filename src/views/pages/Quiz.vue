@@ -18,12 +18,9 @@ export default {
         this.surveyId = this.$route.params.surveyId;
 
         // Выводим их для проверки
-        console.log('Класс ID:', this.classId);
-        console.log('Опрос ID:', this.surveyId);
     },
     methods: {
         goBack() {
-            console.log('выход');
             this.$router.push('/pages/dashboard');
         }
     }

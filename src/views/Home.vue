@@ -1,16 +1,16 @@
 <script setup>
-import { useRouter } from 'vue-router';
 import * as FileSaver from 'file-saver'; // Правильный способ импорта
+import { useRouter } from 'vue-router';
 
 const router = useRouter();
-
+const apiUrl = import.meta.env.VITE_API_URL;
 function goToRegistration() {
     router.push({ name: 'registration' });
 }
 
 async function downloadFile() {
     try {
-        const response = await fetch('http://localhost:3000/cards/download', {
+        const response = await fetch(`${apiUrl}/cards/download`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'

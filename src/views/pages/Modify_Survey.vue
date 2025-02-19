@@ -2,6 +2,7 @@
 import SurveyLayout from '@/layout/SurveyLayout.vue';
 import axios from 'axios'; // Используем axios для запросов на сервер
 import jwtDecode from 'jwt-decode';
+const apiUrl = import.meta.env.VITE_API_URL;
 //import Toastify from 'toastify-js'; // Библиотека для уведомлений
 export default {
     components: {
@@ -42,8 +43,12 @@ export default {
         }
     },
     methods: {
+        goBackAndReload() {
+            window.history.back(); // Вернуться на предыдущую страницу
+            // Для перезагрузки страницы, на которой вы оказались, можно использовать:
+            window.location.reload(); // Но это нужно делать на самой предыдущей странице
+        },
         goBack() {
-            console.log('goBack вызван');
             this.$router.push('/pages/dashboard'); // Возврат на страницу dashboard
         },
         selectQuestion(index) {
@@ -84,7 +89,6 @@ export default {
             }
         },
         handleSaveSurvey(data) {
-            console.log('Data received in Survey.vue:', data); // Данные, полученные от компонента SurveyLayout
             if (!this.surveyTitle.trim()) {
                 this.surveyTitle = data.title;
             } // Только обновляем заголовок
@@ -97,10 +101,6 @@ export default {
         },
         // Отправка данных на сервер
         submitSurvey() {
-            console.log('submitSurvey метод вызван');
-            console.log('surveyTitle:', this.surveyTitle);
-            console.log('questions:', this.questions); // Убедитесь, что данные вопросов передаются
-
             if (!this.surveyTitle.trim()) {
                 this.responseMessage = 'Название опроса не может быть пустым.';
                 this.responseClass = 'error';
@@ -108,7 +108,6 @@ export default {
             }
 
             this.questions[this.currentQuestionIndex].text = this.currentQuestionText;
-            console.log(this.userId);
             const surveyData = {
                 user_id: this.userId,
                 title: this.surveyTitle.trim(),
@@ -119,13 +118,10 @@ export default {
                 }))
             };
 
-            console.log('Survey Data перед отправкой:', surveyData);
-
             const invalidQuestions = surveyData.questions.filter((q) => !q.text || q.correct_option === null || q.options.some((opt) => !opt));
             if (invalidQuestions.length > 0) {
                 this.responseMessage = 'Убедитесь, что все вопросы заполнены и у каждого есть правильный вариант.';
                 this.responseClass = 'error';
-                console.log('Invalid questions:', invalidQuestions);
                 return;
             }
 
@@ -134,8 +130,8 @@ export default {
 
             // Если surveyId существует, то редактируем опрос
             const url = surveyId
-                ? `http://localhost:3000/api/surveys/update/${surveyId}` // Используем PUT запрос
-                : 'http://localhost:3000/api/surveys/create'; // Если ID нет, то создаем новый опрос
+                ? `${apiUrl}/api/surveys/update/${surveyId}` // Используем PUT запрос
+                : `${apiUrl}/api/surveys/create`; // Если ID нет, то создаем новый опрос
 
             // Отправляем запрос с токеном в заголовке
             axios
@@ -148,6 +144,7 @@ export default {
                     console.log('Ответ сервера:', response.data);
                     this.responseMessage = surveyId ? 'Опрос успешно обновлён.' : 'Опрос успешно сохранён.';
                     this.responseClass = 'success';
+                    this.$router.push({ name: 'dashboard' });
                 })
                 .catch((error) => {
                     console.error('Ошибка при сохранении опроса:', error.response?.data || error.message);
@@ -157,8 +154,6 @@ export default {
         },
         async loadSurvey(surveyId) {
             try {
-                console.log(`Загрузка данных для опроса с ID: ${surveyId}`);
-
                 const token = localStorage.getItem('authToken'); // Получаем токен из локального хранилища
                 if (!token) {
                     console.error('Токен отсутствует. Необходимо авторизоваться.');
@@ -168,18 +163,16 @@ export default {
                 }
 
                 // Запрос данных с сервера
-                const response = await axios.get(`http://localhost:3000/api/surveys/${surveyId}`, {
+                const response = await axios.get(`${apiUrl}/api/surveys/${surveyId}`, {
                     headers: { token } // Передаём токен в заголовках
                 });
 
                 // Обработка успешного ответа
                 const survey = response.data;
-                console.log('Данные опроса успешно загружены:', response.data);
 
                 // Устанавливаем заголовок опроса
                 this.surveyTitle = survey.title || 'Без названия';
-                console.log(this.surveyTitle, 'заголовок');
-                console.log(survey.title);
+
                 // Устанавливаем вопросы опроса
                 this.questions = survey.questions.map((q, index) => ({
                     text: q.text || `Вопрос ${index + 1}`,
@@ -217,7 +210,6 @@ export default {
             // Используем jwt-decode для извлечения данных из токена
             const decoded = jwtDecode(token);
             if (decoded && decoded.id) {
-                console.log(decoded.id);
                 this.userId = decoded.id; // Устанавливаем userId из токена
             } else {
                 throw new Error('ID пользователя отсутствует в токене');

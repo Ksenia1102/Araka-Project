@@ -187,6 +187,8 @@ router.get('/questions/:survey_id', async (req, res) => {
 router.post('/surveys/:survey_id/copy', async (req, res) => {
     const { survey_id } = req.params;
     const token = req.headers['token'];
+
+    // Проверяем входные данные
     if (!survey_id || isNaN(survey_id)) {
         console.error(`Invalid or missing survey_id: ${survey_id}`);
         return res.status(400).json({ error: 'Invalid or missing survey_id' });
@@ -218,49 +220,55 @@ router.post('/surveys/:survey_id/copy', async (req, res) => {
                 created_at: new Date() // Новая дата создания
             };
 
-            // Вставляем новый опрос в таблицу
-            const user_id = await getUserId(token, survey_id); // Например, если пользователь залогинен
+            // Получаем user_id (например, на основе токена)
+            const user_id = await getUserId(token, survey_id);
 
+            // Вставляем новый опрос в таблицу
             const insertSurveyQuery = `INSERT INTO surveys (title, created_at, user_id) VALUES (?, ?, ?)`;
             const result = await queryAsync(insertSurveyQuery, [newSurvey.title, newSurvey.created_at, user_id]);
 
             // Получаем ID нового опроса
             const newSurveyId = result.insertId;
 
-            // Копируем все вопросы, связанные с этим опросом
+            // Копируем вопросы
             const copyQuestionsQuery = `SELECT * FROM questions WHERE survey_id = ?`;
             const questions = await queryAsync(copyQuestionsQuery, [survey_id]);
 
             if (questions.length > 0) {
-                // Вставляем все вопросы в новый опрос
                 const insertQuestionsQuery = `INSERT INTO questions (survey_id, text, correct_option) VALUES ?`;
                 const questionValues = questions.map((q) => [newSurveyId, q.text, q.correct_option]);
+                await queryAsync(insertQuestionsQuery, [questionValues]);
 
-                // Вставляем вопросы и получаем результат
-                const result = await queryAsync(insertQuestionsQuery, [questionValues]);
-
-                // Получаем новые question_id, которые были вставлены в новый опрос
-                const getNewQuestionIdsQuery = `SELECT id FROM questions WHERE survey_id = ?`;
+                // Получаем новые question_id
+                const getNewQuestionIdsQuery = `SELECT id FROM questions WHERE survey_id = ? ORDER BY id ASC`;
                 const newQuestions = await queryAsync(getNewQuestionIdsQuery, [newSurveyId]);
 
-                // Теперь у нас есть новые question_id
-                const newQuestionIds = newQuestions.map((q) => q.id);
+                if (questions.length !== newQuestions.length) {
+                    throw new Error('Mismatch in the number of old and new questions');
+                }
 
-                // Копируем все варианты ответов для этих вопросов
-                const insertOptionsQuery = `INSERT INTO options (question_id, text) VALUES ?`;
-
-                // Получаем старые варианты ответов, которые принадлежат старым вопросам
-                const options = await queryAsync(`SELECT * FROM options WHERE question_id IN (SELECT id FROM questions WHERE survey_id = ?)`, [survey_id]);
-
-                // Сопоставляем старые варианты ответов с новыми question_id
-                const optionValues = options.map((o, index) => {
-                    // Используем индекс для соответствия старым и новым question_id
-                    const newQuestionId = newQuestionIds[index % newQuestionIds.length]; // Преобразуем индекс для избежания null
-                    return [newQuestionId, o.text];
+                // Создаем объект сопоставления старого и нового question_id
+                const questionMapping = {};
+                questions.forEach((q, index) => {
+                    questionMapping[q.id] = newQuestions[index].id;
                 });
 
-                // Вставляем новые варианты ответов в новый опрос
-                await queryAsync(insertOptionsQuery, [optionValues]);
+                // Копируем варианты ответов
+                const copyOptionsQuery = `SELECT * FROM options WHERE question_id IN (SELECT id FROM questions WHERE survey_id = ?)`;
+                const options = await queryAsync(copyOptionsQuery, [survey_id]);
+
+                if (options.length > 0) {
+                    const optionValues = options.map((o) => {
+                        const newQuestionId = questionMapping[o.question_id];
+                        if (!newQuestionId) {
+                            throw new Error(`No matching new question_id for old question_id ${o.question_id}`);
+                        }
+                        return [newQuestionId, o.text];
+                    });
+
+                    const insertOptionsQuery = `INSERT INTO options (question_id, text) VALUES ?`;
+                    await queryAsync(insertOptionsQuery, [optionValues]);
+                }
             }
 
             // Подтверждаем транзакцию

@@ -20,14 +20,12 @@ export default {
             this.$emit('update:title', this.localTitle); // Используем this.localTitle, чтобы передать обновленное значение
         },
         saveSurvey() {
-            console.log('Кнопка "Сохранить опрос" нажата');
             // Отправляем событие сохранения с текущим localTitle
             this.$emit('saveSurvey', this.localTitle); // Передаем название опроса
         },
         goBack() {
-            console.log('1212');
             // Используем Vue Router для перехода на предыдущую страницу
-            window.close();
+            this.$router.push({ name: 'dashboard' });
         }
     }
 };

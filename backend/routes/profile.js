@@ -108,24 +108,31 @@ router.put('/profile_auth/:userId', async (req, res) => {
     }
 });
 
-// Маршрут для удаления аккаунта пользователя
 router.delete('/profile/:userId', async (req, res) => {
     const { userId } = req.params;
 
     try {
-        // Сначала удаляем все записи в таблице options, связанные с вопросами, которые принадлежат этому пользователю
+        // 1. Удаляем всех студентов, связанные с классами пользователя
+        const deleteStudentsQuery = 'DELETE FROM student WHERE class_id IN (SELECT id FROM class WHERE user_id = ?)';
+        await queryAsync(deleteStudentsQuery, [userId]);
+
+        // 2. Удаляем все классы, связанные с этим пользователем
+        const deleteClassesQuery = 'DELETE FROM class WHERE user_id = ?';
+        await queryAsync(deleteClassesQuery, [userId]);
+
+        // 3. Удаляем опции, связанные с вопросами этого пользователя
         const deleteOptionsQuery = 'DELETE FROM options WHERE question_id IN (SELECT id FROM questions WHERE survey_id IN (SELECT id FROM surveys WHERE user_id = ?))';
         await queryAsync(deleteOptionsQuery, [userId]);
 
-        // Далее удаляем все вопросы, связанные с этим пользователем
+        // 4. Удаляем вопросы, связанные с этим пользователем
         const deleteQuestionsQuery = 'DELETE FROM questions WHERE survey_id IN (SELECT id FROM surveys WHERE user_id = ?)';
         await queryAsync(deleteQuestionsQuery, [userId]);
 
-        // Затем удаляем все анкеты, связанные с этим пользователем
+        // 5. Удаляем анкеты этого пользователя
         const deleteSurveysQuery = 'DELETE FROM surveys WHERE user_id = ?';
         await queryAsync(deleteSurveysQuery, [userId]);
 
-        // Наконец, удаляем самого пользователя
+        // 6. Удаляем самого пользователя
         const deleteUserQuery = 'DELETE FROM users WHERE id = ?';
         const result = await queryAsync(deleteUserQuery, [userId]);
 
@@ -133,10 +140,10 @@ router.delete('/profile/:userId', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        res.status(200).json({ message: 'User deleted successfully' });
+        res.status(200).json({ message: 'User and related data deleted successfully' });
     } catch (error) {
-        console.error('Error deleting user:', error);
-        res.status(500).json({ error: 'Failed to delete user' });
+        console.error('Error deleting user and related data:', error);
+        res.status(500).json({ error: 'Failed to delete user and related data' });
     }
 });
 

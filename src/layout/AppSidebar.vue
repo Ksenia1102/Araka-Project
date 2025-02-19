@@ -3,10 +3,12 @@ import AppMenu from './AppMenu.vue';
 </script>
 
 <script>
+// import { useRouter } from 'vue-router';
+// const router = useRouter();
 export default {
     methods: {
         openNewTab() {
-            window.open('/pages/survey', '_blank');
+            this.$router.push({ name: 'survey' });
         }
     }
 };

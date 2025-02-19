@@ -22,20 +22,16 @@ export default {
             this.localSurveyTitle = newTitle; // Обновляем локальное название опроса
         },
         saveSurvey() {
-            console.log('Опрос сохранен с названием:', this.localSurveyTitle);
-
             // Отправляем событие saveSurvey с заголовком и вопросами в родительский компонент
             this.$emit('saveSurvey', {
                 title: this.localSurveyTitle
             });
         },
         goBack() {
-            console.log('Нажата кнопка "Назад"');
             this.$router.push('/pages/dashboard');
             // Логика для возвращения на предыдущую страницу
         },
         selectQuestion(index) {
-            console.log('Выбран вопрос:', index);
             this.$emit('selectQuestion', index);
         },
         addQuestion() {

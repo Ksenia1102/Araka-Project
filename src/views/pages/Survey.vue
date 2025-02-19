@@ -2,6 +2,7 @@
 import SurveyLayout from '@/layout/SurveyLayout.vue';
 import axios from 'axios'; // Используем axios для запросов на сервер
 import jwtDecode from 'jwt-decode';
+const apiUrl = import.meta.env.VITE_API_URL;
 //import Toastify from 'toastify-js'; // Библиотека для уведомлений
 export default {
     components: {
@@ -43,11 +44,9 @@ export default {
     },
     methods: {
         goBack() {
-            console.log('goBack вызван');
             this.$router.push('/pages/dashboard'); // Возврат на страницу dashboard
         },
         selectQuestion(index) {
-            console.log('res');
             this.currentQuestionIndex = index;
             this.currentQuestionText = this.questions[index].text; // Устанавливаем текст текущего вопроса в локальную переменную
         },
@@ -85,7 +84,6 @@ export default {
             }
         },
         handleSaveSurvey(data) {
-            console.log('Data received in Survey.vue:', data); // Данные, полученные от компонента SurveyLayout
             this.surveyTitle = data.title; // Только обновляем заголовок
             this.submitSurvey(); // Отправляем опрос
         },
@@ -96,10 +94,6 @@ export default {
         },
         // Отправка данных на сервер
         submitSurvey() {
-            console.log('submitSurvey метод вызван');
-            console.log('surveyTitle:', this.surveyTitle);
-            console.log('questions:', this.questions); // Убедитесь, что данные вопросов передаются
-
             if (!this.surveyTitle.trim()) {
                 this.responseMessage = 'Название опроса не может быть пустым.';
                 this.responseClass = 'error';
@@ -107,7 +101,6 @@ export default {
             }
 
             this.questions[this.currentQuestionIndex].text = this.currentQuestionText;
-            console.log(this.userId);
             const surveyData = {
                 user_id: this.userId,
                 title: this.surveyTitle.trim(),
@@ -118,20 +111,17 @@ export default {
                 }))
             };
 
-            console.log('Survey Data перед отправкой:', surveyData);
-
             const invalidQuestions = surveyData.questions.filter((q) => !q.text || q.correct_option === null || q.options.some((opt) => !opt));
             if (invalidQuestions.length > 0) {
                 this.responseMessage = 'Убедитесь, что все вопросы заполнены и у каждого есть правильный вариант.';
                 this.responseClass = 'error';
-                console.log('Invalid questions:', invalidQuestions);
                 return;
             }
             const token = localStorage.getItem('authToken');
 
             // Отправляем запрос с токеном в заголовке
             axios
-                .post('http://localhost:3000/api/surveys/create', surveyData, {
+                .post(`${apiUrl}/api/surveys/create`, surveyData, {
                     headers: {
                         token: token // Добавляем токен в заголовки
                     }
@@ -140,6 +130,7 @@ export default {
                     console.log('Ответ сервера:', response.data);
                     this.responseMessage = 'Опрос успешно сохранён.';
                     this.responseClass = 'success';
+                    this.$router.push({ name: 'dashboard' });
                 })
                 .catch((error) => {
                     console.error('Ошибка при создании опроса:', error.response?.data || error.message);
@@ -160,7 +151,6 @@ export default {
             // Используем jwt-decode для извлечения данных из токена
             const decoded = jwtDecode(token);
             if (decoded && decoded.id) {
-                console.log(decoded.id);
                 this.userId = decoded.id; // Устанавливаем userId из токена
             } else {
                 throw new Error('ID пользователя отсутствует в токене');

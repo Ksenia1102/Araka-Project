@@ -6,7 +6,7 @@ import { useRoute, useRouter } from 'vue-router';
 // Локальное состояние поиска
 const searchQuery = ref('');
 const filters = ref({ global: { value: null, matchMode: 'contains' } });
-
+const apiUrl = import.meta.env.VITE_API_URL;
 // Слежение за изменением `searchQuery`
 watch(searchQuery, (newValue) => {
     filters.value.global.value = newValue || null; // Присваиваем значение для глобального фильтра
@@ -123,7 +123,7 @@ async function addStudentsToTable() {
     try {
         const token = localStorage.getItem('authToken');
         await axios.post(
-            'http://localhost:3000/api/save-students',
+            `${apiUrl}/api/save-students`,
             {
                 class_id: classId,
                 students: studentsToAdd
@@ -172,7 +172,7 @@ async function quickAddStudent() {
     try {
         const token = localStorage.getItem('authToken');
         await axios.post(
-            'http://localhost:3000/api/save-students',
+            `${apiUrl}/api/save-students`,
             {
                 class_id: classId,
                 students: [studentToAdd]
@@ -201,7 +201,7 @@ async function fetchStudents() {
 
     try {
         const token = localStorage.getItem('authToken');
-        const response = await axios.get(`http://localhost:3000/api/get-students/${classId}`, {
+        const response = await axios.get(`${apiUrl}/api/get-students/${classId}`, {
             headers: { token }
         });
 
@@ -257,7 +257,7 @@ async function deleteStudent(studentId) {
     const token = localStorage.getItem('authToken');
 
     try {
-        const response = await axios.delete(`http://localhost:3000/api/delete-student/${classId}/${studentId}`, {
+        const response = await axios.delete(`${apiUrl}/api/delete-student/${classId}/${studentId}`, {
             headers: {
                 token: token
             }

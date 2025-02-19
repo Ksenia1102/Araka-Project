@@ -4,7 +4,7 @@ import axios from 'axios'; // Импорт библиотеки axios для р�
 import { ref } from 'vue'; // Импорт функции ref для создания реактивных переменных
 import { useRouter } from 'vue-router'; // Импорт функции для навигации между маршрутами
 const router = useRouter(); // Используем роутер для навигации
-
+const apiUrl = import.meta.env.VITE_API_URL;
 const login = ref(''); // Создаем реактивную переменную для логина
 const password = ref(''); // Создаем реактивную переменную для пароля
 const errors = ref({ login: '', password: '' }); // Состояние для ошибок валидации
@@ -37,7 +37,7 @@ async function loginUser() {
     try {
         // Отправляем POST-запрос на сервер с логином и паролем
         const response = await axios.post(
-            'http://localhost:3000/login/login', // Используем правильный URL для вашего API
+            `${apiUrl}/login/login`, // Используем правильный URL для вашего API
             {
                 login: login.value,
                 password: password.value
@@ -45,7 +45,6 @@ async function loginUser() {
         );
 
         // Логируем весь ответ от сервера
-        console.log('Server response:', response.data);
 
         // Сохраняем токен в localStorage
         const token = response.data.token;
@@ -91,16 +90,16 @@ async function loginUser() {
                     </div>
 
                     <div>
-                        <label for="email1" class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2">Login</label>
+                        <label for="email1" class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2">Логин</label>
                         <p v-if="errors.login" class="text-red-500 text-sm">{{ errors.login }}</p>
-                        <InputText id="email1" type="text" placeholder="Login" class="w-full md:w-[30rem] mb-8" v-model="login" />
+                        <InputText id="email1" type="text" placeholder="Логин" class="w-full md:w-[30rem] mb-8" v-model="login" />
 
-                        <label for="password1" class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2">Password</label>
+                        <label for="password1" class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2">Пароль</label>
                         <p v-if="errors.password" class="text-red-500 text-sm">{{ errors.password }}</p>
-                        <Password id="password1" v-model="password" placeholder="Password" :toggleMask="true" class="mb-4" fluid :feedback="false"></Password>
+                        <Password id="password1" v-model="password" placeholder="Пароль" :toggleMask="true" class="mb-4" fluid :feedback="false"></Password>
                         <p v-if="serverError" class="text-red-500 text-sm mb-4">{{ serverError }}</p>
                         <Button :to="{ name: 'registration' }" label="Нет аккаунта" class="w-full" severity="secondary" text @click="goToRegistration" />
-                        <Button label="Войти" class="w-full" @click="loginUser"></Button>
+                        <Button label="Войти" class="w-full" @click="loginUser" severity="info"></Button>
                     </div>
                 </div>
             </div>

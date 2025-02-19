@@ -5,7 +5,7 @@ import { onMounted, ref } from 'vue';
 // import { useRouter } from 'vue-router'; // Импортируйте useRouter
 
 // const router = useRouter(); // Получите доступ к роутеру
-
+const apiUrl = import.meta.env.VITE_API_URL;
 const displayConfirmation = ref(false);
 function openConfirmation() {
     displayConfirmation.value = true;
@@ -29,7 +29,6 @@ const buttonLabelName = ref('Изменить данные о пользоват
 const buttonLabelAuth = ref('Изменить данные аутентификации');
 function getUserIdFromToken() {
     const token = localStorage.getItem('authToken'); // Или другой способ получения токена
-    console.log(token);
     if (!token) return null;
 
     try {
@@ -44,14 +43,13 @@ async function fetchUserData() {
     try {
         const userId = getUserIdFromToken();
         const token = localStorage.getItem('authToken');
-        const response = await axios.get(`http://localhost:3000/api/profile/${userId}`, {
+        const response = await axios.get(`${apiUrl}/api/profile/${userId}`, {
             headers: {
                 token: token // Добавляем токен в заголовки
             }
         }); // Запрос к вашему API
         const user = response.data;
         username.value = user.username || 'Имя';
-        console.log(user.username);
         lastname.value = user.lastname || 'Фамилия';
         login.value = user.login || ''; // Предполагаем, что email используется как login
         pass.value = '*****'; // Пароль обычно не передается, оставляем пустым
@@ -65,7 +63,7 @@ async function saveUserData() {
     try {
         const userId = getUserIdFromToken();
         const token = localStorage.getItem('authToken');
-        await axios.put(`http://localhost:3000/api/profile/${userId}`, { name: username.value, lastname: lastname.value }, { headers: { token } });
+        await axios.put(`${apiUrl}/api/profile/${userId}`, { name: username.value, lastname: lastname.value }, { headers: { token } });
         isEditingName.value = false;
         buttonLabelName.value = 'Изменить данные о пользователе';
         console.log('Данные успешно сохранены');
@@ -80,7 +78,7 @@ async function saveAuthData() {
         const userId = getUserIdFromToken();
         const token = localStorage.getItem('authToken');
         await axios.put(
-            `http://localhost:3000/api/profile_auth/${userId}`,
+            `${apiUrl}/api/profile_auth/${userId}`,
             {
                 login: login.value,
                 password: pass.value
@@ -119,7 +117,7 @@ async function deleteAccount() {
     const token = localStorage.getItem('authToken');
 
     try {
-        await axios.delete(`http://localhost:3000/api/profile/${userId}`, {
+        await axios.delete(`${apiUrl}/api/profile/${userId}`, {
             headers: { token: token }
         });
         // Перенаправление пользователя на страницу логина или главную после удаления аккаунта
