@@ -1,85 +1,167 @@
-const { Router } = require('express'); // Импортируем роутер из express для создания маршрутов
-// const mysql = require('mysql'); // Импортируем библиотеку для работы с MySQL
-const dotenv = require('dotenv'); // Импортируем dotenv для загрузки переменных окружения
-const router = Router(); // Создаем экземпляр роутера
-const bcrypt = require('bcrypt'); // Для проверки пароля
+const { Router } = require('express');
+const dotenv = require('dotenv');
+const router = Router();
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { queryAsync } = require('./db');
-// const jwtDecode = require('jwt-express-decode');
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 
-dotenv.config({ path: '../backend/.env' }); // Загружаем переменные окружения из файла .env
+dotenv.config({ path: '../backend/.env' });
 
-// Настраиваем соединение с базой данных MySQL
-// const db = mysql.createConnection({
-//     host: process.env.DATABASE_HOST, // Хост базы данных из переменных окружения
-//     user: process.env.DATABASE_USER, // Пользователь базы данных
-//     password: process.env.DATABASE_PASSWORD, // Пароль базы данных
-//     database: process.env.DATABASE // Имя базы данных
-// });
+// Настройка nodemailer для отправки писем
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+    },
+});
 
-// // Подключаемся к базе данных
-// db.connect((err) => {
-//     if (err) {
-//         console.log(err); // Выводим ошибку, если не удалось подключиться
-//     } else {
-//         console.log('MySQL Connected...'); // Успешное подключение
-//     }
-// });
+// Генерация случайного кода подтверждения
+const generateVerificationCode = () => {
+    return crypto.randomBytes(3).toString('hex').toUpperCase(); // 6-значный код
+};
 
-// Middleware для проверки и декодирования JWT токена
-function verifyToken(req, res, next) {
-    const token = req.headers['authorization']; // Получаем токен из заголовка Authorization
-    if (!token) {
-        return res.status(401).send('Токен не предоставлен');
+// Маршрут для запроса восстановления пароля
+router.post('/request-password-reset', async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).send('Почта обязательна');
     }
 
-    const tokenString = token.split(' ')[1]; // Извлекаем сам токен из строки "Bearer <token>"
-
     try {
-        // Используем jwt.verify для проверки токена и получения данных
-        const decoded = jwt.verify(tokenString, process.env.JWT_SECRET_KEY); // Декодируем токен и проверяем подпись
-        req.userId = decoded.id; // Присваиваем decoded id пользователя в запрос
-        next(); // Переход к следующему middleware или маршруту
-    } catch (err) {
-        console.error('Ошибка декодирования токена:', err);
-        return res.status(401).send('Неверный токен');
-    }
-}
-
-// Пример защищенного маршрута, для которого требуется токен
-router.get('/profile', verifyToken, async (req, res) => {
-    const userId = req.userId; // Получаем id пользователя из декодированного токена
-
-    try {
-        // SQL-запрос для получения информации о пользователе по id
-        const query = 'SELECT * FROM users WHERE id = ?';
-        const results = await queryAsync(query, [userId]);
+        // Проверяем, существует ли пользователь с такой почтой
+        const query = 'SELECT * FROM users WHERE email = ?';
+        const results = await queryAsync(query, [email]);
 
         if (results.length === 0) {
-            return res.status(404).send('Пользователь не найден');
+            return res.status(404).send('Пользователь с такой почтой не найден');
         }
-        res.json(results[0]); // Отправляем информацию о пользователе
+
+        // Генерация кода подтверждения
+        const resetCode = generateVerificationCode();
+
+        // Хеширование кода подтверждения
+        const hashedResetCode = await bcrypt.hash(resetCode, 10);
+
+        // Сохраняем хэшированный код в базе данных
+        const updateQuery = 'UPDATE users SET resetCode = ? WHERE email = ?';
+        await queryAsync(updateQuery, [hashedResetCode, email]);
+
+        // Отправка письма с кодом подтверждения
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'Восстановление пароля',
+            text: `Ваш код подтверждения: ${resetCode}`,
+            html: `<p>Ваш код подтверждения: <strong>${resetCode}</strong></p>`,
+        };
+
+        transporter.sendMail(mailOptions, (err, info) => {
+            if (err) {
+                console.error('Ошибка при отправке письма:', err);
+                return res.status(500).send('Ошибка при отправке письма');
+            }
+            console.log('Письмо отправлено:', info.response);
+            res.status(200).send('Код подтверждения отправлен на вашу почту');
+        });
     } catch (err) {
-        return res.status(500).send('Ошибка при получении данных пользователя');
+        console.error('Ошибка при запросе восстановления пароля:', err);
+        res.status(500).send('Ошибка при запросе восстановления пароля');
     }
 });
 
-// Маршрут для обработки POST-запроса на вход
-router.post('/login', async (req, res) => {
-    console.log('Полученные данные для входа:', req.body);
+// Маршрут для проверки кода подтверждения
+router.post('/verify-reset-code', async (req, res) => {
+    const { email, code } = req.body;
 
-    // Извлекаем login и password из тела запроса
-    const { login, password } = req.body;
-
-    // Проверяем, что логин и пароль указаны
-    if (!login || !password) {
-        return res.status(400).send('login и пароль обязательны');
+    if (!email || !code) {
+        return res.status(400).send('Почта и код обязательны');
     }
 
     try {
-        // SQL-запрос для поиска пользователя по логину
-        const query = 'SELECT * FROM users WHERE login = ?';
-        const results = await queryAsync(query, [login]);
+        // Получаем пользователя по email
+        const query = 'SELECT * FROM users WHERE email = ?';
+        const results = await queryAsync(query, [email]);
+
+        if (results.length === 0) {
+            return res.status(404).send('Пользователь с такой почтой не найден');
+        }
+
+        const user = results[0];
+
+        // Сравниваем хэшированный код с введенным кодом
+        const isMatch = await bcrypt.compare(code, user.resetCode);
+        if (!isMatch) {
+            return res.status(400).send('Неверный код подтверждения');
+        }
+
+        res.status(200).send('Код подтверждения верен');
+    } catch (err) {
+        console.error('Ошибка при проверке кода:', err);
+        res.status(500).send('Ошибка при проверке кода');
+    }
+});
+
+// Маршрут для обновления пароля
+router.post('/reset-password', async (req, res) => {
+    const { email, code, newPassword } = req.body;
+
+    if (!email || !code || !newPassword) {
+        return res.status(400).send('Почта, код и новый пароль обязательны');
+    }
+
+    try {
+        // Получаем пользователя по email
+        const query = 'SELECT * FROM users WHERE email = ?';
+        const results = await queryAsync(query, [email]);
+
+        if (results.length === 0) {
+            return res.status(404).send('Пользователь с такой почтой не найден');
+        }
+
+        const user = results[0];
+
+        // Сравниваем хэшированный код с введенным кодом
+        const isMatch = await bcrypt.compare(code, user.resetCode);
+        if (!isMatch) {
+            return res.status(400).send('Неверный код подтверждения');
+        }
+
+        // Хешируем новый пароль
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Обновляем пароль и очищаем resetCode
+        const updateQuery = 'UPDATE users SET password = ?, resetCode = NULL WHERE email = ?';
+        await queryAsync(updateQuery, [hashedPassword, email]);
+
+        res.status(200).send('Пароль успешно обновлен');
+    } catch (err) {
+        console.error('Ошибка при обновлении пароля:', err);
+        res.status(500).send('Ошибка при обновлении пароля');
+    }
+});
+
+// Маршрут для входа пользователя
+router.post('/login', async (req, res) => {
+    const { loginOrEmail, password } = req.body;
+
+    if (!loginOrEmail || !password) {
+        return res.status(400).send('Логин/почта и пароль обязательны');
+    }
+
+    try {
+        // Определяем, является ли введенное значение почтой
+        const isEmail = loginOrEmail.includes('@');
+
+        // SQL-запрос для поиска пользователя по логину или почте
+        const query = isEmail
+            ? 'SELECT * FROM users WHERE email = ?' // Если это почта
+            : 'SELECT * FROM users WHERE login = ?'; // Если это логин
+
+        const results = await queryAsync(query, [loginOrEmail]);
 
         // Если пользователь не найден
         if (results.length === 0) {
@@ -90,17 +172,18 @@ router.post('/login', async (req, res) => {
         const user = results[0];
 
         // Сравниваем хеш пароля с введённым паролем
-        bcrypt.compare(password, user.password, (err, isMatch) => {
-            if (err) return res.status(500).send('Ошибка проверки пароля');
-            if (!isMatch) return res.status(401).send('Неверный пароль');
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(401).send('Неверный пароль');
+        }
 
-            const token = jwt.sign({ id: user.id, login: user.login }, process.env.JWT_SECRET_KEY, { expiresIn: '10h' });
+        // Генерация JWT токена
+        const token = jwt.sign({ id: user.id, login: user.login }, process.env.JWT_SECRET_KEY, { expiresIn: '10h' });
 
-            res.json({ message: 'Успешный вход', token });
-        });
+        res.json({ message: 'Успешный вход', token });
     } catch (err) {
-        console.error(err); // Логируем ошибку, если она произошла
-        return res.status(500).send('Ошибка при проверке данных пользователя');
+        console.error('Ошибка при входе:', err);
+        res.status(500).send('Ошибка при входе');
     }
 });
 
