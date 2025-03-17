@@ -37,7 +37,7 @@ async function loginUser() {
     try {
         // Отправляем POST-запрос на сервер с логином и паролем
         const response = await axios.post(
-            `${apiUrl}/login/login`, // Используем правильный URL для вашего API
+            `${apiUrl}/auth/login`, // Используем правильный URL для вашего API
             {
                 login: login.value,
                 password: password.value

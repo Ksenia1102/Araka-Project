@@ -8,7 +8,7 @@ const dbConfig = {
     database: process.env.DATABASE,
     connectionLimit: 10, // Лимит одновременных подключений
     queueLimit: 0, // Нет ограничений на очередь запросов
-    waitForConnections: true // Ожидание освобождения соединений
+    waitForConnections: true // Ожидание освобождения соединени
 };
 
 // Создаем пул соединений
@@ -53,7 +53,7 @@ checkConnection();
 pool.on('error', (err) => {
     console.error('Ошибка в пуле соединений:', err);
 
-    // Если ошибка связана с потерей соединения
+    // Если ошибка связана с потерей соединен
     if (err.code === 'PROTOCOL_CONNECTION_LOST') {
         console.log('Соединение потеряно. Ожидание восстановления...');
         checkConnection();

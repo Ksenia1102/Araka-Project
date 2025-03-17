@@ -4,7 +4,7 @@ const router = express.Router();
 
 router.get('/download', async (req, res) => {
     try {
-        const filePath = path.resolve(__dirname, '../../public/files/Cards.pdf'); // Обновленный путь
+        const filePath = path.resolve(__dirname, '../../public/files/Cards.pdf'); // Обновленный пу
         console.log(`Попытка загрузить файл: ${filePath}`);
         res.download(filePath, 'Cards.pdf', (err) => {
             if (err) {
