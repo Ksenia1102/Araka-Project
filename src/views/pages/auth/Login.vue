@@ -20,8 +20,9 @@ const resetErrors = ref({ email: '', code: '', newPassword: '' });
 const isCodeSent = ref(false); // Управляет видимостью поля "Код подтверждения" и кнопки "Проверить код"
 const isCodeVerified = ref(false); // Управляет видимостью поля "Новый пароль" и кнопки "Обновить пароль"
 const isSendingCode = ref(false); // Реактивное состояние для отслеживания отправки кода
-const canResendCode = ref(false); // Реактивное состояние для возможности повторной отправки кода
-const resendTimer = ref(60); // Таймер для отсчета времени
+const isResendDisabled = ref(false); // Реактивное состояние для блокировки кнопки повторной отправки
+const countdown = ref(0); // Реактивное состояние для отслеживания оставшегося времени
+
 // Функция для перехода на страницу регистрации
 function goToRegistration() {
     router.push({ name: 'registration' });
@@ -112,17 +113,41 @@ async function verifyResetCode() {
     }
 }
 
+// Функция для запуска таймера
 function startResendTimer() {
-    canResendCode.value = false; // Блокируем кнопку повторной отправки
-    resendTimer.value = 60; // Устанавливаем таймер на 60 секунд
+    isResendDisabled.value = true; // Блокируем кнопку
+    countdown.value = 60; // Устанавливаем таймер на 60 секунд
 
     const interval = setInterval(() => {
-        resendTimer.value--; // Уменьшаем таймер на 1 секунду
-        if (resendTimer.value <= 0) {
-            clearInterval(interval); // Останавливаем таймер
-            canResendCode.value = true; // Разблокируем кнопку повторной отправки
+        countdown.value -= 1;
+        if (countdown.value <= 0) {
+            clearInterval(interval);
+            isResendDisabled.value = false; // Разблокируем кнопку
         }
-    }, 1000); // Запускаем таймер каждую секунду
+    }, 1000);
+}
+
+// Функция для отправки кода подтверждения повторно
+async function sendVerificationCode() {
+    resetErrors.value.email = '';
+
+    if (!emailForReset.value) {
+        resetErrors.value.email = 'Пожалуйста, заполните почту';
+        return;
+    }
+
+    try {
+        await axios.post(`${apiUrl}/login/request-password-reset`, {
+            email: emailForReset.value,
+        });
+        alert('Код подтверждения отправлен на вашу почту');
+
+        // Запускаем таймер для повторной отправки кода
+        startResendTimer();
+    } catch (error) {
+        console.error('Error sending verification code:', error);
+        alert('Ошибка при отправке кода подтверждения');
+    }
 }
 
 // Функция для обновления пароля
@@ -211,14 +236,26 @@ function goBack() {
                             <span v-else>Отправить код</span>
                         </Button>
 
-                        <!-- Кнопка "Запросить код повторно" -->
-                        <Button label="Запросить код повторно" class="w-full" @click="requestPasswordReset" severity="info" v-if="isCodeSent && !canResendCode" :disabled="true">
-                            Запросить код повторно ({{ resendTimer }} сек)
-                        </Button>
-                        <Button label="Запросить код повторно" class="w-full" @click="requestPasswordReset" severity="info" v-if="isCodeSent && canResendCode"></Button>
-
+                        <!-- Кнопка "Проверить код" (появляется после отправки кода) -->
                         <Button label="Проверить код" class="w-full" @click="verifyResetCode" severity="info" v-if="isCodeSent && !isCodeVerified"></Button>
+
+                        <!-- Кнопка "Запросить код повторно" (появляется после отправки кода и находится ниже кнопки "Проверить код") -->
+                        <Button 
+                            v-if="isCodeSent" 
+                            label="Запросить код повторно" 
+                            class="w-full mt-4" 
+                            @click="sendVerificationCode" 
+                            severity="secondary" 
+                            :disabled="isResendDisabled"
+                        >
+                            <span v-if="isResendDisabled">Запросить код повторно ({{ countdown }} сек)</span>
+                            <span v-else>Запросить код повторно</span>
+                        </Button>
+
+                        <!-- Кнопка "Обновить пароль" (появляется после проверки кода) -->
                         <Button label="Обновить пароль" class="w-full" @click="updatePassword" severity="info" v-if="isCodeVerified"></Button>
+
+                        <!-- Кнопка "Назад" -->
                         <Button label="Назад" class="w-full" @click="goBack" severity="info" text></Button>
                     </div>
                 </div>
