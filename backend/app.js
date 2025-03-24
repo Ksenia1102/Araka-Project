@@ -72,7 +72,7 @@
 // });
 
 // module.exports = app;
-
+//app.js
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -85,6 +85,9 @@ const surveyRoutes = require('./routes/SurveyRoutes');
 const questionRoutes = require('./routes/QuestionRoutes');
 const optionRoutes = require('./routes/OptionRoutes');
 const authRoutes = require('./routes/authRoutes');
+const errorHandler = require('./middlewares/errorHandler');
+
+const profileRoutes = require('./routes/profileRoutes');
 const app = express();
 
 app.use(cors()); // Настроим CORS
@@ -98,4 +101,6 @@ app.use('/api', surveyRoutes); // Подключаем маршруты опро
 app.use('/api', questionRoutes); // Подключаем маршруты вопросов
 app.use('/api', optionRoutes); // Подключаем маршруты вариантов ответа
 app.use('/auth', authRoutes);
+app.use('/profile', profileRoutes);
+app.use(errorHandler); // Подключаем в конце!
 module.exports = app;

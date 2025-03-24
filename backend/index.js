@@ -35,7 +35,7 @@
 // app.listen(PORT, () => {
 //     console.log(`Server running on port ${PORT}`);
 // });
-
+// index.js
 require('dotenv').config(); // Загружаем переменные окружения
 const { connectDB } = require('./config/database'); // Подключаем БД
 const app = require('./app'); // Импортируем основное приложение

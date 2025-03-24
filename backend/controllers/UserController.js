@@ -1,22 +1,13 @@
 // src/controllers/UserController.js
 const { User } = require('../models');
-
+const { createUser } = require('../services/UserService');
 // Создание пользователя
-async function createUser(req, res) {
+async function createUserHandler(req, res) {
     try {
-        const { login, password, name, surname } = req.body;
-
-        const user = await User.create({
-            login,
-            password,
-            name,
-            surname
-        });
-
-        return res.status(201).json(user); // Возвращаем созданного пользователя
+        const user = await createUser(req.body);
+        return res.status(201).json(user);
     } catch (error) {
-        console.error('Error creating user:', error);
-        return res.status(500).json({ message: 'Ошибка при создании пользователя' });
+        return res.status(400).json({ message: error.message });
     }
 }
 
@@ -82,7 +73,7 @@ async function deleteUser(req, res) {
 }
 
 module.exports = {
-    createUser,
+    createUserHandler,
     getUser,
     updateUser,
     deleteUser

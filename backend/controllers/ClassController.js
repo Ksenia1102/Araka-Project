@@ -1,3 +1,4 @@
+///controllers/ClassController.js
 const { Class } = require('../models');
 
 // Создание класса
