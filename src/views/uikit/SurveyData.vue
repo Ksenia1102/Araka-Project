@@ -51,9 +51,9 @@ const fetchClasses = async () => {
     try {
         const token = localStorage.getItem('authToken'); // Получаем токен авторизации
         const UserId1 = getUserID();
-        const response = await axios.get(`${apiUrl}/api/classes/${UserId1}`, {
+        const response = await axios.get(`${apiUrl}/api/classes/user/${UserId1}`, {
             headers: {
-                token: token
+                Authorization: `Bearer ${token}` // Стандартный формат
             }
         });
         classes.value = response.data; // Загружаем данные в `ref`
@@ -67,7 +67,7 @@ const copySurvey = async () => {
         const token = localStorage.getItem('authToken'); // Получаем токен из localStorage
         const response = await axios.post(
             `${apiUrl}/api/surveys/${surveyId}/copy`,
-            {},
+
             {
                 headers: {
                     token: token // Отправляем токен авторизации
@@ -94,7 +94,7 @@ const deleteSurvey = async () => {
         const token = localStorage.getItem('authToken');
         await axios.delete(`${apiUrl}/api/surveys/${surveyId}`, {
             headers: {
-                token: token // Токен авторизации
+                Authorization: `Bearer ${token}` // Стандартный формат
             }
         });
 
@@ -128,7 +128,7 @@ onMounted(async () => {
 
         const questionsResponse = await axios.get(`${apiUrl}/api/questions/${surveyId}`, {
             headers: {
-                token: token // Добавляем токен в заголовки
+                Authorization: `Bearer ${token}` // Стандартный формат
             }
         });
         const data = questionsResponse.data;

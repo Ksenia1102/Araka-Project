@@ -92,7 +92,7 @@ const fetchSurveyData = async () => {
         const token = localStorage.getItem('authToken');
         const response = await axios.get(`${apiUrl}/api/survey1/${surveyId.value}`, {
             headers: {
-                token: token // Добавляем токен в заголовки
+                Authorization: `Bearer ${token}` // Стандартный формат
             }
         });
         surveyData.value = response.data; // Данные об опросе

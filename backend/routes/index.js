@@ -12,20 +12,20 @@ const downloadCardsRoutes1 = require('./download_cards_1');
 // const profileRoutes = require('./profile');
 // const createClassRouter = require('./classes');
 // const saveStudentsRouter = require('./students');
-// const quizRouter = require('./quiz');
+const quizRouter = require('./quiz');
 
 // Подключаем маршруты
 // router.use('/registration', registrationRoutes);
 // router.use('/login', loginRoutes);
-router.use('/surveys', surveyRoutes);
-router.use('/surveys1', getSurveysRoutes);
-router.use('/questions', questionsRoutes);
+router.use('/', surveyRoutes);
+router.use('/', getSurveysRoutes);
+router.use('/', questionsRoutes);
 router.use('/cards', downloadCardsRoutes);
 router.use('/cards', downloadCardsRoutes1);
 // router.use('/profile', profileRoutes);
 // router.use('/classes', createClassRouter);
 // router.use('/students', saveStudentsRouter);
 
-// router.use('/quiz', quizRouter);
+router.use('/', quizRouter);
 
 module.exports = router;
