@@ -59,6 +59,23 @@ router.get('/surveys1/user/:user_id', async (req, res) => {
         }
     });
 });
+const getUserId = async (token, survey_id) => {
+    let userId;
+
+    // Если нет user_id из токена, получаем его из базы данных
+    if (!userId) {
+        const query = 'SELECT user_id FROM surveys WHERE id = ?';
+        const result = await queryAsync(query, [survey_id]);
+
+        if (result.length === 0) {
+            throw new Error('Survey not found');
+        }
+
+        userId = result[0].user_id; // Извлекаем user_id из опроса
+    }
+
+    return userId;
+};
 
 // Маршрут для копирования опроса
 router.post('/surveys/:survey_id/copy', async (req, res) => {
