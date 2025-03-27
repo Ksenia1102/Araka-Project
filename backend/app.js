@@ -81,9 +81,9 @@ const routes = require('./routes'); // Импортируем маршруты
 const userRoutes = require('./routes/UserRoutes');
 const classRoutes = require('./routes/ClassRoutes');
 const studentRoutes = require('./routes/StudentRoutes');
-const surveyRoutes = require('./routes/SurveyRoutes');
-const questionRoutes = require('./routes/QuestionRoutes');
-const optionRoutes = require('./routes/OptionRoutes');
+// const surveyRoutes = require('./routes/SurveyRoutes');
+// const questionRoutes = require('./routes/QuestionRoutes');
+// const optionRoutes = require('./routes/OptionRoutes');
 const authRoutes = require('./routes/authRoutes');
 const errorHandler = require('./middlewares/errorHandler');
 
@@ -95,11 +95,11 @@ app.use(bodyParser.json()); // Разбираем JSON
 app.use('/api', jwtMiddleware); // Добавляем middleware для защиты API
 app.use('/api', routes); // Подключаем все маршруты
 app.use('/api', userRoutes); // Все маршруты, связанные с пользователями, начинаются с /api
-app.use('/api', classRoutes); // Подключаем маршруты
-app.use('/api', studentRoutes);
-app.use('/api', surveyRoutes); // Подключаем маршруты опросов
-app.use('/api', questionRoutes); // Подключаем маршруты вопросов
-app.use('/api', optionRoutes); // Подключаем маршруты вариантов ответа
+app.use('/api/classes', classRoutes);
+app.use('/api/students', studentRoutes); // Добавляем новые роуты
+// app.use('/api', surveyRoutes); // Подключаем маршруты опросов
+// app.use('/api', questionRoutes); // Подключаем маршруты вопросов
+// app.use('/api', optionRoutes); // Подключаем маршруты вариантов ответа
 app.use('/auth', authRoutes);
 app.use('/profile', profileRoutes);
 app.use(errorHandler); // Подключаем в конце!

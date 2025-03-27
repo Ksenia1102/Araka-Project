@@ -13,12 +13,12 @@ const User = sequelize.define(
     },
     {
         tableName: 'users',
-        timestamps: false,
-        hooks: {
-            beforeCreate: async (user) => {
-                user.password = await bcrypt.hash(user.password, 10);
-            }
-        }
+        timestamps: false
+        // hooks: {
+        //     beforeCreate: async (user) => {
+        //         user.password = await bcrypt.hash(user.password, 10);
+        //     }
+        // }
     }
 );
 

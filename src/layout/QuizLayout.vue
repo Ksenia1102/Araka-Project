@@ -56,13 +56,31 @@ const surveyData = ref(null);
 // Получаем данные о классе
 const fetchClassData = async () => {
     try {
+        // Проверяем наличие classId
+        if (!classId.value) {
+            console.error('ID класса не указан');
+            return;
+        }
+
         const token = localStorage.getItem('authToken');
-        const response = await axios.get(`${apiUrl}/api/class/${classId.value}`, {
+        if (!token) {
+            throw new Error('Токен авторизации отсутствует');
+        }
+        const response = await axios.get(`${apiUrl}/api/classes/${classId.value}`, {
             headers: {
-                token: token // Добавляем токен в заголовки
+                Authorization: `Bearer ${token}`
+                // 'Accept': 'application/json'
             }
         });
-        classData.value = response.data; // Данные о классе
+        // Нормализация данных
+        classData.value = {
+            id: response.data.id,
+            title: response.data.title,
+            user_id: response.data.user_id,
+            students: response.data.students || [],
+            createdAt: response.data.createdAt,
+            updatedAt: response.data.updatedAt
+        };
     } catch (error) {
         console.error('Ошибка получения данных о классе:', error);
     }

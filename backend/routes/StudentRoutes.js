@@ -1,12 +1,14 @@
 const express = require('express');
-const { createStudent, getStudentsByClass, getStudentById, updateStudent, deleteStudent } = require('../controllers/StudentController');
-
 const router = express.Router();
+const StudentController = require('../controllers/StudentController');
 
-router.post('/students', createStudent); //  Создать студента
-router.get('/students/class/:classId', getStudentsByClass); //  Получить всех студентов класса
-router.get('/students/:id', getStudentById); //  Получить одного студента
-router.put('/students/:id', updateStudent); //  Обновить студента
-router.delete('/students/:id', deleteStudent); //  Удалить студента
+// POST /api/students - Добавление студентов
+router.post('/', StudentController.addStudents);
+
+// GET /api/students/:classId - Получение студентов класса
+router.get('/:classId', StudentController.getStudents);
+
+// DELETE /api/students/:classId/:arucoNum - Удаление студента
+router.delete('/:classId/:arucoNum', StudentController.deleteStudent);
 
 module.exports = router;

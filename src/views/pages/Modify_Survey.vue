@@ -137,7 +137,7 @@ export default {
             axios
                 .post(url, surveyData, {
                     headers: {
-                        token: token // Добавляем токен в заголовки
+                        Authorization: `Bearer ${token}` // Стандартный формат
                     }
                 })
                 .then((response) => {
@@ -164,7 +164,9 @@ export default {
 
                 // Запрос данных с сервера
                 const response = await axios.get(`${apiUrl}/api/surveys/${surveyId}`, {
-                    headers: { token } // Передаём токен в заголовках
+                    headers: {
+                        Authorization: `Bearer ${token}` // Стандартный формат
+                    } // Передаём токен в заголовках
                 });
 
                 // Обработка успешного ответа

@@ -1,12 +1,9 @@
 const express = require('express');
-const { createClass, getUserClasses, getClassById, updateClass, deleteClass } = require('../controllers/ClassController');
-
 const router = express.Router();
+const ClassController = require('../controllers/ClassController');
 
-router.post('/classes', createClass); // Создать класс
-router.get('/classes/user/:userId', getUserClasses); // Получить классы пользователя
-router.get('/classes/:id', getClassById); // Получить один класс
-router.put('/classes/:id', updateClass); // Обновить класс
-router.delete('/classes/:id', deleteClass); // Удалить класс
+router.post('/', ClassController.create);
+router.get('/user/:userId', ClassController.getByUser);
+router.get('/:classId', ClassController.getDetails);
 
 module.exports = router;

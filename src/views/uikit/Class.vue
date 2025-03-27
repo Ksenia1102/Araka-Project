@@ -123,13 +123,15 @@ async function addStudentsToTable() {
     try {
         const token = localStorage.getItem('authToken');
         await axios.post(
-            `${apiUrl}/api/save-students`,
+            `${apiUrl}/api/students`,
             {
                 class_id: classId,
                 students: studentsToAdd
             },
             {
-                headers: { token }
+                headers: {
+                    Authorization: `Bearer ${token}` // Стандартный формат
+                }
             }
         );
 
@@ -144,9 +146,11 @@ async function addStudentsToTable() {
         // Делаем таблицу видимой
         showStudentTable.value = true;
         saveClassData();
+        // Уведомление об успехе
+        alert('Студенты успешно добавлены!');
     } catch (error) {
         console.error('Ошибка при добавлении студентов:', error);
-        alert('Не удалось добавить студентов. Попробуйте снова.');
+        alert(error.response?.data?.error || 'Не удалось добавить студентов');
     }
 }
 
@@ -172,13 +176,15 @@ async function quickAddStudent() {
     try {
         const token = localStorage.getItem('authToken');
         await axios.post(
-            `${apiUrl}/api/save-students`,
+            `${apiUrl}/api/students`,
             {
                 class_id: classId,
                 students: [studentToAdd]
             },
             {
-                headers: { token }
+                headers: {
+                    Authorization: `Bearer ${token}` // Стандартный формат заголовка
+                }
             }
         );
 
@@ -189,9 +195,20 @@ async function quickAddStudent() {
         quickAddInput.value = '';
         showStudentTable.value = true;
         saveClassData();
+        // Уведомление об успехе
+        alert('Ученик успешно добавлен!');
     } catch (error) {
-        console.error('Ошибка при добавлении ученика:', error);
-        alert('Не удалось добавить ученика. Попробуйте снова.');
+        console.error('Ошибка добавления:', error);
+
+        // Улучшенная обработка ошибок
+        const errorMessage = error.response?.data?.error || 'Не удалось добавить ученика. Проверьте данные и попробуйте снова.';
+
+        alert(errorMessage);
+
+        // Дополнительные действия при ошибке (опционально)
+        if (error.response?.status === 401) {
+            router.push('/login');
+        }
     }
 }
 
@@ -201,25 +218,40 @@ async function fetchStudents() {
 
     try {
         const token = localStorage.getItem('authToken');
-        const response = await axios.get(`${apiUrl}/api/get-students/${classId}`, {
-            headers: { token }
+        const response = await axios.get(`${apiUrl}/api/students/${classId}`, {
+            headers: {
+                Authorization: `Bearer ${token}` // Стандартный формат заголовка
+            }
         });
 
         // Обновляем данные, включая aruco_num
         students.value = response.data.map((student) => {
             const [firstName, ...lastNameParts] = student.name.split(' ');
             return {
-                id: student.aruco_num, // Используем aruco_num как уникальный ID
+                id: student.aruco_num, // Используем aruco_num как ID
+                aruco_num: student.aruco_num, // Сохраняем оригинальный номер
                 firstName: firstName || '',
-                lastName: lastNameParts.join(' ') || ''
+                lastName: lastNameParts.join(' ') || '',
+                fullName: student.name // Сохраняем оригинальное имя
             };
         });
         showStudentTable.value = students.value.length > 0;
     } catch (error) {
-        console.error('Ошибка при загрузке студентов:', error);
-        alert('Не удалось загрузить список студентов.');
+        console.error('Ошибка загрузки студентов:', error);
+
+        // Улучшенная обработка ошибок
+        const errorMessage = error.response?.data?.error || 'Не удалось загрузить список студентов';
+
+        alert(errorMessage);
+
+        // Сброс данных
         students.value = [];
         showStudentTable.value = false;
+
+        // // Перенаправление при 401 ошибке
+        // if (error.response?.status === 401) {
+        //     router.push('/login');
+        // }
     }
 }
 
@@ -257,9 +289,10 @@ async function deleteStudent(studentId) {
     const token = localStorage.getItem('authToken');
 
     try {
-        const response = await axios.delete(`${apiUrl}/api/delete-student/${classId}/${studentId}`, {
+        const response = await axios.delete(`${apiUrl}/api/students/${classId}/${studentId}`, {
             headers: {
-                token: token
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
         });
 

@@ -43,18 +43,37 @@ async function fetchUserData() {
     try {
         const userId = getUserIdFromToken();
         const token = localStorage.getItem('authToken');
-        const response = await axios.get(`${apiUrl}/api/profile/${userId}`, {
+
+        // Проверка наличия токена
+        if (!token) {
+            throw new Error('Токен авторизации не найден');
+        }
+
+        const response = await axios.get(`${apiUrl}/profile/${userId}`, {
             headers: {
-                token: token // Добавляем токен в заголовки
+                Authorization: `Bearer ${token}` // Используем стандартный формат
             }
-        }); // Запрос к вашему API
+        });
+
         const user = response.data;
-        username.value = user.username || 'Имя';
-        lastname.value = user.lastname || 'Фамилия';
-        login.value = user.login || ''; // Предполагаем, что email используется как login
-        pass.value = '*****'; // Пароль обычно не передается, оставляем пустым
+        username.value = user.name || 'Имя';
+        lastname.value = user.surname || 'Фамилия';
+        login.value = user.login || '';
+        pass.value = '';
     } catch (error) {
-        console.error('Ошибка загрузки данных пользователя:', error);
+        console.error('Ошибка загрузки данных:', error);
+
+        // Обработка ошибки 401
+        if (error.response?.status === 401) {
+            // 1. Удаляем невалидный токен
+            localStorage.removeItem('authToken');
+
+            // 2. Перенаправляем на страницу входа
+            // router.push('/login');
+
+            // 3. Показываем сообщение пользователю
+            alert('Сессия истекла. Пожалуйста, войдите снова.');
+        }
     }
 }
 
@@ -63,7 +82,15 @@ async function saveUserData() {
     try {
         const userId = getUserIdFromToken();
         const token = localStorage.getItem('authToken');
-        await axios.put(`${apiUrl}/api/profile/${userId}`, { name: username.value, lastname: lastname.value }, { headers: { token } });
+        await axios.put(
+            `${apiUrl}/profile/${userId}`,
+            { name: username.value, surname: lastname.value },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}` // Используем стандартный формат
+                }
+            }
+        );
         isEditingName.value = false;
         buttonLabelName.value = 'Изменить данные о пользователе';
         console.log('Данные успешно сохранены');
@@ -78,12 +105,16 @@ async function saveAuthData() {
         const userId = getUserIdFromToken();
         const token = localStorage.getItem('authToken');
         await axios.put(
-            `${apiUrl}/api/profile_auth/${userId}`,
+            `${apiUrl}/profile/${userId}`,
             {
                 login: login.value,
                 password: pass.value
             },
-            { headers: { token } }
+            {
+                headers: {
+                    Authorization: `Bearer ${token}` // Используем стандартный формат
+                }
+            }
         );
         isEditingAuth.value = false;
         buttonLabelAuth.value = 'Изменить данные аутентификации';
@@ -117,8 +148,10 @@ async function deleteAccount() {
     const token = localStorage.getItem('authToken');
 
     try {
-        await axios.delete(`${apiUrl}/api/profile/${userId}`, {
-            headers: { token: token }
+        await axios.delete(`${apiUrl}/profile/${userId}`, {
+            headers: {
+                Authorization: `Bearer ${token}` // Используем стандартный формат
+            }
         });
         // Перенаправление пользователя на страницу логина или главную после удаления аккаунта
         window.location.replace('/auth/login'); // Замените на путь, куда нужно отправить пользователя

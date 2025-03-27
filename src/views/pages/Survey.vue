@@ -123,7 +123,7 @@ export default {
             axios
                 .post(`${apiUrl}/api/surveys/create`, surveyData, {
                     headers: {
-                        token: token // Добавляем токен в заголовки
+                        Authorization: `Bearer ${token}` // Стандартный формат
                     }
                 })
                 .then((response) => {

@@ -34,7 +34,7 @@ async function registerUser() {
 
     try {
         // Отправляем POST-запрос на сервер с логином и паролем
-        const response = await axios.post(`${apiUrl}/registration/register`, {
+        const response = await axios.post(`${apiUrl}/auth/register`, {
             login: login.value,
             password: password.value
         });

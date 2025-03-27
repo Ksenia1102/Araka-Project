@@ -70,25 +70,47 @@ const model1 = ref([
 const newClassInputs = ref(Array(8).fill('')); // Поля для ввода новых классов
 
 async function saveClass(userId, classTitle) {
+    // Валидация входных данных
+    if (!userId || !classTitle?.trim()) {
+        alert('Пожалуйста, укажите корректные данные класса');
+        return null;
+    }
     try {
         const token = localStorage.getItem('authToken');
         const response = await axios.post(
-            `${apiUrl}/api/create-class`,
+            `${apiUrl}/api/classes`,
             {
                 user_id: userId,
-                title: classTitle
+                title: classTitle.trim()
             },
             {
                 headers: {
-                    token: token // Добавляем токен в заголовки
+                    Authorization: `Bearer ${token}`
+                    // 'Content-Type': 'application/json'
                 }
             }
         );
-        return { classId: response.data.classId, title: classTitle }; // Возвращаем classId, который приходит в ответе
+        // Возвращаем нормализованные данные
+        return {
+            id: response.data.id, // Используем стандартное поле id
+            classId: response.data.id, // Для обратной совместимости
+            title: response.data.title,
+            createdAt: response.data.createdAt // Если сервер возвращает
+        };
     } catch (error) {
-        console.error('Ошибка при создании класса:', error);
-        alert('Не удалось создать класс. Попробуйте снова.');
-        return null; // Возвращаем null в случае ошибки
+        console.error('Ошибка создания класса:', error);
+
+        // Детализированная обработка ошибок
+        const errorMessage = error.response?.data?.error || 'Не удалось создать класс. Проверьте данные и попробуйте снова.';
+
+        alert(errorMessage);
+
+        // // Автоматический logout при 401
+        // if (error.response?.status === 401) {
+        //     router.push('/login');
+        // }
+
+        return null;
     }
 }
 async function createClasses() {
@@ -155,17 +177,24 @@ function getUserID() {
 async function fetchClasses() {
     try {
         const token = localStorage.getItem('authToken');
-        const UserId1 = getUserID();
-        const response = await axios.get(`${apiUrl}/api/classes/${UserId1}`, {
-            headers: { token }
+        const userId = getUserID();
+        const response = await axios.get(`${apiUrl}/api/classes/user/${userId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+                // 'Accept': 'application/json'
+            }
         });
 
-        const classes = response.data;
+        // const classes = response.data;
         const classMenu = model1.value[0].items.find((item) => item.label === 'Классы');
-        classMenu.items = classes.map((classItem) => ({
+        classMenu.items = response.data.map((classItem) => ({
             label: classItem.title,
             icon: 'pi pi-fw pi-bookmark',
-            to: `/uikit/class/${classItem.id}/${classItem.title}`
+            to: `/uikit/class/${classItem.id}/${classItem.title}`,
+            state: {
+                classTitle: classItem.title // Дополнительные данные в маршруте
+            },
+            badge: classItem.studentsCount > 0 ? classItem.studentsCount.toString() : null
         }));
     } catch (error) {
         console.error('Ошибка при загрузке классов:', error);

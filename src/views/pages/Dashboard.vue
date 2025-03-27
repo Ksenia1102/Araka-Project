@@ -4,7 +4,7 @@ import { NodeService } from '@/service/NodeService';
 import { ProductService } from '@/service/ProductService';
 import axios from 'axios';
 import jwtDecode from 'jwt-decode';
-import { onMounted, ref, watch, computed } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 const apiUrl = import.meta.env.VITE_API_URL;
 const { getPrimary, getSurface, isDarkTheme } = useLayout();
 const products = ref(null);
@@ -33,11 +33,12 @@ onMounted(async () => {
         return;
     }
     const token = localStorage.getItem('authToken');
+    console.log(token);
     try {
         // Отправка GET запроса на сервер
         const response = await axios.get(`${apiUrl}/api/surveys1/user/${userId}`, {
             headers: {
-                token: token // Добавляем токен в заголовки
+                Authorization: `Bearer ${token}` // Стандартный формат
             }
         });
         surveys.value = response.data; // Сохраняем полученные данные в переменную
