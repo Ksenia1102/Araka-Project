@@ -47,3 +47,4 @@ app.listen(PORT, async () => {
     console.log(`🚀 Сервер запущен на http://${HOST}:${PORT}`);
     await connectDB();
 });
+ 

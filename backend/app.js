@@ -86,7 +86,7 @@ const studentRoutes = require('./routes/StudentRoutes');
 // const optionRoutes = require('./routes/OptionRoutes');
 const authRoutes = require('./routes/authRoutes');
 const errorHandler = require('./middlewares/errorHandler');
-
+const fileRoutes = require('./routes/fileRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const app = express();
 
@@ -102,5 +102,6 @@ app.use('/api/students', studentRoutes); // Добавляем новые роу
 // app.use('/api', optionRoutes); // Подключаем маршруты вариантов ответа
 app.use('/auth', authRoutes);
 app.use('/profile', profileRoutes);
+app.use('/files', fileRoutes);
 app.use(errorHandler); // Подключаем в конце!
 module.exports = app;
