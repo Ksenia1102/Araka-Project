@@ -4,7 +4,7 @@ require('dotenv').config();
 const sequelize = new Sequelize(process.env.DATABASE, process.env.DATABASE_USER, process.env.DATABASE_PASSWORD, {
     host: process.env.DATABASE_HOST,
     dialect: 'mysql',
-    logging: false // Выключаем логи
+    logging: console.log // Выключаем логи
 });
 
 async function connectDB() {

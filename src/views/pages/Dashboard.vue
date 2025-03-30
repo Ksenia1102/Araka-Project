@@ -36,12 +36,17 @@ onMounted(async () => {
     console.log(token);
     try {
         // Отправка GET запроса на сервер
-        const response = await axios.get(`${apiUrl}/api/surveys1/user/${userId}`, {
+        const response = await axios.get(`${apiUrl}/api/surveys/user/${userId}`, {
             headers: {
                 Authorization: `Bearer ${token}` // Стандартный формат
             }
         });
-        surveys.value = response.data; // Сохраняем полученные данные в переменную
+        surveys.value = response.data.map((survey) => ({
+            id: survey.id,
+            title: survey.title,
+            date: new Date(survey.createdAt).toLocaleDateString('ru-RU'),
+            questionCount: survey.questionCount
+        })); // Сохраняем полученные данные в переменную
     } catch (error) {
         console.error('Ошибка при загрузке опросов:', error);
     }

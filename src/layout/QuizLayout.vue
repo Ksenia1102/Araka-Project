@@ -90,7 +90,7 @@ const fetchClassData = async () => {
 const fetchSurveyData = async () => {
     try {
         const token = localStorage.getItem('authToken');
-        const response = await axios.get(`${apiUrl}/api/survey1/${surveyId.value}`, {
+        const response = await axios.get(`${apiUrl}/api/surveys/${surveyId.value}`, {
             headers: {
                 Authorization: `Bearer ${token}` // Стандартный формат
             }
@@ -245,7 +245,7 @@ onMounted(() => {
                                                 <li v-for="(option, index) in currentQuestion.options" :key="index" class="section-item">
                                                     <span class="option-label font-bold text-xl">{{ ['А', 'Б', 'В', 'Г'][index] }}.</span>
                                                     <div class="option-text text-xl">
-                                                        {{ option }}
+                                                        {{ option.text }}
                                                     </div>
                                                 </li>
                                             </ul>

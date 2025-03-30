@@ -16,12 +16,41 @@ Student.belongsTo(Class, { foreignKey: 'class_id' });
 User.hasMany(Survey, { foreignKey: 'user_id' });
 Survey.belongsTo(User, { foreignKey: 'user_id' });
 
-Survey.hasMany(Question, { foreignKey: 'survey_id' });
-Question.belongsTo(Survey, { foreignKey: 'survey_id' });
+// Основные ассоциации для Survey-Question-Option
+Survey.hasMany(Question, {
+    foreignKey: 'survey_id',
+    as: 'questions' // Единообразно используем нижний регистр
+});
 
-Question.hasMany(Option, { foreignKey: 'question_id' });
-Option.belongsTo(Question, { foreignKey: 'question_id' });
+Question.belongsTo(Survey, {
+    foreignKey: 'survey_id',
+    as: 'survey'
+});
 
-Question.belongsTo(Option, { as: 'correctAnswer', foreignKey: 'correct_option' });
+Question.hasMany(Option, {
+    foreignKey: 'question_id',
+    as: 'options' // Единообразно используем нижний регистр
+});
 
-module.exports = { sequelize, User, Class, Student, Survey, Question, Option };
+Option.belongsTo(Question, {
+    foreignKey: 'question_id',
+    as: 'question'
+});
+
+// Ассоциация для правильного ответа (если нужно)
+Question.belongsTo(Option, {
+    as: 'correctAnswer',
+    foreignKey: 'correct_option',
+    constraints: false // если correct_option может быть NULL
+});
+
+module.exports = {
+    sequelize,
+    User,
+    Class,
+    Student,
+    Survey,
+    Question,
+    Option
+};
+// Question.belongsTo(Option, { as: 'correctAnswer', foreignKey: 'correct_option' });

@@ -121,7 +121,7 @@ export default {
 
             // Отправляем запрос с токеном в заголовке
             axios
-                .post(`${apiUrl}/api/surveys/create`, surveyData, {
+                .post(`${apiUrl}/api/surveys`, surveyData, {
                     headers: {
                         Authorization: `Bearer ${token}` // Стандартный формат
                     }

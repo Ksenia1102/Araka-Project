@@ -1,193 +1,150 @@
 const SurveyService = require('../services/SurveyService');
-
+// const QuestionService = require('../services/QuestionService');
 class SurveyController {
-    /**
-     * Создание опроса с вопросами и вариантами ответов
-     * POST /surveys
-     * {
-     *   "user_id": 1,
-     *   "title": "Новый опрос",
-     *   "questions": [
-     *     {
-     *       "text": "Вопрос 1",
-     *       "correct_option": 0,
-     *       "options": ["Вариант 1", "Вариант 2"]
-     *     }
-     *   ]
-     * }
-     */
+    static async getSurvey(req, res) {
+        try {
+            const surveyId = parseInt(req.params.id);
+            if (isNaN(surveyId)) {
+                return res.status(400).json({ error: 'Invalid survey ID' });
+            }
+
+            const survey = await SurveyService.getSurveyById(surveyId);
+            if (!survey) {
+                return res.status(404).json({ error: 'Survey not found' });
+            }
+
+            // Форматируем ответ для фронтенда
+            const response = {
+                id: survey.id,
+                title: survey.title,
+                createdAt: survey.createdAt,
+                questions: survey.questions.map((question) => ({
+                    id: question.id,
+                    text: question.text,
+                    correct_option_id: question.correctOption, // Изменено на correct_option_id
+                    options: question.options.map((option) => ({
+                        id: option.id,
+                        text: option.text,
+                        // Добавляем isCorrect для удобства фронтенда
+                        isCorrect: option.id === question.correctOption
+                    }))
+                }))
+            };
+
+            res.json(response);
+        } catch (error) {
+            console.error('Error in getSurvey:', error);
+            res.status(500).json({
+                error: 'Internal server error',
+                details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            });
+        }
+    }
+    static async getUserSurveys(req, res) {
+        try {
+            const surveys = await SurveyService.getSurveysByUserId(req.params.user_id);
+
+            // Форматируем ответ
+            const response = surveys.map((survey) => ({
+                id: survey.id,
+                title: survey.title,
+                createdAt: survey.created_at,
+                questionCount: survey.questions ? survey.questions.length : 0
+            }));
+
+            res.json(response);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
     static async createSurvey(req, res) {
         try {
             const { user_id, title, questions } = req.body;
 
             // Валидация
-            if (!user_id || !title || !questions?.length) {
-                return res.status(400).json({ error: 'Необходимы user_id, title и вопросы' });
+            if (!user_id || !title || !Array.isArray(questions)) {
+                return res.status(400).json({ error: 'Параметры запроса некорректны' });
             }
 
-            const survey = await SurveyService.createSurvey(user_id, title, questions);
-            res.status(201).json(survey);
+            // Создание опроса через сервис
+            const survey = await SurveyService.createSurveyWithQuestions({
+                user_id,
+                title,
+                questions
+            });
+
+            res.status(201).json({
+                message: 'Опрос успешно сохранен',
+                surveyId: survey.id
+            });
         } catch (error) {
-            console.error('Ошибка создания опроса:', error);
+            console.error('Ошибка при создании опроса:', error);
+            res.status(500).json({
+                error: error.message || 'Ошибка при сохранении опроса'
+            });
+        }
+    }
+
+    static async copySurvey(req, res) {
+        try {
+            const newSurvey = await SurveyService.copySurvey(req.params.survey_id, req.user.id);
+            res.status(201).json(newSurvey);
+        } catch (error) {
             res.status(500).json({ error: error.message });
         }
     }
 
-    /**
-     * Получение опроса с вопросами и вариантами
-     * GET /surveys/:id
-     */
-    static async getSurvey(req, res) {
+    static async deleteSurvey(req, res) {
         try {
-            const survey = await SurveyService.getSurvey(req.params.id);
+            await SurveyService.deleteSurvey(req.params.survey_id);
+            res.json({ message: 'Survey deleted successfully' });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
 
-            if (!survey) {
-                return res.status(404).json({ error: 'Опрос не найден' });
+    static async updateSurvey(req, res) {
+        try {
+            const surveyId = parseInt(req.params.id);
+            if (isNaN(surveyId)) {
+                return res.status(400).json({ error: 'Invalid survey ID' });
             }
 
-            res.json({
-                id: survey.id,
-                title: survey.title,
-                questions: survey.Questions.map((q) => ({
-                    id: q.id,
-                    text: q.text,
-                    options: q.Options.map((o) => o.text),
-                    correct_option: q.correct_option
-                }))
-            });
+            const { user_id, title, questions } = req.body;
+
+            // Validate input
+            if (!user_id || !title || !Array.isArray(questions)) {
+                return res.status(400).json({
+                    error: 'Invalid request data',
+                    details: {
+                        requires: ['user_id', 'title', 'questions'],
+                        received: Object.keys(req.body)
+                    }
+                });
+            }
+
+            // Call the service
+            const updatedSurvey = await SurveyService.updateSurvey(surveyId, user_id, { title, questions });
+
+            return res.json(updatedSurvey);
         } catch (error) {
-            console.error('Ошибка получения опроса:', error);
-            res.status(500).json({ error: 'Ошибка сервера' });
+            console.error('Error updating survey:', error);
+
+            const statusCode = error.message.includes('not found') ? 404 : 500;
+
+            res.status(statusCode).json({
+                error: error.message.includes('not found') ? error.message : 'Internal server error',
+                details:
+                    process.env.NODE_ENV === 'development'
+                        ? {
+                              message: error.message,
+                              stack: error.stack
+                          }
+                        : undefined
+            });
         }
     }
 }
 
 module.exports = SurveyController;
-
-// const { Survey } = require('../models');
-
-// // 📌 Создание опроса
-// async function createSurvey(req, res) {
-//     try {
-//         const { user_id, title } = req.body;
-
-//         if (!user_id || !title) {
-//             return res.status(400).json({ message: 'user_id и title обязательны' });
-//         }
-
-//         const survey = await Survey.create({
-//             user_id,
-//             title
-//         });
-
-//         return res.status(201).json(survey);
-//     } catch (error) {
-//         console.error('Ошибка при создании опроса:', error);
-//         return res.status(500).json({ message: 'Ошибка сервера' });
-//     }
-// }
-
-// // 📌 Получение всех опросов пользователя
-// async function getSurveysByUser(req, res) {
-//     try {
-//         const { userId } = req.params;
-//         const surveys = await Survey.findAll({ where: { user_id: userId } });
-
-//         if (!surveys.length) {
-//             return res.status(404).json({ message: 'Опросы не найдены' });
-//         }
-
-//         return res.status(200).json(surveys);
-//     } catch (error) {
-//         console.error('Ошибка при получении опросов:', error);
-//         return res.status(500).json({ message: 'Ошибка сервера' });
-//     }
-// }
-
-// // 📌 Получение опроса по ID
-// async function getSurveyById(req, res) {
-//     try {
-//         const { id } = req.params;
-//         const survey = await Survey.findByPk(id);
-
-//         if (!survey) {
-//             return res.status(404).json({ message: 'Опрос не найден' });
-//         }
-
-//         return res.status(200).json(survey);
-//     } catch (error) {
-//         console.error('Ошибка при получении опроса:', error);
-//         return res.status(500).json({ message: 'Ошибка сервера' });
-//     }
-// }
-
-// // 📌 Обновление опроса
-// async function updateSurvey(req, res) {
-//     try {
-//         const { id } = req.params;
-//         const { title } = req.body;
-
-//         const survey = await Survey.findByPk(id);
-//         if (!survey) {
-//             return res.status(404).json({ message: 'Опрос не найден' });
-//         }
-
-//         survey.title = title || survey.title;
-//         await survey.save();
-
-//         return res.status(200).json(survey);
-//     } catch (error) {
-//         console.error('Ошибка при обновлении опроса:', error);
-//         return res.status(500).json({ message: 'Ошибка сервера' });
-//     }
-// }
-
-// // 📌 Удаление опроса
-// async function deleteSurvey(req, res) {
-//     try {
-//         const { id } = req.params;
-
-//         const survey = await Survey.findByPk(id);
-//         if (!survey) {
-//             return res.status(404).json({ message: 'Опрос не найден' });
-//         }
-
-//         await survey.destroy();
-
-//         return res.status(204).send();
-//     } catch (error) {
-//         console.error('Ошибка при удалении опроса:', error);
-//         return res.status(500).json({ message: 'Ошибка сервера' });
-//     }
-// }
-
-// module.exports = {
-//     createSurvey,
-//     getSurveysByUser,
-//     getSurveyById,
-//     updateSurvey,
-//     deleteSurvey
-// };
-// const SurveyService = require('../services/SurveyService');
-
-// class SurveyController {
-//     static async createSurvey(req, res) {
-//         try {
-//             const survey = await SurveyService.createSurvey(req.body.user_id, req.body.title, req.body.questions);
-//             res.status(201).json(survey);
-//         } catch (error) {
-//             res.status(500).json({ error: error.message });
-//         }
-//     }
-
-//     static async getSurvey(req, res) {
-//         try {
-//             const survey = await SurveyService.getSurvey(req.params.surveyId);
-//             survey ? res.json(survey) : res.status(404).json({ error: 'Survey not found' });
-//         } catch (error) {
-//             res.status(500).json({ error: error.message });
-//         }
-//     }
-// }
-
-// module.exports = SurveyController;

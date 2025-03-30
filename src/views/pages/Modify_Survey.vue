@@ -112,13 +112,14 @@ export default {
                 user_id: this.userId,
                 title: this.surveyTitle.trim(),
                 questions: this.questions.map((q, index) => ({
+                    id: q.id,
                     text: q.text.trim() || `Вопрос ${index + 1}`,
                     correct_option: q.selectedOption,
-                    options: q.options.map((opt) => opt.trim())
+                    options: q.options.map((opt) => opt.trim()).filter((opt) => opt !== '')
                 }))
             };
 
-            const invalidQuestions = surveyData.questions.filter((q) => !q.text || q.correct_option === null || q.options.some((opt) => !opt));
+            const invalidQuestions = surveyData.questions.filter((q) => !q.text || q.correct_option_id === null || q.options.some((opt) => !opt));
             if (invalidQuestions.length > 0) {
                 this.responseMessage = 'Убедитесь, что все вопросы заполнены и у каждого есть правильный вариант.';
                 this.responseClass = 'error';
@@ -128,18 +129,18 @@ export default {
             const token = localStorage.getItem('authToken');
             const surveyId = this.$route.query.id; // Получаем ID опроса из маршрута (если есть)
 
-            // Если surveyId существует, то редактируем опрос
+            // Определяем метод и URL в зависимости от наличия surveyId
+            const method = surveyId ? 'put' : 'post';
             const url = surveyId
-                ? `${apiUrl}/api/surveys/update/${surveyId}` // Используем PUT запрос
-                : `${apiUrl}/api/surveys/create`; // Если ID нет, то создаем новый опрос
+                ? `${apiUrl}/api/surveys/${surveyId}` // Для редактирования
+                : `${apiUrl}/api/surveys`; // Для создания
 
-            // Отправляем запрос с токеном в заголовке
-            axios
-                .post(url, surveyData, {
-                    headers: {
-                        Authorization: `Bearer ${token}` // Стандартный формат
-                    }
-                })
+            // Используем axios[method] вместо жесткого .post
+            axios[method](url, surveyData, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
                 .then((response) => {
                     console.log('Ответ сервера:', response.data);
                     this.responseMessage = surveyId ? 'Опрос успешно обновлён.' : 'Опрос успешно сохранён.';
@@ -175,12 +176,17 @@ export default {
                 // Устанавливаем заголовок опроса
                 this.surveyTitle = survey.title || 'Без названия';
 
-                // Устанавливаем вопросы опроса
-                this.questions = survey.questions.map((q, index) => ({
-                    text: q.text || `Вопрос ${index + 1}`,
-                    options: q.options.length > 0 ? q.options : ['', '', '', ''], // Обеспечиваем 4 варианта
-                    selectedOption: q.correct_option !== undefined ? q.correct_option : null
-                }));
+                this.questions = survey.questions.map((question) => {
+                    // Проверяем и форматируем варианты ответов
+                    const options = question.options && question.options.length > 0 ? question.options.map((opt) => opt.text || '') : ['', '', '', ''];
+                    console.log(options);
+                    return {
+                        id: question.id, // Сохраняем ID вопроса
+                        text: question.text || 'Без текста',
+                        options: options,
+                        selectedOption: question.correct_option_id !== undefined ? question.correct_option_id : null
+                    };
+                });
 
                 // Если вопросов нет, создаём один новый
                 if (this.questions.length === 0) {

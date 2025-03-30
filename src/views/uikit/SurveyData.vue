@@ -64,24 +64,43 @@ const fetchClasses = async () => {
 
 const copySurvey = async () => {
     try {
-        const token = localStorage.getItem('authToken'); // Получаем токен из localStorage
+        const surveyId = route.params.id;
+
+        // Получаем токен аутентификации
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            alert('Требуется авторизация. Пожалуйста, войдите.');
+            router.push({ name: 'login' });
+            return;
+        }
+
+        // Отправляем POST запрос на сервер для копирования опроса
         const response = await axios.post(
             `${apiUrl}/api/surveys/${surveyId}/copy`,
-
+            {}, // Пустое тело запроса
             {
                 headers: {
-                    token: token // Отправляем токен авторизации
+                    Authorization: `Bearer ${token}` // Стандартный формат, как в delete
                 }
             }
         );
-
-        // После успешного копирования перенаправляем пользователя на страницу нового опроса
-        const newSurvey = response.data;
-        alert(`Опрос "${newSurvey.survey_name}" успешно скопирован!`);
-        router.push({ name: 'dashboard' }); // Перенаправляем на страницу нового опроса
     } catch (error) {
-        console.error('Ошибка при копировании опроса:', error);
-        alert('Произошла ошибка при копировании опроса.');
+        console.error('Детали ошибки:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status
+        });
+
+        if (error.response?.status === 401) {
+            alert('Сессия истекла. Пожалуйста, войдите заново.');
+            this.$router.push({ name: 'login' });
+        } else if (error.response?.status === 500) {
+            alert(`Ошибка сервера: ${error.response.data?.error || 'Попробуйте позже'}`);
+        } else {
+            alert(`Ошибка: ${error.message || 'Неизвестная ошибка'}`);
+        }
+    } finally {
+        this.loading = false;
     }
 };
 
@@ -119,32 +138,44 @@ const deleteSurvey = async () => {
 onMounted(async () => {
     try {
         fetchClasses();
-        // Отправка GET запроса для получения данных о опросе
-        // const surveyResponse = await axios.get('http://localhost:3000/api/questions/1'); // Здесь замените на нужный URL
-        // surveyId.value = surveyResponse.data.id; // Предположим, что ответ содержит поле id опроса
-
-        // Теперь отправляем запрос на получение вопросов для этого опроса
+        const surveyId = route.params.id;
         const token = localStorage.getItem('authToken');
-
-        const questionsResponse = await axios.get(`${apiUrl}/api/questions/${surveyId}`, {
+        const response = await axios.get(`${apiUrl}/api/surveys/${surveyId}`, {
             headers: {
-                Authorization: `Bearer ${token}` // Стандартный формат
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            params: {
+                // Добавляем timestamp для избежания кеширования
+                t: Date.now()
             }
         });
-        const data = questionsResponse.data;
-        surveyName.value = data.survey_name; // Название опроса
-        lastModified.value = data.survey_date; // Дата опроса
-        questions.value = data.questions; // Список вопросов
 
-        // Преобразуем строку в объект Date
-        formattedDate.value = new Date(lastModified.value).toLocaleDateString('ru-RU', {
-            // weekday: 'long', // День недели (например, понедельник)
-            year: 'numeric', // Год
-            month: 'long', // Месяц (например, ноябрь)
-            day: 'numeric' // Число
+        if (response.status !== 200) {
+            throw new Error(`Ошибка сервера: ${response.status}`);
+        }
+
+        const surveyData = response.data;
+
+        // Проверяем структуру ответа
+        if (!surveyData || !surveyData.title || !surveyData.questions) {
+            throw new Error('Неверный формат данных опроса');
+        }
+
+        // Сохраняем данные
+        surveyName.value = surveyData.title;
+        lastModified.value = surveyData.createdAt;
+        questions.value = surveyData.questions;
+        console.log(surveyData.questions);
+        // Форматируем дату
+        formattedDate.value = new Date(surveyData.createdAt).toLocaleDateString('ru-RU', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
         });
     } catch (error) {
         console.error('Ошибка загрузки данных:', error);
+        // errorMessage.value = 'Не удалось загрузить данные опроса';
     }
 });
 
@@ -275,14 +306,14 @@ function openNewTab() {
                                     <div class="flex flex-row md:flex-col justify-between items-start gap-2">
                                         <div>
                                             <!-- Выводим текст вопроса -->
-                                            <div class="text-lg font-medium mt-2">{{ item.question_text }}</div>
+                                            <div class="text-lg font-medium mt-2">{{ item.text }}</div>
                                         </div>
                                     </div>
                                     <div class="flex flex-col md:items-end gap-8">
                                         <div class="flex flex-row-reverse md:flex-row gap-2">
                                             <!-- Для каждого варианта ответа выводим кнопку -->
                                             <Button v-for="(option, optionIndex) in item.options" :key="option.option_id" :outlined="true" :severity="optionIndex === item.correct_option_id ? 'success' : 'secondary'">
-                                                {{ option.option_text }}
+                                                {{ option.text }}
                                             </Button>
                                         </div>
                                     </div>
