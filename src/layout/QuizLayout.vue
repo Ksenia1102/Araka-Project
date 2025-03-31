@@ -6,19 +6,23 @@ const quizData = ref({
     questions: [
         {
             text: 'Какое животное символизирует мудрость?',
-            options: ['Со fbg fg g gf gf gf g  gfggbfggfbgfbgff f fgfgfg g fgfgfgb g fg gfgfgfgfggf fgfgbfgf  fва', 'Кошка', 'Лиса', 'Волк']
+            options: ['Со fbg fg g gf gf gf g  gfggbfggfbgfbgff f fgfgfg g fgfgfgb g fg gfgfgfgfggf fgfgbfgf  fва', 'Кошка', 'Лиса', 'Волк'],
+            imageUrl: '/public/demo/images/tt.jpg'
         },
         {
             text: 'Какая планета самая большая в Солнечной системе?',
-            options: ['Земля', 'Юпитер', 'Сатурн', 'Марс']
+            options: ['Земля', 'Юпитер', 'Сатурн', 'Марс'],
+            imageUrl: '/public/demo/images/tt.jpg'
         },
         {
             text: 'Как называется столица Франции?',
-            options: ['Лондон', 'Берлин', 'Париж', 'Рим']
+            options: ['Лондон', 'Берлин', 'Париж', 'Рим'],
+            imageUrl: null
         },
         {
             text: 'Кто написал "Война и мир"?',
-            options: ['Толстой', 'Достоевский', 'Чехов', 'Пушкин']
+            options: ['Толстой', 'Достоевский', 'Чехов', 'Пушкин'],
+            imageUrl: '/public/demo/images/tt.jpg'
         }
     ]
 });
@@ -160,11 +164,18 @@ onMounted(() => {
                 <div v-else>
                     <div class="flex flex-col md:flex-row">
                         <div>
-                            <div class="card" style="height: 80vh; width: 120vh; margin-right: 30px">
+                            <div class="card" style="min-height: 80vh; width: 120vh; margin-right: 30px">
                                 <div style="height: 100%; display: flex; flex-direction: column">
                                     <span class="font-semibold text-xl">Вопрос {{ currentQuestionIndex + 1 }} / {{ quizData.questions.length }}</span>
                                     <div class="centered-content">
-                                        <h2 class="layout-menu-category font-bold mb-12 text-max">{{ currentQuestion.text }}</h2>
+                                        <h2 class="layout-menu-category font-bold text-max">{{ currentQuestion.text }}</h2>
+                                        <!-- Контейнер изображения: скрывается, если нет картинки -->
+                                        <div v-if="currentQuestion.imageUrl" class="image-preview">
+                                            <img :src="currentQuestion.imageUrl" alt="Загруженное изображение" class="uploaded-image" />
+                                        </div>
+
+                                        <!-- Пустой блок-заглушка для сохранения высоты -->
+                                        <div v-else class="image-placeholder"></div>
                                         <div>
                                             <ul class="sections-list">
                                                 <li v-for="(option, index) in currentQuestion.options" :key="index" class="section-item">
@@ -268,22 +279,44 @@ onMounted(() => {
     margin: 30px 3.5rem;
     padding: 0 1.5rem;
 }
-.text-max {
-    font-size: 2.2em;
-    text-align: center;
+
+/* Контейнер для изображения */
+.image-preview {
+    width: 100%;
+    max-width: 600px;
+    height: 40vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    margin: 1rem auto;
 }
+/* .image-placeholder {
+    height: 30vh;
+    width: 100%;
+} */
+
+/* Стил для изображения */
+.uploaded-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+    border: 0.5px solid #e9e9e9;
+}
+
 .centered-content {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     height: 100%;
-    margin-top: 15vh;
 }
+
 .sections-list {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* Две колонки */
-    gap: 1rem; /* Отступы между элементами */
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
     padding: 1rem;
 }
 
@@ -293,12 +326,45 @@ onMounted(() => {
     gap: 1rem;
     padding: 1rem;
     background-color: #f9f9f9;
-    border-radius: 5px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
 }
+
+.section-item:hover {
+    background-color: #e0f7ff;
+}
+
 .action-buttons {
     margin-top: 1rem;
     display: flex;
     justify-content: space-between;
     width: 100%;
+}
+
+.card {
+    max-width: 120vh;
+    width: 100%;
+}
+
+.text-max {
+    font-size: 2.2em;
+    text-align: center;
+}
+
+.sidebar {
+    width: 20rem;
+    height: 80vh;
+    overflow-y: auto;
+    border-radius: var(--content-border-radius);
+    padding: 0 1.5rem;
+}
+
+.question-number {
+    padding: 4px 8px;
+    font-weight: 400;
+    color: white;
+    background-color: #0ea5e9;
+    border-radius: 3px;
 }
 </style>

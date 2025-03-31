@@ -131,6 +131,15 @@ export default {
                                     <div class="flex flex-row md:flex-col justify-between items-start gap-2">
                                         <div>
                                             <div class="text-lg font-medium mt-2">Где находится ухо у кузнечика?</div>
+                                            <div class="p-fileupload-file-list">
+                                                <div class="demo-image">
+                                                    <img :src="imageUrl || '/public/demo/images/notfound.png'" width="50" />
+                                                    <div style="margin-left: 10px">
+                                                        <p>{{ imageName || 'Нет изображения' }}</p>
+                                                        <span>{{ imageSize || '0 КБ' }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="flex flex-col md:items-end gap-8">
@@ -180,5 +189,9 @@ export default {
 .selected {
     font-weight: bold;
     color: #0ea5e9;
+}
+.demo-image {
+    display: flex;
+    align-items: center;
 }
 </style>
