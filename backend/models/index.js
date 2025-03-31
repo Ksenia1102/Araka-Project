@@ -43,6 +43,7 @@ Question.belongsTo(Option, {
     foreignKey: 'correct_option',
     constraints: false // если correct_option может быть NULL
 });
+// Question.belongsTo(Option, { as: 'correctAnswer', foreignKey: 'correct_option' });
 
 module.exports = {
     sequelize,
@@ -53,4 +54,3 @@ module.exports = {
     Question,
     Option
 };
-// Question.belongsTo(Option, { as: 'correctAnswer', foreignKey: 'correct_option' });
