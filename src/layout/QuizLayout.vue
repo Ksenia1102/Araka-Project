@@ -239,7 +239,7 @@ onMounted(() => {
                                 <div style="height: 100%; display: flex; flex-direction: column">
                                     <span class="font-semibold text-xl">Вопрос {{ currentQuestionIndex + 1 }} / {{ quizData.questions.length }}</span>
                                     <div class="centered-content">
-                                        <h2 class="layout-menu-category font-bold mb-12 text-max">{{ currentQuestion.text }}</h2>
+                                        <h2 v-breakwords:[20]="currentQuestion.text" class="layout-menu-category font-bold mb-12 text-max"></h2>
                                         <div>
                                             <ul class="sections-list">
                                                 <li v-for="(option, index) in currentQuestion.options" :key="index" class="section-item">

@@ -175,7 +175,7 @@ export default {
             <!-- <input v-model="currentQuestionText" placeholder="Введите текст вопроса" class="question-input" @input="updateQuestionText" /> -->
             <div class="flex items-center">
                 <span class="question-number">{{ currentQuestionIndex !== null ? currentQuestionIndex + 1 : '' }}</span>
-                <input v-model="currentQuestionText" placeholder="Введите текст вопроса" class="question-input" @input="updateQuestionText" />
+                <input v-maxlength="300" v-model="currentQuestionText" placeholder="Введите текст вопроса" class="question-input" @input="updateQuestionText" />
             </div>
             <!-- Событие для обновления текста вопроса -->
 
@@ -183,7 +183,7 @@ export default {
             <ul>
                 <li v-for="(option, index) in currentQuestion.options" :key="index" :class="{ selected: currentQuestion.selectedOption === index }" @click="selectOption(index)" class="option">
                     <span class="option-label">{{ ['А', 'Б', 'В', 'Г'][index] }}.</span>
-                    <input v-model="currentQuestion.options[index]" placeholder="Введите текст ответа" class="option-input" />
+                    <input v-maxlength="300" v-model="currentQuestion.options[index]" placeholder="Введите текст ответа" class="option-input" />
                 </li>
             </ul>
         </div>

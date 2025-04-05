@@ -346,7 +346,7 @@ function proceedWithDeletion() {
                 <div class="form-container">
                     <!-- Первая колонка -->
                     <div class="form-column">
-                        <Textarea rows="23" style="width: 100%" v-model="studentInput" placeholder="Введите имена и фамилии учеников..." @input="generatePreview" />
+                        <Textarea v-linelimit="50" rows="23" style="width: 100%" v-model="studentInput" placeholder="Введите имена и фамилии учеников..." @input="generatePreview" />
                     </div>
 
                     <!-- Вторая колонка - предпросмотр -->
