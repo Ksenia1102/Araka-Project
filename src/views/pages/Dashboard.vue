@@ -44,9 +44,10 @@ onMounted(async () => {
         surveys.value = response.data.map((survey) => ({
             id: survey.id,
             title: survey.title,
-            date: new Date(survey.createdAt).toLocaleDateString('ru-RU'),
+            date: survey.createdAt,
             questionCount: survey.questionCount
         })); // Сохраняем полученные данные в переменную
+        console.log(surveys.value);
     } catch (error) {
         console.error('Ошибка при загрузке опросов:', error);
     }
@@ -241,7 +242,7 @@ export default {
             <Column field="created_at" header="Дата создания">
                 <template #body="slotProps">
                     <!-- Форматируем дату перед выводом -->
-                    <span>{{ formatDate(slotProps.data.created_at) }}</span>
+                    <span>{{ formatDate(slotProps.data.date) }}</span>
                 </template>
             </Column>
 

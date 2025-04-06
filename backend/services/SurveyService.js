@@ -120,7 +120,7 @@ class SurveyService {
         });
     }
 
-    static async copySurvey(surveyId, userId) {
+    static async copySurvey(surveyId) {
         return await sequelize.transaction(async (t) => {
             const originalSurvey = await Survey.findByPk(surveyId, { transaction: t });
             if (!originalSurvey) throw new Error('Original survey not found');
@@ -129,7 +129,7 @@ class SurveyService {
             const newSurvey = await Survey.create(
                 {
                     title: `${originalSurvey.title} (Копия)`,
-                    user_id: userId
+                    user_id: originalSurvey.user_id
                 },
                 { transaction: t }
             );

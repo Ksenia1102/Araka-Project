@@ -99,8 +99,6 @@ const copySurvey = async () => {
         } else {
             alert(`Ошибка: ${error.message || 'Неизвестная ошибка'}`);
         }
-    } finally {
-        this.loading = false;
     }
 };
 
