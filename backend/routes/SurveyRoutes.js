@@ -5,7 +5,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
 
 router.use(authMiddleware);
 
-router.get('/user/:user_id', SurveyController.getUserSurveys);
+router.get('/user/my', SurveyController.getUserSurveys);
 router.get('/:id', SurveyController.getSurvey);
 router.post('/', SurveyController.createSurvey);
 router.put('/:id', SurveyController.updateSurvey);

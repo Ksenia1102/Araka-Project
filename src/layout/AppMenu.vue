@@ -1,7 +1,6 @@
 <!-- меню!!! -->
 <script setup>
 import axios from 'axios';
-import jwtDecode from 'jwt-decode';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import AppMenuItem from './AppMenuItem.vue';
@@ -9,30 +8,6 @@ const apiUrl = import.meta.env.VITE_API_URL;
 const router = useRouter();
 const display = ref(false);
 
-function getUserIdFromToken() {
-    // Получаем токен из localStorage
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-        console.error('Токен не найден');
-        return null;
-    }
-
-    try {
-        // Декодируем токен
-        const decoded = jwtDecode(token);
-
-        // Проверка на наличие id в декодированном токене
-        if (decoded && decoded.id) {
-            return decoded.id;
-        } else {
-            console.error('Токен не содержит поля id');
-            return null;
-        }
-    } catch (error) {
-        console.error('Ошибка декодирования токена:', error);
-        return null;
-    }
-}
 function open() {
     display.value = true;
 }
@@ -69,9 +44,9 @@ const model1 = ref([
 // Поля для ввода названий новых классов
 const newClassInputs = ref(Array(8).fill('')); // Поля для ввода новых классов
 
-async function saveClass(userId, classTitle) {
+async function saveClass(classTitle) {
     // Валидация входных данных
-    if (!userId || !classTitle?.trim()) {
+    if (!classTitle?.trim()) {
         alert('Пожалуйста, укажите корректные данные класса');
         return null;
     }
@@ -80,7 +55,6 @@ async function saveClass(userId, classTitle) {
         const response = await axios.post(
             `${apiUrl}/api/classes`,
             {
-                user_id: userId,
                 title: classTitle.trim()
             },
             {
@@ -92,10 +66,8 @@ async function saveClass(userId, classTitle) {
         );
         // Возвращаем нормализованные данные
         return {
-            id: response.data.id, // Используем стандартное поле id
-            classId: response.data.id, // Для обратной совместимости
-            title: response.data.title,
-            createdAt: response.data.createdAt // Если сервер возвращает
+            classId: response.data.classId, // Для обратной совместимости
+            title: response.data.title
         };
     } catch (error) {
         console.error('Ошибка создания класса:', error);
@@ -114,7 +86,7 @@ async function saveClass(userId, classTitle) {
     }
 }
 async function createClasses() {
-    const userId = getUserIdFromToken(); // Пример ID пользователя (замените на динамическое значение, если доступно)
+    // const userId = getUserIdFromToken(); // Пример ID пользователя (замените на динамическое значение, если доступно)
     // Получить список новых классов из введенных данных
     const newClasses = newClassInputs.value.filter((name) => name.trim() !== ''); // Удаляем пустые строки
     if (newClasses.length > 0) {
@@ -122,13 +94,14 @@ async function createClasses() {
         for (const name of newClasses) {
             try {
                 // Сохраняем класс на сервере и получаем его ID
-                const { classId, title } = await saveClass(userId, name);
+                const { classId, title } = await saveClass(name);
+                console.log(classId);
                 if (classId) {
                     // Добавляем класс в меню с использованием classId
                     classMenu.items.push({
                         label: title,
                         icon: 'pi pi-fw pi-bookmark',
-                        to: `/uikit/class/${classId}/${title}` // Путь с динамическим ID
+                        to: `/uikit/class/${classId.id}/${title}` // Путь с динамическим ID
                     });
                 }
             } catch (error) {
@@ -148,37 +121,11 @@ async function createClasses() {
     }
 }
 
-function getUserID() {
-    const token = localStorage.getItem('authToken'); // Извлекаем токен из localStorage
-    if (!token) {
-        console.error('Пользователь не авторизован');
-        this.$router.push({ name: 'login' }); // Перенаправление на страницу входа
-        return;
-    }
-
-    try {
-        // Используем jwt-decode для извлечения данных из токена
-        const decoded = jwtDecode(token);
-        if (decoded && decoded.id) {
-            return decoded.id; // Устанавливаем userId из токена
-        } else {
-            throw new Error('ID пользователя отсутствует в токене');
-        }
-    } catch (err) {
-        console.error('Ошибка декодирования токена:', err);
-        this.$router.push({ name: 'login' }); // Перенаправление на страницу входа
-    }
-
-    if (this.questions.length === 0) {
-        this.addQuestion();
-    }
-}
-
 async function fetchClasses() {
     try {
         const token = localStorage.getItem('authToken');
-        const userId = getUserID();
-        const response = await axios.get(`${apiUrl}/api/classes/user/${userId}`, {
+        // const userId = getUserID();
+        const response = await axios.get(`${apiUrl}/api/classes/user/my`, {
             headers: {
                 Authorization: `Bearer ${token}`
                 // 'Accept': 'application/json'
@@ -187,10 +134,11 @@ async function fetchClasses() {
 
         // const classes = response.data;
         const classMenu = model1.value[0].items.find((item) => item.label === 'Классы');
+        console.log(response.data[5].id);
         classMenu.items = response.data.map((classItem) => ({
             label: classItem.title,
             icon: 'pi pi-fw pi-bookmark',
-            to: `/uikit/class/${classItem.id}/${classItem.title}`,
+            to: `/uikit/class/${response.data[5].id}/${classItem.title}`,
             state: {
                 classTitle: classItem.title // Дополнительные данные в маршруте
             },

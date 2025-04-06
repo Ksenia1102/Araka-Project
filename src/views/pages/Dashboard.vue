@@ -3,7 +3,6 @@ import { useLayout } from '@/layout/composables/layout';
 import { NodeService } from '@/service/NodeService';
 import { ProductService } from '@/service/ProductService';
 import axios from 'axios';
-import jwtDecode from 'jwt-decode';
 import { computed, onMounted, ref, watch } from 'vue';
 const apiUrl = import.meta.env.VITE_API_URL;
 const { getPrimary, getSurface, isDarkTheme } = useLayout();
@@ -14,29 +13,29 @@ const treeValue = ref(null);
 const treeTableValue = ref(null);
 const surveys = ref([]); // Это будет хранить список опросов
 const searchQuery = ref(''); // Введённый текст для поиска
-function getUserIdFromToken() {
-    const token = localStorage.getItem('authToken'); // Или другой способ получения токена
-    if (!token) return null;
-    try {
-        const decoded = jwtDecode(token);
-        return decoded.id; // Зависит от структуры вашего токена
-    } catch (error) {
-        console.error('Ошибка декодирования токена:', error);
-        return null;
-    }
-}
+// function getUserIdFromToken() {
+//     const token = localStorage.getItem('authToken'); // Или другой способ получения токена
+//     if (!token) return null;
+//     try {
+//         const decoded = jwtDecode(token);
+//         return decoded.id; // Зависит от структуры вашего токена
+//     } catch (error) {
+//         console.error('Ошибка декодирования токена:', error);
+//         return null;
+//     }
+// }
 
 onMounted(async () => {
-    const userId = getUserIdFromToken();
-    if (!userId) {
-        console.error('ID пользователя не найден.');
-        return;
-    }
+    // const userId = getUserIdFromToken();
+    // if (!userId) {
+    //     console.error('ID пользователя не найден.');
+    //     return;
+    // }
     const token = localStorage.getItem('authToken');
     console.log(token);
     try {
         // Отправка GET запроса на сервер
-        const response = await axios.get(`${apiUrl}/api/surveys/user/${userId}`, {
+        const response = await axios.get(`${apiUrl}/api/surveys/user/my`, {
             headers: {
                 Authorization: `Bearer ${token}` // Стандартный формат
             }

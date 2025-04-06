@@ -111,6 +111,7 @@ function generatePreview() {
 
 async function addStudentsToTable() {
     const classId = route.params.classId;
+    console.log('classId:', route.params); // Логируем значение classId
     const studentsToAdd = studentPreview.value.map((student) => ({
         name: `${student.firstName} ${student.lastName}`
     }));

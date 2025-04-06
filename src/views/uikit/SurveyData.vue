@@ -1,7 +1,6 @@
 <script setup>
 import { ProductService } from '@/service/ProductService';
 import axios from 'axios';
-import jwtDecode from 'jwt-decode';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 const apiUrl = import.meta.env.VITE_API_URL;
@@ -20,38 +19,11 @@ const lastModified = ref('');
 const formattedDate = ref('');
 // Пример ID опроса. Можно заменить на динамическое значение.
 
-function getUserID() {
-    const token = localStorage.getItem('authToken'); // Извлекаем токен из localStorage
-    if (!token) {
-        console.error('Пользователь не авторизован');
-        this.$router.push({ name: 'login' }); // Перенаправление на страницу входа
-        return;
-    }
-
-    try {
-        // Используем jwt-decode для извлечения данных из токена
-        const decoded = jwtDecode(token);
-        if (decoded && decoded.id) {
-            return decoded.id; // Устанавливаем userId из токена
-        } else {
-            throw new Error('ID пользователя отсутствует в токене');
-        }
-    } catch (err) {
-        console.error('Ошибка декодирования токена:', err);
-        this.$router.push({ name: 'login' }); // Перенаправление на страницу входа
-    }
-
-    if (this.questions.length === 0) {
-        this.addQuestion();
-    }
-}
-
 // Функция загрузки классов
 const fetchClasses = async () => {
     try {
         const token = localStorage.getItem('authToken'); // Получаем токен авторизации
-        const UserId1 = getUserID();
-        const response = await axios.get(`${apiUrl}/api/classes/user/${UserId1}`, {
+        const response = await axios.get(`${apiUrl}/api/classes/user/my`, {
             headers: {
                 Authorization: `Bearer ${token}` // Стандартный формат
             }

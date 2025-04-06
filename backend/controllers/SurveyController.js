@@ -42,7 +42,7 @@ class SurveyController {
     }
     static async getUserSurveys(req, res) {
         try {
-            const surveys = await SurveyService.getSurveysByUserId(req.params.user_id);
+            const surveys = await SurveyService.getSurveysByUserId(req.user.id);
 
             // Форматируем ответ
             const response = surveys.map((survey) => ({

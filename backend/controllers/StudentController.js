@@ -10,10 +10,13 @@ class StudentController {
                 return res.status(400).json({ error: 'Требуется class_id и список студентов' });
             }
 
+            // Логируем входящие данные
+            console.log('Получены данные для добавления студентов:', { class_id, students });
+
             await StudentService.addStudents(class_id, students);
             res.status(201).json({ message: 'Студенты успешно добавлены' });
         } catch (error) {
-            console.error('Ошибка добавления студентов:', error);
+            console.error('Ошибка при добавлении студентов:', error);
             res.status(500).json({ error: error.message });
         }
     }

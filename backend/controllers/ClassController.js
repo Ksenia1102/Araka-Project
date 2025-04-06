@@ -3,9 +3,11 @@ const ClassService = require('../services/ClassService');
 class ClassController {
     static async create(req, res) {
         try {
-            const { user_id, title } = req.body;
-            const classId = await ClassService.createClass(user_id, title);
-            res.status(201).json({ classId });
+            const { title } = req.body;
+            const classId = await ClassService.createClass(req.user.id, title);
+            console.log({ classId, title });
+            res.status(201).json({ classId, title });
+            return {};
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
@@ -13,7 +15,7 @@ class ClassController {
 
     static async getByUser(req, res) {
         try {
-            const classes = await ClassService.getClassesByUser(req.params.userId);
+            const classes = await ClassService.getClassesByUser(req.user.id);
             res.json(classes);
         } catch (error) {
             res.status(500).json({ error: error.message });
