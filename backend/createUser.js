@@ -14,7 +14,8 @@ async function createUser() {
             login: 'john_doe',
             password: 'password123',
             name: 'John',
-            surname: 'Doe'
+            surname: 'Doe',
+            email: 'is@example.ru'
         });
 
         console.log('Пользователь создан:', user);
