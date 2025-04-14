@@ -43,7 +43,7 @@ function validatePassword(password) {
         passwordErrors.push('Хотя бы одна цифра');
     }
     
-    if (!/[a-z]/.test(password)) {
+    if (!/[a-zа-я]/.test(password)) {
         passwordErrors.push('Хотя бы одна строчная буква');
     }
     
