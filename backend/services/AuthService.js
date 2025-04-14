@@ -23,47 +23,78 @@ class AuthService {
         });
     }
 
+    static validatePassword(password) {
+        const errors = [];
+        
+        if (password.length < 8) {
+            errors.push('Пароль должен содержать минимум 8 символов');
+        }
+        
+        if (!/\d/.test(password)) {
+            errors.push('Пароль должен содержать хотя бы одну цифру');
+        }
+        
+        if (!/[a-z]/.test(password)) {
+            errors.push('Пароль должен содержать хотя бы одну строчную букву');
+        }
+        
+        if (!/[A-Z]/.test(password)) {
+            errors.push('Пароль должен содержать хотя бы одну заглавную букву');
+        }
+        
+        if (errors.length > 0) {
+            throw new Error(errors.join(', '));
+        }
+    }
+
     static async register(login, email, password) {
-        if (!password) throw new Error('Пароль обязателен');
-
-        // Проверяем, не занят ли email или логин
-        const existingUser = await User.findOne({
-            where: {
-                [Op.or]: [{ login }, { email }]
-            }
-        });
-        console.log(existingUser);
-        if (existingUser) throw new Error('Пользователь с таким логином или email уже существует');
-
-        // Генерируем код и хешируем его
-        const verificationCode = this.generateVerificationCode();
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-        const hashedCode = await bcrypt.hash(verificationCode, salt);
-
-        // Создаём пользователя
-        const user = await User.create({
-            login,
-            email,
-            password: hashedPassword,
-            verificationCode: hashedCode,
-            isVerified: false // Добавляем флаг верификации
-        });
-
-        // Отправляем письмо с кодом
-        const transporter = this.getTransporter();
-        await transporter.sendMail({
-            from: `"Ваш сервис" <${process.env.EMAIL_USER}>`,
-            to: email,
-            subject: 'Код подтверждения регистрации',
-            html: `
-                <h2>Добро пожаловать!</h2>
-                <p>Ваш код подтверждения: <strong>${verificationCode}</strong></p>
-                <p>Используйте его для активации аккаунта.</p>
-            `
-        });
-
-        return user;
+        try {
+            if (!password) throw new Error('Пароль обязателен');
+            
+            this.validatePassword(password);
+    
+            // Проверяем, не занят ли email или логин
+            const existingUser = await User.findOne({
+                where: {
+                    [Op.or]: [{ login }, { email }]
+                }
+            });
+            
+            if (existingUser) throw new Error('Пользователь с таким логином или email уже существует');
+    
+            // Генерируем код и хешируем его
+            const verificationCode = this.generateVerificationCode();
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(password, salt);
+            const hashedCode = await bcrypt.hash(verificationCode, salt);
+    
+            // Создаём пользователя
+            const user = await User.create({
+                login,
+                email,
+                password: hashedPassword,
+                verificationCode: hashedCode,
+                isVerified: false
+            });
+    
+            // Отправляем письмо с кодом
+            const transporter = this.getTransporter();
+            await transporter.sendMail({
+                from: `"Ваш сервис" <${process.env.EMAIL_USER}>`,
+                to: email,
+                subject: 'Код подтверждения регистрации',
+                html: `
+                    <h2>Добро пожаловать!</h2>
+                    <p>Ваш код подтверждения: <strong>${verificationCode}</strong></p>
+                    <p>Используйте его для активации аккаунта.</p>
+                `
+            });
+    
+            return user;
+        } catch (error) {
+            console.error('Ошибка при регистрации:', error.message);
+            throw error; // Перебрасываем оригинальную ошибку
+        }
     }
     // Вход пользователя
     static async login(loginOrEmail, password) {
@@ -162,6 +193,11 @@ class AuthService {
     }
 
     static async resetPassword(email, newPassword) {
+        // Проверка сложности нового пароля
+        if (!this.validatePassword(newPassword)) {
+            throw new Error('Пароль должен содержать минимум 8 символов, включая цифры, заглавные и строчные буквы');
+        }
+    
         const user = await User.findOne({ where: { email } });
         if (!user) throw new Error('Пользователь не найден');
 
