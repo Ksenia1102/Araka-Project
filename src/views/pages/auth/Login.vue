@@ -28,6 +28,11 @@ function goToRegistration() {
     router.push({ name: 'registration' });
 }
 
+// Функция для перехода на страницу регистрации
+function goToCode() {
+    router.push({ name: 'code' });
+}
+
 // Функция для входа пользователя
 async function loginUser() {
     errors.value.loginOrEmail = '';
@@ -36,7 +41,7 @@ async function loginUser() {
 
     // Проверка на пустые поля
     if (!loginOrEmail.value) {
-        errors.value.login = 'Пожалуйста, заполните логин';
+        errors.value.loginOrEmail = 'Пожалуйста, заполните логин';
     }
     if (!password.value) {
         errors.value.password = 'Пожалуйста, заполните пароль';
@@ -48,7 +53,6 @@ async function loginUser() {
     }
 
     try {
-        // Отправляем POST-запрос на сервер с логином и паролем
         const response = await axios.post(
             `${apiUrl}/auth/login`, // Используем правильный URL для вашего API
             {
@@ -57,9 +61,6 @@ async function loginUser() {
             }
         );
 
-        // Логируем весь ответ от сервера
-
-        // Сохраняем токен в localStorage
         const token = response.data.token;
         localStorage.setItem('authToken', token);
         router.push({ name: 'dashboard' });
@@ -189,10 +190,10 @@ function goBack() {
                         <Password id="password1" v-model="password" placeholder="Пароль" :toggleMask="true" class="mb-4" fluid :feedback="false"></Password>
                         <p v-if="serverError" class="text-red-500 text-sm mb-4">{{ serverError }}</p>
                         <Button :to="{ name: 'registration' }" label="Нет аккаунта" class="w-full" severity="secondary" text @click="goToRegistration" />
+                        <Button :to="{ name: 'registration' }" label="Подвтердить почту" class="w-full" severity="secondary" text @click="goToCode" />
                         <Button label="Войти" class="w-full" @click="loginUser" severity="info"></Button>
                         <Button label="Забыли пароль?" class="w-full" @click="isPasswordReset = true" severity="secondary" text></Button>
                     </div>
-
                     <!-- Форма восстановления пароля -->
                     <div v-else>
                         <!-- Поле для почты -->

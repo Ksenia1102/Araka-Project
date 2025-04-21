@@ -51,6 +51,7 @@ class AuthService {
         try {
             if (!password) throw new Error('Пароль обязателен');
             
+            // Проверка сложности пароля
             this.validatePassword(password);
     
             // Проверяем, не занят ли email или логин
@@ -93,22 +94,23 @@ class AuthService {
             return user;
         } catch (error) {
             console.error('Ошибка при регистрации:', error.message);
-            throw error; // Перебрасываем оригинальную ошибку
+            throw new Error(`Ошибка при регистрации: ${error.message}`);
         }
     }
     // Вход пользователя
     static async login(loginOrEmail, password) {
         const isEmail = loginOrEmail.includes('@');
         const whereCondition = isEmail ? { email: loginOrEmail } : { login: loginOrEmail };
-
+    
         const user = await User.findOne({ where: whereCondition });
         if (!user) throw new Error('Пользователь не найден');
+        if (!user.isVerified) throw new Error('Почта не подтверждена. Пожалуйста, проверьте ваш email.');
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) throw new Error('Неверный пароль');
-
+    
         const token = jwt.sign({ id: user.id, login: user.login }, process.env.JWT_SECRET_KEY, { expiresIn: '10h' });
-
+    
         return { token, user: { id: user.id, login: user.login } };
     }
 
