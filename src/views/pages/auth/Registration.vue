@@ -161,7 +161,7 @@ async function sendVerificationCode() {
     }
 
     try {
-        const response = await axios.post(`${apiUrl}/registration/send-code`, {
+        const response = await axios.post(`${apiUrl}/auth/registration/send-code`, {
             email: email.value
         });
         console.log('Код отправлен:', response.data);
