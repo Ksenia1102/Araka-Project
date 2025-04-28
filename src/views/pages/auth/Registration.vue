@@ -1,8 +1,9 @@
 <script setup>
 import axios from 'axios';
+import { useToast } from 'primevue/usetoast';
 import { onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-
+const toast = useToast();
 const router = useRouter();
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -65,7 +66,7 @@ function handlePasswordInput() {
 
 function startResendTimer() {
     isResendDisabled.value = true;
-    countdown.value = 60;
+    countdown.value = 5;
 
     resendTimeout.value = setInterval(() => {
         countdown.value -= 1;
@@ -113,24 +114,56 @@ async function registerUser() {
         console.log('User registered:', response.data);
         isCodeSent.value = true;
         startResendTimer();
-        alert('Код подтверждения отправлен на вашу почту. Пожалуйста, подтвердите email для завершения регистрации. Без подтверждения вы не сможете войти в систему.');
+        toast.add({ severity: 'success', summary: 'Отлично!', detail: 'Код подтверждения отправлен на вашу почту. Без подтверждения аккаунта вход будет невозоможен.', life: 8000 });
     } catch (error) {
-        console.error('Error registering user:', error);
-        if (error.response && error.response.status === 400) {
-            if (error.response.data === 'Логин уже занят') {
-                errors.value.login = 'Логин уже занят';
-            } else if (error.response.data === 'Почта уже занята') {
-                errors.value.email = 'Почта уже занята';
-            } else if (error.response.data.error) {
-                // Обработка ошибок валидации пароля с сервера
-                errors.value.password = [error.response.data.error];
-            }
-        } else {
-            alert('Ошибка при регистрации. Пожалуйста, попробуйте снова.');
+    console.error('Error registering user:', error);
+    
+    if (error.response) {
+        // Логируем полный ответ сервера для отладки
+        console.log('Full error response:', error.response.data);
+
+        // Проверяем разные варианты формата ошибки
+        const errorData = error.response.data;
+        let errorMessage = '';
+
+        // Если ошибка в виде объекта { error: "..." }
+        if (errorData.error && typeof errorData.error === 'string') {
+            errorMessage = errorData.error;
         }
-    } finally {
-        isLoading.value = false;
+        // Если ошибка в виде строки
+        else if (typeof errorData === 'string') {
+            errorMessage = errorData;
+        }
+
+        // Теперь проверяем текст ошибки
+        if (errorMessage.includes('логин') || errorMessage.includes('Логин')) {
+            errors.value.login = 'Пользователь с таким логином или email уже существует';
+        } 
+        else if (errorMessage.includes('email') || errorMessage.includes('почта') || errorMessage.includes('Почта')) {
+            errors.value.email = 'Пользователь с таким логином или email уже существует';
+        } 
+        else {
+            // Если ошибка не распознана, выводим её как есть
+            toast.add({ 
+                severity: 'error', 
+                summary: 'Ошибка', 
+                detail: errorMessage || 'Ошибка при регистрации', 
+                life: 3000 
+            });
+        }
+    } 
+    else {
+        // Общая ошибка (нет ответа сервера или другая ошибка)
+        toast.add({ 
+            severity: 'error', 
+            summary: 'Ошибка', 
+            detail: 'Ошибка при регистрации. Пожалуйста, попробуйте снова.', 
+            life: 3000 
+        });
     }
+} finally {
+    isLoading.value = false;
+}
 }
 
 async function verifyCode() {
@@ -148,7 +181,7 @@ async function verifyCode() {
         router.push({ name: 'login' });
     } catch (error) {
         console.error('Error verifying code:', error);
-        alert('Неверный код подтверждения. Пожалуйста, попробуйте снова.');
+        toast.add({ severity: 'info', summary: 'Ой!', detail: 'Неверный код подтверждения. Пожалуйста, попробуйте снова', life: 8000 });
     }
 }
 
@@ -166,10 +199,10 @@ async function sendVerificationCode() {
         });
         console.log('Код отправлен:', response.data);
         startResendTimer();
-        alert('Код подтверждения отправлен на вашу почту. Пожалуйста, проверьте почту.');
+        toast.add({ severity: 'success', summary: 'Отлично!', detail: 'Код подтверждения отправлен на вашу почту. Без подтверждения аккаунта, вход будет невозоможен.', life: 8000 });
     } catch (error) {
         console.error('Ошибка при отправке кода:', error);
-        alert('Ошибка при отправке кода. Пожалуйста, попробуйте снова.');
+        toast.add({ severity: 'error', summary: 'Ошибка!', detail: 'Ошибка при отправке кода.', life: 8000 });
     }
 }
 

@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-
+const toast = useToast();
 const router = useRouter();
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -90,7 +90,7 @@ async function requestPasswordReset() {
         await axios.post(`${apiUrl}/auth/login/request-password-reset`, {
             email: emailForReset.value
         });
-        alert('Код подтверждения отправлен на вашу почту');
+        toast.add({ severity: 'success', summary: 'Отлично!', detail: 'Код подтверждения отправлен на вашу почту. Без подтверждения аккаунта вход будет невозоможен.', life: 8000 });
         isCodeSent.value = true; // Показываем поле "Код подтверждения" и кнопку "Проверить код"
 
         // Запускаем таймер для повторной отправки кода
@@ -98,7 +98,7 @@ async function requestPasswordReset() {
     } catch (error) {
         // Или другую страницу по вашему выбору
         console.error('Error requesting password reset:', error);
-        alert('Ошибка при запросе восстановления пароля');
+        toast.add({ severity: 'error', summary: 'Ошибка!', detail: 'Ошибка при отправке кода.', life: 8000 });
     } finally {
         isSendingCode.value = false; // Завершаем отправку кода
     }
@@ -120,7 +120,7 @@ async function verifyResetCode() {
         isCodeVerified.value = true; // Показываем поле "Новый пароль" и кнопку "Обновить пароль"
     } catch (error) {
         console.error('Error verifying reset code:', error);
-        alert('Неверный код подтверждения');
+        toast.add({ severity: 'info', summary: 'Ой!', detail: 'Неверный код подтверждения. Пожалуйста, попробуйте снова', life: 8000 });
     }
 }
 
@@ -152,13 +152,13 @@ async function updatePassword() {
             code: resetCode.value,
             newPassword: newPassword.value
         });
-        alert('Пароль успешно обновлен');
+        toast.add({ severity: 'success', summary: 'Успех!', detail: 'Пароль успешно обновлен.', life: 8000 });
 
         // Автоматически нажимаем кнопку "Назад"
         goBack();
     } catch (error) {
         console.error('Error updating password:', error);
-        alert('Ошибка при обновлении пароля');
+        toast.add({ severity: 'error', summary: 'Ошибка!', detail: 'Ошибка при попытке изменения пароля.', life: 8000 });
     }
 }
 
