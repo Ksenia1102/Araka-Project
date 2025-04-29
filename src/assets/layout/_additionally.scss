@@ -1,0 +1,38 @@
+// стиль для стр Библиотека
+.sections-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Две колонки */
+    gap: 1rem; /* Отступы между элементами */
+    padding: 1rem;
+    /* border: 1px solid #ddd;  */
+    border-radius: 8px;
+}
+
+.section-item {
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    background-color: #f9f9f9;
+    /* border: 1px solid #ccc; */
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.section-item:hover {
+    background-color: #e6f7ff; /* Цвет при наведении */
+}
+.back-btn {
+    cursor: pointer;
+}
+.arrow-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+}
+.arrow-button:hover {
+    background-color: #e5e7eb;
+    border-radius: 5px;
+}
+
+// стили для Создания опроса
