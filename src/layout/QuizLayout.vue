@@ -5,24 +5,33 @@ import { computed, onMounted, ref } from 'vue';
 const quizData = ref({
     questions: [
         {
-            text: 'Какое животное символизирует мудрость?',
-            options: ['Со fbg fg g gf gf gf g  gfggbfggfbgfbgff f fgfgfg g fgfgfgb g fg gfgfgfgfggf fgfgbfgf  fва', 'Кошка', 'Лиса', 'Волк'],
-            imageUrl: '/public/demo/images/tt.jpg'
+            text: 'Какой фактор главным образом влияет на формирование крупнейших пустынь мира (Сахара, Аравийская пустыня)?',
+            options: [
+                'Нисходящие сухие воздушные потоки в зоне субтропических максимумов – они препятствуют образованию облаков и осадков.',
+                'Удалённость от океанов – континентальные воздушные массы теряют влагу ещё до достижения этих регионов.',
+                'Холодные океанические течения у побережья – охлаждают воздух и блокируют испарение, создавая засушливые условия.',
+                'Деятельность человека (вырубка лесов, перевыпас скота) – ускоряет процесс опустынивания, но не является основной причиной.'
+            ],
+            mediaUrl: '/public/demo/images/sahara.jpg',
+            mediaType: 'image'
         },
         {
             text: 'Какая планета самая большая в Солнечной системе?',
             options: ['Земля', 'Юпитер', 'Сатурн', 'Марс'],
-            imageUrl: '/public/demo/images/tt.jpg'
+            mediaUrl: '/public/demo/images/uu.mp4',
+            mediaType: 'video'
         },
         {
             text: 'Как называется столица Франции?',
             options: ['Лондон', 'Берлин', 'Париж', 'Рим'],
-            imageUrl: null
+            mediaUrl: null,
+            mediaType: null
         },
         {
             text: 'Кто написал "Война и мир"?',
             options: ['Толстой', 'Достоевский', 'Чехов', 'Пушкин'],
-            imageUrl: '/public/demo/images/tt.jpg'
+            mediaUrl: '/public/demo/images/pp.mp3',
+            mediaType: 'audio'
         }
     ]
 });
@@ -117,7 +126,7 @@ onMounted(() => {
                 <h1 class="survey-title-input">Опрос 1 ghghgh</h1>
             </div>
             <div class="flex items-center">
-                <!-- <span class="question-number" style="margin-right: 0.2em">ЗАПУЩЕН</span> -->
+                <!-- <span class="ques-num" style="margin-right: 0.2em">ЗАПУЩЕН</span> -->
                 <!-- <h2>ДЛЯ КЛАССА ID: {{ quizData.classId }}</h2> -->
             </div>
         </div>
@@ -135,7 +144,7 @@ onMounted(() => {
                                     <span class="layout-menuitem-text">{{ student.label }}</span>
                                 </div>
                                 <div class="layout-menuitem-actions">
-                                    <span class="question-number">{{ student.cardNumber }}</span>
+                                    <span class="ques-num">{{ student.cardNumber }}</span>
                                 </div>
                             </li>
                         </template>
@@ -156,8 +165,8 @@ onMounted(() => {
                     <!-- дублирование карточки??? как то это исправить-->
                     <div>
                         <div class="card" style="text-align: center">
-                            <p style="margin-bottom: 1em">Получено ответов: <br /><span class="question-number">нет ответов</span></p>
-                            <p>Правильных ответов: <br /><span class="question-number">нет ответов</span></p>
+                            <p style="margin-bottom: 1em">Получено ответов: <br /><span class="ques-num">нет ответов</span></p>
+                            <p>Правильных ответов: <br /><span class="ques-num">нет ответов</span></p>
                         </div>
                     </div>
                 </div>
@@ -168,14 +177,26 @@ onMounted(() => {
                                 <div style="height: 100%; display: flex; flex-direction: column">
                                     <span class="font-semibold text-xl">Вопрос {{ currentQuestionIndex + 1 }} / {{ quizData.questions.length }}</span>
                                     <div class="centered-content">
-                                        <h2 class="layout-menu-category font-bold text-max">{{ currentQuestion.text }}</h2>
+                                        <h2 v-breakwords:[20]="currentQuestion.text" class="layout-menu-category font-bold text-max"></h2>
                                         <!-- Контейнер изображения: скрывается, если нет картинки -->
-                                        <div v-if="currentQuestion.imageUrl" class="image-preview">
-                                            <img :src="currentQuestion.imageUrl" alt="Загруженное изображение" class="uploaded-image" />
+                                        <div v-if="currentQuestion.mediaUrl" class="image-preview">
+                                            <!-- <img :src="currentQuestion.imageUrl" alt="Загруженное изображение" class="uploaded-image" /> -->
+                                            <template v-if="currentQuestion.mediaType === 'image'">
+                                                <img :src="currentQuestion.mediaUrl" alt="Загруженное изображение" class="uploaded-image" />
+                                            </template>
+
+                                            <template v-else-if="currentQuestion.mediaType === 'video'">
+                                                <video :src="currentQuestion.mediaUrl" controls class="uploaded-image"></video>
+                                            </template>
+
+                                            <template v-else-if="currentQuestion.mediaType === 'audio'">
+                                                <audio :src="currentQuestion.mediaUrl" controls class="uploaded-image"></audio>
+                                            </template>
                                         </div>
 
                                         <!-- Пустой блок-заглушка для сохранения высоты -->
                                         <div v-else class="image-placeholder"></div>
+                                        <!-- Ответы -->
                                         <div>
                                             <ul class="sections-list">
                                                 <li v-for="(option, index) in currentQuestion.options" :key="index" class="section-item">
@@ -199,10 +220,10 @@ onMounted(() => {
                         <div>
                             <div class="card" style="text-align: center">
                                 <p style="margin-bottom: 1em">
-                                    Получено ответов: <br /><span class="question-number">{{ answersReceived }}</span>
+                                    Получено ответов: <br /><span class="ques-num">{{ answersReceived }}</span>
                                 </p>
                                 <p>
-                                    Правильных ответов: <br /><span class="question-number">{{ correctAnswers }}</span>
+                                    Правильных ответов: <br /><span class="ques-num">{{ correctAnswers }}</span>
                                 </p>
                             </div>
                         </div>
@@ -254,7 +275,7 @@ onMounted(() => {
     padding: 20px 20px 20px 0;
     margin: 10px 10px 10px 0;
 }
-.question-number {
+.ques-num {
     padding: 4px 8px;
     font-weight: 400;
     color: white;
@@ -280,29 +301,14 @@ onMounted(() => {
     padding: 0 1.5rem;
 }
 
-/* Контейнер для изображения */
-.image-preview {
-    width: 100%;
-    max-width: 600px;
-    height: 40vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    margin: 1rem auto;
+/* Для аудио */
+.image-preview audio {
+    margin: 10vh 0;
 }
-/* .image-placeholder {
-    height: 30vh;
+.image-placeholder {
+    /* height: 20vh; */
+    margin: 15vh 0;
     width: 100%;
-} */
-
-/* Стил для изображения */
-.uploaded-image {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    border-radius: 8px;
-    border: 0.5px solid #e9e9e9;
 }
 
 .centered-content {
@@ -311,13 +317,6 @@ onMounted(() => {
     justify-content: center;
     align-items: center;
     height: 100%;
-}
-
-.sections-list {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    padding: 1rem;
 }
 
 .section-item {
@@ -360,7 +359,7 @@ onMounted(() => {
     padding: 0 1.5rem;
 }
 
-.question-number {
+.ques-num {
     padding: 4px 8px;
     font-weight: 400;
     color: white;

@@ -58,7 +58,29 @@ function startSur() {
 function openQuiz() {
     window.open('/pages/quiz', '_blank');
 }
+// проверка типа медиа
+const mediaUrl = ref('/demo/images/audio.png'); // липовые данные
+const mediaType = ref('mp3'); // тип данных
+const mediaName = ref('audio.mp3');
+const mediaSize = ref('220 КБ');
+
+const mediaPreviewImage = computed(() => {
+    if (!mediaUrl.value || !mediaType.value) {
+        return '/demo/images/notfound.png';
+    }
+    if (mediaType.value.startsWith('jpg' || 'jpeg' || 'png')) {
+        return mediaUrl.value;
+    }
+    if (mediaType.value.startsWith('mp4')) {
+        return '/demo/images/video.png';
+    }
+    if (mediaType.value.startsWith('mp3')) {
+        return '/demo/images/audio.png';
+    }
+    return '/demo/images/notfound.png';
+});
 </script>
+
 <script>
 export default {
     methods: {
@@ -133,10 +155,10 @@ export default {
                                             <div class="text-lg font-medium mt-2">Где находится ухо у кузнечика?</div>
                                             <div class="p-fileupload-file-list">
                                                 <div class="demo-image">
-                                                    <img :src="imageUrl || '/public/demo/images/notfound.png'" width="50" />
+                                                    <img :src="mediaPreviewImage" width="50" />
                                                     <div style="margin-left: 10px">
-                                                        <p>{{ imageName || 'Нет изображения' }}</p>
-                                                        <span>{{ imageSize || '0 КБ' }}</span>
+                                                        <p>{{ mediaName || 'Нет медиа' }}</p>
+                                                        <span>{{ mediaSize || '0 КБ' }}</span>
                                                     </div>
                                                 </div>
                                             </div>
