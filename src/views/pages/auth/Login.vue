@@ -35,43 +35,97 @@ function goToCode() {
 }
 
 // Функция для входа пользователя
+// В вашем компоненте (в секции script setup) должны быть определены эти переменные
+const isLoading = ref(false);
+
 async function loginUser() {
-    errors.value.loginOrEmail = '';
-    errors.value.password = '';
-    serverError.value = '';
+    // Сброс ошибок
+    errors.value = {
+        loginOrEmail: '',
+        password: ''
+    };
 
     // Проверка на пустые поля
     if (!loginOrEmail.value) {
-        errors.value.loginOrEmail = 'Пожалуйста, заполните логин';
+        errors.value.loginOrEmail = 'Пожалуйста, заполните логин или email';
+        return;
     }
     if (!password.value) {
         errors.value.password = 'Пожалуйста, заполните пароль';
-    }
-
-    // Если есть ошибки, прекратить выполнение
-    if (errors.value.loginOrEmail || errors.value.password) {
         return;
     }
 
     try {
-        const response = await axios.post(
-            `${apiUrl}/auth/login`, // Используем правильный URL для вашего API
-            {
-                loginOrEmail: loginOrEmail.value,
-                password: password.value
-            }
-        );
-
+        isLoading.value = true;
+        const response = await axios.post(`${apiUrl}/auth/login`, {
+            loginOrEmail: loginOrEmail.value,
+            password: password.value
+        });
+        
+        console.log('User logged in:', response.data);
         const token = response.data.token;
         localStorage.setItem('authToken', token);
         router.push({ name: 'dashboard' });
+        
     } catch (error) {
-        console.error('Error login user:', error);
+        console.error('Error logging in user:', error);
+        
         if (error.response) {
-            serverError.value = error.response.data.message || 'Произошла ошибка при попытке входа';
+            console.log('Full error response:', error.response.data);
+
+            const errorData = error.response.data;
+            let errorMessage = '';
+
+            // Обработка разных форматов ошибок
+            if (typeof errorData === 'string') {
+                errorMessage = errorData;
+            } else if (errorData.message) {
+                errorMessage = errorData.message;
+            } else if (errorData.error) {
+                errorMessage = errorData.error;
+            }
+
+            // Проверка на неподтвержденную почту (500 ошибка)
+            if (error.response.status === 500 && 
+                (errorMessage.toLowerCase().includes('подтвержден') || 
+                 errorMessage.toLowerCase().includes('подтвердите'))) {
+                toast.add({ 
+                    severity: 'warn', 
+                    summary: 'Требуется подтверждение', 
+                    detail: 'Пожалуйста, подтвердите вашу почту перед входом. Проверьте вашу почту для получения кода подтверждения.', 
+                    life: 5000 
+                });
+                return;
+            }
+
+            // Общие ошибки авторизации
+            if (error.response.status === 401 || 
+                errorMessage.toLowerCase().includes('неверный') ||
+                errorMessage.toLowerCase().includes('invalid')) {
+                    toast.add({ 
+                    severity: 'error', 
+                    summary: 'Ошибка', 
+                    detail: 'Неверный пароль.', 
+                    life: 5000 
+                });
+            } else {
+                toast.add({ 
+                    severity: 'error', 
+                    summary: 'Ошибка сервера', 
+                    detail: errorMessage || 'Произошла ошибка при входе', 
+                    life: 3000 
+                });
+            }
         } else {
-            serverError.value = 'Произошла ошибка при попытке входа';
+            toast.add({ 
+                severity: 'error', 
+                summary: 'Ошибка сети', 
+                detail: 'Не удалось подключиться к серверу. Проверьте соединение.', 
+                life: 3000 
+            });
         }
+    } finally {
+        isLoading.value = false;
     }
 }
 

@@ -1,8 +1,9 @@
 <script setup>
 import axios from 'axios';
+import { useToast } from 'primevue/usetoast';
 import { onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-
+const toast = useToast();
 const router = useRouter();
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -67,7 +68,7 @@ async function sendCode() {
         console.log('Code sent:', response.data);
         isCodeSent.value = true;
         startResendTimer();
-        alert('Код подтверждения отправлен на вашу почту. Пожалуйста, проверьте почту.');
+        toast.add({ severity: 'success', summary: 'Отлично!', detail: 'Код подтверждения отправлен на вашу почту. Без подтверждения аккаунта вход будет невозоможен.', life: 8000 });
     } catch (error) {
         console.error('Error sending code:', error);
         if (error.response && error.response.status === 400) {
@@ -75,7 +76,7 @@ async function sendCode() {
                 errors.value.email = 'Почта уже занята';
             }
         } else {
-            alert('Ошибка при отправке кода. Пожалуйста, попробуйте снова.');
+            toast.add({ severity: 'error', summary: 'Ошибка!', detail: 'Ошибка при отправке кода.', life: 8000 });
         }
     } finally {
         isLoading.value = false;
@@ -97,7 +98,7 @@ async function verifyCode() {
         router.push({ name: 'login' });
     } catch (error) {
         console.error('Error verifying code:', error);
-        alert('Неверный код подтверждения. Пожалуйста, попробуйте снова.');
+        toast.add({ severity: 'info', summary: 'Ой!', detail: 'Неверный код подтверждения. Пожалуйста, попробуйте снова', life: 8000 });
     }
 }
 
@@ -115,10 +116,10 @@ async function resendVerificationCode() {
         });
         console.log('Код отправлен:', response.data);
         startResendTimer();
-        alert('Код подтверждения отправлен на вашу почту. Пожалуйста, проверьте почту.');
+        toast.add({ severity: 'success', summary: 'Отлично!', detail: 'Код подтверждения отправлен на вашу почту. Без подтверждения аккаунта вход будет невозоможен.', life: 8000 });
     } catch (error) {
         console.error('Ошибка при отправке кода:', error);
-        alert('Ошибка при отправке кода. Пожалуйста, попробуйте снова.');
+        toast.add({ severity: 'error', summary: 'Ошибка!', detail: 'Ошибка при отправке кода.', life: 8000 });
     }
 }
 
