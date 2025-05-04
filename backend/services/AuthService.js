@@ -25,7 +25,6 @@ class AuthService {
 
     static validatePassword(password) {
         const errors = [];
-<<<<<<< HEAD
 
         if (password.length < 8) {
             errors.push('Пароль должен содержать минимум 8 символов');
@@ -43,25 +42,6 @@ class AuthService {
             errors.push('Пароль должен содержать хотя бы одну заглавную букву');
         }
 
-=======
-        
-        if (password.length < 8) {
-            errors.push('Пароль должен содержать минимум 8 символов');
-        }
-        
-        if (!/\d/.test(password)) {
-            errors.push('Пароль должен содержать хотя бы одну цифру');
-        }
-        
-        if (!/[a-z]/.test(password)) {
-            errors.push('Пароль должен содержать хотя бы одну строчную букву');
-        }
-        
-        if (!/[A-Z]/.test(password)) {
-            errors.push('Пароль должен содержать хотя бы одну заглавную букву');
-        }
-        
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
         if (errors.length > 0) {
             throw new Error(errors.join(', '));
         }
@@ -70,42 +50,25 @@ class AuthService {
     static async register(login, email, password) {
         try {
             if (!password) throw new Error('Пароль обязателен');
-<<<<<<< HEAD
 
             // Проверка сложности пароля
             this.validatePassword(password);
 
-=======
-            
-            // Проверка сложности пароля
-            this.validatePassword(password);
-    
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
             // Проверяем, не занят ли email или логин
             const existingUser = await User.findOne({
                 where: {
                     [Op.or]: [{ login }, { email }]
                 }
             });
-<<<<<<< HEAD
 
             if (existingUser) throw new Error('Пользователь с таким логином или email уже существует');
 
-=======
-            
-            if (existingUser) throw new Error('Пользователь с таким логином или email уже существует');
-    
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
             // Генерируем код и хешируем его
             const verificationCode = this.generateVerificationCode();
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(password, salt);
             const hashedCode = await bcrypt.hash(verificationCode, salt);
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
             // Создаём пользователя
             const user = await User.create({
                 login,
@@ -114,11 +77,7 @@ class AuthService {
                 verificationCode: hashedCode,
                 isVerified: false
             });
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
             // Отправляем письмо с кодом
             const transporter = this.getTransporter();
             await transporter.sendMail({
@@ -131,11 +90,7 @@ class AuthService {
                     <p>Используйте его для активации аккаунта.</p>
                 `
             });
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
             return user;
         } catch (error) {
             console.error('Ошибка при регистрации:', error.message);
@@ -146,16 +101,16 @@ class AuthService {
     static async login(loginOrEmail, password) {
         const isEmail = loginOrEmail.includes('@');
         const whereCondition = isEmail ? { email: loginOrEmail } : { login: loginOrEmail };
-    
+
         const user = await User.findOne({ where: whereCondition });
         if (!user) throw new Error('Пользователь не найден');
         if (!user.isVerified) throw new Error('Почта не подтверждена. Пожалуйста, проверьте ваш email.');
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) throw new Error('Неверный пароль');
-    
+
         const token = jwt.sign({ id: user.id, login: user.login }, process.env.JWT_SECRET_KEY, { expiresIn: '10h' });
-    
+
         return { token, user: { id: user.id, login: user.login } };
     }
 
@@ -244,11 +199,7 @@ class AuthService {
         if (!this.validatePassword(newPassword)) {
             throw new Error('Пароль должен содержать минимум 8 символов, включая цифры, заглавные и строчные буквы');
         }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
         const user = await User.findOne({ where: { email } });
         if (!user) throw new Error('Пользователь не найден');
 

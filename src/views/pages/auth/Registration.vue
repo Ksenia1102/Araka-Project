@@ -15,19 +15,11 @@ const login = ref('');
 const email = ref('');
 const password = ref('');
 const verificationCode = ref('');
-<<<<<<< HEAD
 const errors = ref({
     login: '',
     email: '',
     password: [], // Изменено на массив для хранения нескольких ошибок
     verificationCode: ''
-=======
-const errors = ref({ 
-    login: '', 
-    email: '', 
-    password: [], // Изменено на массив для хранения нескольких ошибок
-    verificationCode: '' 
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
 });
 const isCodeSent = ref(false);
 const isLoading = ref(false);
@@ -43,7 +35,6 @@ function validateEmail(email) {
 // Новая функция для валидации пароля
 function validatePassword(password) {
     const passwordErrors = [];
-<<<<<<< HEAD
 
     if (password.length < 8) {
         passwordErrors.push('Минимум 8 символов');
@@ -61,25 +52,6 @@ function validatePassword(password) {
         passwordErrors.push('Хотя бы одна заглавная буква');
     }
 
-=======
-    
-    if (password.length < 8) {
-        passwordErrors.push('Минимум 8 символов');
-    }
-    
-    if (!/\d/.test(password)) {
-        passwordErrors.push('Хотя бы одна цифра');
-    }
-    
-    if (!/[a-zа-я]/.test(password)) {
-        passwordErrors.push('Хотя бы одна строчная буква');
-    }
-    
-    if (!/[A-Z]/.test(password)) {
-        passwordErrors.push('Хотя бы одна заглавная буква');
-    }
-    
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
     return passwordErrors;
 }
 
@@ -107,19 +79,11 @@ function startResendTimer() {
 
 async function registerUser() {
     // Сброс ошибок
-<<<<<<< HEAD
     errors.value = {
         login: '',
         email: '',
         password: validatePassword(password.value),
         verificationCode: ''
-=======
-    errors.value = { 
-        login: '', 
-        email: '', 
-        password: validatePassword(password.value), 
-        verificationCode: '' 
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
     };
 
     // Проверка на пустые поля
@@ -152,7 +116,6 @@ async function registerUser() {
         startResendTimer();
         toast.add({ severity: 'success', summary: 'Отлично!', detail: 'Код подтверждения отправлен на вашу почту. Без подтверждения аккаунта вход будет невозоможен.', life: 8000 });
     } catch (error) {
-<<<<<<< HEAD
         console.error('Error registering user:', error);
 
         if (error.response) {
@@ -197,60 +160,8 @@ async function registerUser() {
         }
     } finally {
         isLoading.value = false;
-=======
-    console.error('Error registering user:', error);
-    
-    if (error.response) {
-        // Логируем полный ответ сервера для отладки
-        console.log('Full error response:', error.response.data);
-
-        // Проверяем разные варианты формата ошибки
-        const errorData = error.response.data;
-        let errorMessage = '';
-
-        // Если ошибка в виде объекта { error: "..." }
-        if (errorData.error && typeof errorData.error === 'string') {
-            errorMessage = errorData.error;
-        }
-        // Если ошибка в виде строки
-        else if (typeof errorData === 'string') {
-            errorMessage = errorData;
-        }
-
-        // Теперь проверяем текст ошибки
-        if (errorMessage.includes('логин') || errorMessage.includes('Логин')) {
-            errors.value.login = 'Пользователь с таким логином или email уже существует';
-        } 
-        else if (errorMessage.includes('email') || errorMessage.includes('почта') || errorMessage.includes('Почта')) {
-            errors.value.email = 'Пользователь с таким логином или email уже существует';
-        } 
-        else {
-            // Если ошибка не распознана, выводим её как есть
-            toast.add({ 
-                severity: 'error', 
-                summary: 'Ошибка', 
-                detail: errorMessage || 'Ошибка при регистрации', 
-                life: 3000 
-            });
-        }
-    } 
-    else {
-        // Общая ошибка (нет ответа сервера или другая ошибка)
-        toast.add({ 
-            severity: 'error', 
-            summary: 'Ошибка', 
-            detail: 'Ошибка при регистрации. Пожалуйста, попробуйте снова.', 
-            life: 3000 
-        });
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
     }
-} finally {
-    isLoading.value = false;
 }
-<<<<<<< HEAD
-=======
-}
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
 
 async function verifyCode() {
     if (!verificationCode.value) {
@@ -317,11 +228,7 @@ onUnmounted(() => {
                         </label>
                         <p v-if="errors.login" class="text-red-500 text-sm">{{ errors.login }}</p>
                         <InputText id="login1" type="text" placeholder="Логин" class="w-full md:w-[30rem] mb-8" v-model="login" />
-<<<<<<< HEAD
 
-=======
-                        
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
                         <!-- Поле для почты -->
                         <label for="email" class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2">
                             Почта
@@ -336,22 +243,8 @@ onUnmounted(() => {
                                 Пароль
                                 <span class="text-red-500">*</span>
                             </label>
-<<<<<<< HEAD
                             <Password id="password1" v-model="password" placeholder="Пароль" :toggleMask="true" class="mb-2" fluid :feedback="false" @input="handlePasswordInput"></Password>
 
-=======
-                            <Password 
-                                id="password1" 
-                                v-model="password" 
-                                placeholder="Пароль" 
-                                :toggleMask="true" 
-                                class="mb-2" 
-                                fluid 
-                                :feedback="false"
-                                @input="handlePasswordInput"
-                            ></Password>
-                            
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
                             <!-- Отображение ошибок пароля -->
                             <div v-if="errors.password.length > 0" class="text-red-500 text-sm mb-4">
                                 <p v-for="(error, index) in errors.password" :key="index">
@@ -373,18 +266,7 @@ onUnmounted(() => {
                             <Button :to="{ name: 'login' }" label="Уже есть аккаунт" class="w-full" severity="secondary" text @click="goToLogin"></Button>
 
                             <!-- Кнопка "Зарегистрироваться" (скрывается после отправки кода) -->
-<<<<<<< HEAD
                             <Button v-if="!isCodeSent" label="Зарегистрироваться" class="w-full" @click="registerUser" severity="info" :disabled="isLoading || errors.password.length > 0">
-=======
-                            <Button 
-                                v-if="!isCodeSent" 
-                                label="Зарегистрироваться" 
-                                class="w-full" 
-                                @click="registerUser" 
-                                severity="info" 
-                                :disabled="isLoading || errors.password.length > 0"
-                            >
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
                                 <span v-if="isLoading">Отправляем код на почту...</span>
                                 <span v-else>Зарегистрироваться</span>
                             </Button>

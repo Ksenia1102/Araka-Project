@@ -13,15 +13,9 @@ function goToLogin() {
 
 const email = ref('');
 const verificationCode = ref('');
-<<<<<<< HEAD
 const errors = ref({
     email: '',
     verificationCode: ''
-=======
-const errors = ref({ 
-    email: '', 
-    verificationCode: '' 
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
 });
 const isCodeSent = ref(false);
 const isLoading = ref(false);
@@ -49,15 +43,9 @@ function startResendTimer() {
 
 async function sendCode() {
     // Сброс ошибок
-<<<<<<< HEAD
     errors.value = {
         email: '',
         verificationCode: ''
-=======
-    errors.value = { 
-        email: '', 
-        verificationCode: '' 
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
     };
 
     // Проверка на пустые поля
@@ -174,18 +162,7 @@ onUnmounted(() => {
                             <Button :to="{ name: 'login' }" label="Уже есть аккаунт" class="w-full" severity="secondary" text @click="goToLogin"></Button>
 
                             <!-- Кнопка "Отправить код" -->
-<<<<<<< HEAD
                             <Button v-if="!isCodeSent" label="Отправить код" class="w-full" @click="sendCode" severity="info" :disabled="isLoading">
-=======
-                            <Button 
-                                v-if="!isCodeSent" 
-                                label="Отправить код" 
-                                class="w-full" 
-                                @click="sendCode" 
-                                severity="info" 
-                                :disabled="isLoading"
-                            >
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
                                 <span v-if="isLoading">Отправляем код на почту...</span>
                                 <span v-else>Отправить код</span>
                             </Button>
@@ -225,8 +202,4 @@ onUnmounted(() => {
 ul.list-disc {
     margin-top: 0.5rem;
 }
-<<<<<<< HEAD
 </style>
-=======
-</style>
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5

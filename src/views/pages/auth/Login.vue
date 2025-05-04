@@ -61,23 +61,14 @@ async function loginUser() {
             loginOrEmail: loginOrEmail.value,
             password: password.value
         });
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
         console.log('User logged in:', response.data);
         const token = response.data.token;
         localStorage.setItem('authToken', token);
         router.push({ name: 'dashboard' });
-        
     } catch (error) {
         console.error('Error logging in user:', error);
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
         if (error.response) {
             console.log('Full error response:', error.response.data);
 
@@ -94,29 +85,17 @@ async function loginUser() {
             }
 
             // Проверка на неподтвержденную почту (500 ошибка)
-<<<<<<< HEAD
             if (error.response.status === 500 && (errorMessage.toLowerCase().includes('подтвержден') || errorMessage.toLowerCase().includes('подтвердите'))) {
                 toast.add({
                     severity: 'warn',
                     summary: 'Требуется подтверждение',
                     detail: 'Пожалуйста, подтвердите вашу почту перед входом. Проверьте вашу почту для получения кода подтверждения.',
                     life: 5000
-=======
-            if (error.response.status === 500 && 
-                (errorMessage.toLowerCase().includes('подтвержден') || 
-                 errorMessage.toLowerCase().includes('подтвердите'))) {
-                toast.add({ 
-                    severity: 'warn', 
-                    summary: 'Требуется подтверждение', 
-                    detail: 'Пожалуйста, подтвердите вашу почту перед входом. Проверьте вашу почту для получения кода подтверждения.', 
-                    life: 5000 
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
                 });
                 return;
             }
 
             // Общие ошибки авторизации
-<<<<<<< HEAD
             if (error.response.status === 401 || errorMessage.toLowerCase().includes('неверный') || errorMessage.toLowerCase().includes('invalid')) {
                 toast.add({
                     severity: 'error',
@@ -138,31 +117,6 @@ async function loginUser() {
                 summary: 'Ошибка сети',
                 detail: 'Не удалось подключиться к серверу. Проверьте соединение.',
                 life: 3000
-=======
-            if (error.response.status === 401 || 
-                errorMessage.toLowerCase().includes('неверный') ||
-                errorMessage.toLowerCase().includes('invalid')) {
-                    toast.add({ 
-                    severity: 'error', 
-                    summary: 'Ошибка', 
-                    detail: 'Неверный пароль.', 
-                    life: 5000 
-                });
-            } else {
-                toast.add({ 
-                    severity: 'error', 
-                    summary: 'Ошибка сервера', 
-                    detail: errorMessage || 'Произошла ошибка при входе', 
-                    life: 3000 
-                });
-            }
-        } else {
-            toast.add({ 
-                severity: 'error', 
-                summary: 'Ошибка сети', 
-                detail: 'Не удалось подключиться к серверу. Проверьте соединение.', 
-                life: 3000 
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
             });
         }
     } finally {

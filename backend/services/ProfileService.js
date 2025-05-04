@@ -8,12 +8,8 @@ class ProfileService {
         });
     }
 
-<<<<<<< HEAD
     static async updateUser(userId, { name, surname, login, password, email }) {
         // Добавляем email
-=======
-    static async updateUser(userId, { name, surname, login, password, email }) { // Добавляем email
->>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
         const updates = {};
         if (name) updates.name = name;
         if (surname) updates.surname = surname;
@@ -25,10 +21,6 @@ class ProfileService {
 
         await User.update(updates, { where: { id: userId } });
     }
-    static async checkEmailExists(email) {
-        return await User.findOne({ where: { email } });
-    }
-
     static async checkEmailExists(email) {
         return await User.findOne({ where: { email } });
     }
