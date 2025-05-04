@@ -11,6 +11,7 @@ function openConfirmation() {
 function closeConfirmation() {
     displayConfirmation.value = false;
 }
+
 // Начальные данные
 const username = ref('Иван');
 const lastname = ref('Конов');
@@ -20,8 +21,13 @@ const pass = ref('*****');
 
 const isEditingName = ref(false);
 const isEditingAuth = ref(false);
+<<<<<<< HEAD
+=======
+
+>>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
 const buttonLabelName = ref('Изменить данные о пользователе');
 const buttonLabelAuth = ref('Изменить данные аутентификации');
+
 function getUserIdFromToken() {
     const token = localStorage.getItem('authToken');
     if (!token) return null;
@@ -34,6 +40,7 @@ function getUserIdFromToken() {
         return null;
     }
 }
+
 async function fetchUserData() {
     try {
         const userId = getUserIdFromToken();
@@ -155,12 +162,14 @@ onMounted(() => {
     fetchUserData();
 });
 </script>
+
 <template>
     <div class="card">
         <div class="flex" style="gap: 0.5rem; align-items: stretch">
             <i class="pi pi-user" style="font-size: 2.3rem"></i>
             <h2 class="font-semibold text-4xl mb-6">Имя Фамилия</h2>
         </div>
+        
         <!-- Поля для имени и фамилии -->
         <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Данные о пользователе</div>
         <div class="flex flex-wrap flex-col gap-4" style="margin-bottom: 10px; width: 50%">
@@ -174,6 +183,7 @@ onMounted(() => {
             </div>
         </div>
         <Button severity="info" :label="buttonLabelName" @click="toggleEditNameMode" style="margin-bottom: 10px" outlined></Button>
+        
         <!-- Поля для логина и пароля -->
         <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Пароль и аутентификация</div>
         <div class="flex flex-wrap flex-col gap-4" style="margin-bottom: 10px; width: 50%">
@@ -187,6 +197,10 @@ onMounted(() => {
             </div>
         </div>
         <Button severity="info" :label="buttonLabelAuth" @click="toggleEditAuthMode" style="margin-bottom: 10px" outlined></Button>
+<<<<<<< HEAD
+=======
+        
+>>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
         <!-- Поле для email (только для чтения) -->
         <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Контактные данные</div>
         <div class="flex flex-wrap flex-col gap-4" style="margin-bottom: 10px; width: 50%">
@@ -195,9 +209,14 @@ onMounted(() => {
                 <InputText type="text" id="email" v-model="email" disabled />
             </div>
         </div>
+<<<<<<< HEAD
+=======
+        
+>>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
         <!-- Кнопка удаления аккаунта -->
         <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Другие действия</div>
         <Button severity="danger" style="margin-bottom: 10px" @click="openConfirmation" outlined>Удалить аккаунт</Button>
+        
         <Dialog header="Предупреждение" v-model:visible="displayConfirmation" :style="{ width: '350px' }" :modal="true">
             <div class="flex items-center justify-center">
                 <i class="pi pi-exclamation-triangle mr-4" style="font-size: 2rem" />
@@ -210,4 +229,5 @@ onMounted(() => {
         </Dialog>
     </div>
 </template>
+
 <style scoped></style>

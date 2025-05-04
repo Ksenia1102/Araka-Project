@@ -14,7 +14,11 @@ async function createUser() {
             login: 'john_doe',
             password: 'password123',
             name: 'John',
+<<<<<<< HEAD
             urname: 'Doe',
+=======
+            surname: 'Doe',
+>>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
             email: 'is@example.ru'
         });
 

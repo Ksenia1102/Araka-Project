@@ -34,7 +34,11 @@ class AuthController {
         try {
             const { email } = req.body;
             if (!email) {
+<<<<<<< HEAD
                 return res.status(400).json({
+=======
+                return res.status(400).json({ 
+>>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
                     error: 'Email обязателен',
                     errorType: 'EMAIL_REQUIRED'
                 });
@@ -63,7 +67,11 @@ class AuthController {
         try {
             const { email, code } = req.body;
             if (!email || !code) {
+<<<<<<< HEAD
                 return res.status(400).json({
+=======
+                return res.status(400).json({ 
+>>>>>>> ee5b91bd657e07c78d961e8fe43950aa17f8b4b5
                     error: 'Email и код обязательны',
                     errorType: 'VALIDATION_ERROR'
                 });
