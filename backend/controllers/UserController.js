@@ -16,7 +16,9 @@ async function getUser(req, res) {
     try {
         const { id } = req.params;
 
-        const user = await User.findByPk(id);
+        const user = await User.findByPk(id, {
+            attributes: ['id', 'name', 'surname', 'login', 'email', 'createdAt'] // Явно указываем поля
+        });
         if (!user) {
             return res.status(404).json({ message: 'Пользователь не найден' });
         }
@@ -32,7 +34,7 @@ async function getUser(req, res) {
 async function updateUser(req, res) {
     try {
         const { id } = req.params;
-        const { login, password, name, surname } = req.body;
+        const { login, password, name, surname, email } = req.body;
 
         const user = await User.findByPk(id);
         if (!user) {
@@ -43,6 +45,7 @@ async function updateUser(req, res) {
         user.password = password || user.password;
         user.name = name || user.name;
         user.surname = surname || user.surname;
+        user.email = email || user.email;
 
         await user.save(); // Сохраняем изменения
 

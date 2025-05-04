@@ -19,6 +19,17 @@ const lastModified = ref('');
 const formattedDate = ref('');
 // Пример ID опроса. Можно заменить на динамическое значение.
 
+function getMediaType(url) {
+    if (!url) return null;
+    const extension = url.split('.').pop().toLowerCase();
+
+    if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(extension)) return 'image';
+    if (['mp3', 'wav', 'ogg'].includes(extension)) return 'audio';
+    if (['mp4', 'webm', 'mov'].includes(extension)) return 'video';
+
+    return null;
+}
+
 // Функция загрузки классов
 const fetchClasses = async () => {
     try {
@@ -277,6 +288,30 @@ function openNewTab() {
                                         <div>
                                             <!-- Выводим текст вопроса -->
                                             <div class="text-lg font-medium mt-2">{{ item.text }}</div>
+
+                                            <!-- Если есть изображение, то показываем его -->
+                                            <!-- <div class="p-fileupload-file-list">
+                                                <div class="demo-image">
+                                                    <img :src="mediaPreviewImage" width="50" />
+                                                    <div style="margin-left: 10px">
+                                                        <p>{{ mediaName || 'Нет медиа' }}</p>
+                                                        <span>{{ mediaSize || '0 КБ' }}</span>
+                                                    </div>
+                                                </div>
+                                            </div> -->
+                                            <div v-if="item.file_url" class="flex items-center mt-2">
+                                                <template v-if="getMediaType(item.file_url) === 'image'">
+                                                    <img :src="item.file_url" alt="Изображение вопроса" style="max-width: 150px; max-height: 150px; border-radius: 8px" />
+                                                </template>
+
+                                                <template v-else-if="getMediaType(item.file_url) === 'audio'">
+                                                    <img src="/demo/images/audio.png" alt="Аудио файл" style="width: 100px; height: auto" />
+                                                </template>
+
+                                                <template v-else-if="getMediaType(item.file_url) === 'video'">
+                                                    <img src="/demo/images/video.png" alt="Видео файл" style="width: 100px; height: auto" />
+                                                </template>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="flex flex-col md:items-end gap-8">
@@ -326,5 +361,9 @@ function openNewTab() {
 .selected {
     font-weight: bold;
     color: #0ea5e9;
+}
+.demo-image {
+    display: flex;
+    align-items: center;
 }
 </style>

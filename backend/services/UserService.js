@@ -2,7 +2,7 @@ const { User } = require('../models');
 const bcrypt = require('bcrypt');
 
 // Функция для создания пользователя
-async function createUser({ login, password, name, surname }) {
+async function createUser({ login, password, name, surname, email }) {
     // Проверяем, существует ли пользователь
     const existingUser = await User.findOne({ where: { login } });
     if (existingUser) {
@@ -17,7 +17,8 @@ async function createUser({ login, password, name, surname }) {
         login,
         password: hashedPassword,
         name,
-        surname
+        surname,
+        email
     });
 }
 

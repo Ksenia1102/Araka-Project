@@ -1,52 +1,90 @@
 <script setup>
-import axios from 'axios'; // Импорт библиотеки axios для работы с HTTP-запросами
-import { onUnmounted, ref } from 'vue'; // Импорт функций ref и onUnmounted
-import { useRouter } from 'vue-router'; // Импорт функции для навигации между маршрутами
-
-const router = useRouter(); // Создаем экземпляр маршрутизатора
+import axios from 'axios';
+import { useToast } from 'primevue/usetoast';
+import { onUnmounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+const toast = useToast();
+const router = useRouter();
 const apiUrl = import.meta.env.VITE_API_URL;
 
-// Функция для перехода на страницу логина
 function goToLogin() {
-    router.push({ name: 'login' }); // Редирект на маршрут с именем 'login'
+    router.push({ name: 'login' });
 }
 
-const login = ref(''); // Реактивная переменная для логина
-const email = ref(''); // Реактивная переменная для почты
-const password = ref(''); // Реактивная переменная для пароля
-const verificationCode = ref(''); // Реактивная переменная для кода подтверждения
-const errors = ref({ login: '', email: '', password: '', verificationCode: '' }); // Состояние для ошибок валидации
-const isCodeSent = ref(false); // Реактивное состояние для отображения поля и кнопки подтверждения
-const isLoading = ref(false); // Реактивное состояние для отслеживания загрузки
-const isResendDisabled = ref(false); // Реактивное состояние для блокировки кнопки повторной отправки
-const resendTimeout = ref(null); // Реактивное состояние для хранения таймера
-const countdown = ref(0); // Реактивное состояние для отслеживания оставшегося времени
+const login = ref('');
+const email = ref('');
+const password = ref('');
+const verificationCode = ref('');
+const errors = ref({
+    login: '',
+    email: '',
+    password: [], // Изменено на массив для хранения нескольких ошибок
+    verificationCode: ''
+});
+const isCodeSent = ref(false);
+const isLoading = ref(false);
+const isResendDisabled = ref(false);
+const resendTimeout = ref(null);
+const countdown = ref(0);
 
-// Функция для валидации почты
 function validateEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
 }
 
-// Функция для запуска таймера
+// Новая функция для валидации пароля
+function validatePassword(password) {
+    const passwordErrors = [];
+
+    if (password.length < 8) {
+        passwordErrors.push('Минимум 8 символов');
+    }
+
+    if (!/\d/.test(password)) {
+        passwordErrors.push('Хотя бы одна цифра');
+    }
+
+    if (!/[a-zа-я]/.test(password)) {
+        passwordErrors.push('Хотя бы одна строчная буква');
+    }
+
+    if (!/[A-Z]/.test(password)) {
+        passwordErrors.push('Хотя бы одна заглавная буква');
+    }
+
+    return passwordErrors;
+}
+
+// Обновленная функция для проверки пароля при вводе
+function handlePasswordInput() {
+    if (password.value) {
+        errors.value.password = validatePassword(password.value);
+    } else {
+        errors.value.password = [];
+    }
+}
+
 function startResendTimer() {
-    isResendDisabled.value = true; // Блокируем кнопку
-    countdown.value = 60; // Устанавливаем таймер на 60 секунд
+    isResendDisabled.value = true;
+    countdown.value = 5;
 
     resendTimeout.value = setInterval(() => {
         countdown.value -= 1;
         if (countdown.value <= 0) {
             clearInterval(resendTimeout.value);
-            isResendDisabled.value = false; // Разблокируем кнопку
+            isResendDisabled.value = false;
         }
     }, 1000);
 }
 
-// Функция для регистрации пользователя
 async function registerUser() {
-    errors.value.login = '';
-    errors.value.email = '';
-    errors.value.password = '';
+    // Сброс ошибок
+    errors.value = {
+        login: '',
+        email: '',
+        password: validatePassword(password.value),
+        verificationCode: ''
+    };
 
     // Проверка на пустые поля
     if (!login.value) {
@@ -58,47 +96,73 @@ async function registerUser() {
         errors.value.email = 'Пожалуйста, введите корректный адрес почты';
     }
     if (!password.value) {
-        errors.value.password = 'Пожалуйста, заполните пароль';
+        errors.value.password = ['Пожалуйста, заполните пароль'];
     }
 
     // Если есть ошибки, прекратить выполнение
-    if (errors.value.login || errors.value.email || errors.value.password) {
+    if (errors.value.login || errors.value.email || errors.value.password.length > 0) {
         return;
     }
-    isLoading.value = true; // Начинаем загрузку
+
+    isLoading.value = true;
     try {
-        // Отправляем POST-запрос на сервер с логином, почтой и паролем
         const response = await axios.post(`${apiUrl}/auth/register`, {
             login: login.value,
             email: email.value,
             password: password.value
         });
         console.log('User registered:', response.data);
-
-        // Устанавливаем isCodeSent в true, чтобы показать поле и кнопку подтверждения
         isCodeSent.value = true;
-
-        // Запускаем таймер для кнопки повторной отправки
         startResendTimer();
-
-        // Сообщение о необходимости подтверждения почты
-        alert('Код подтверждения отправлен на вашу почту. Пожалуйста, проверьте почту.');
+        toast.add({ severity: 'success', summary: 'Отлично!', detail: 'Код подтверждения отправлен на вашу почту. Без подтверждения аккаунта вход будет невозоможен.', life: 8000 });
     } catch (error) {
         console.error('Error registering user:', error);
-        if (error.response && error.response.status === 400) {
-            if (error.response.data === 'Логин уже занят') {
-                errors.value.login = 'Логин уже занят';
-            } else if (error.response.data === 'Почта уже занята') {
-                errors.value.email = 'Почта уже занята';
+
+        if (error.response) {
+            // Логируем полный ответ сервера для отладки
+            console.log('Full error response:', error.response.data);
+
+            // Проверяем разные варианты формата ошибки
+            const errorData = error.response.data;
+            let errorMessage = '';
+
+            // Если ошибка в виде объекта { error: "..." }
+            if (errorData.error && typeof errorData.error === 'string') {
+                errorMessage = errorData.error;
+            }
+            // Если ошибка в виде строки
+            else if (typeof errorData === 'string') {
+                errorMessage = errorData;
+            }
+
+            // Теперь проверяем текст ошибки
+            if (errorMessage.includes('логин') || errorMessage.includes('Логин')) {
+                errors.value.login = 'Пользователь с таким логином или email уже существует';
+            } else if (errorMessage.includes('email') || errorMessage.includes('почта') || errorMessage.includes('Почта')) {
+                errors.value.email = 'Пользователь с таким логином или email уже существует';
+            } else {
+                // Если ошибка не распознана, выводим её как есть
+                toast.add({
+                    severity: 'error',
+                    summary: 'Ошибка',
+                    detail: errorMessage || 'Ошибка при регистрации',
+                    life: 3000
+                });
             }
         } else {
-            alert('Ошибка при регистрации. Пожалуйста, попробуйте снова.');
+            // Общая ошибка (нет ответа сервера или другая ошибка)
+            toast.add({
+                severity: 'error',
+                summary: 'Ошибка',
+                detail: 'Ошибка при регистрации. Пожалуйста, попробуйте снова.',
+                life: 3000
+            });
         }
     } finally {
-        isLoading.value = false; // Завершаем загрузку
+        isLoading.value = false;
     }
 }
-// Функция для проверки кода подтверждения
+
 async function verifyCode() {
     if (!verificationCode.value) {
         errors.value.verificationCode = 'Пожалуйста, введите код подтверждения';
@@ -111,44 +175,34 @@ async function verifyCode() {
             code: verificationCode.value
         });
         console.log('Email verified:', response.data);
-
-        // Редирект на страницу логина после успешного подтверждения
         router.push({ name: 'login' });
     } catch (error) {
         console.error('Error verifying code:', error);
-        alert('Неверный код подтверждения. Пожалуйста, попробуйте снова.');
+        toast.add({ severity: 'info', summary: 'Ой!', detail: 'Неверный код подтверждения. Пожалуйста, попробуйте снова', life: 8000 });
     }
 }
 
-// Функция для отправки кода подтверждения
 async function sendVerificationCode() {
     errors.value.email = '';
 
-    // Проверка на пустую почту
     if (!email.value) {
         errors.value.email = 'Пожалуйста, заполните почту';
         return;
     }
 
     try {
-        // Отправляем POST-запрос на сервер для отправки кода подтверждения
-        const response = await axios.post(`${apiUrl}/registration/send-code`, {
+        const response = await axios.post(`${apiUrl}/auth/registration/send-code`, {
             email: email.value
         });
         console.log('Код отправлен:', response.data);
-
-        // Запускаем таймер для кнопки повторной отправки
         startResendTimer();
-
-        // Сообщение пользователю
-        alert('Код подтверждения отправлен на вашу почту. Пожалуйста, проверьте почту.');
+        toast.add({ severity: 'success', summary: 'Отлично!', detail: 'Код подтверждения отправлен на вашу почту. Без подтверждения аккаунта, вход будет невозоможен.', life: 8000 });
     } catch (error) {
         console.error('Ошибка при отправке кода:', error);
-        alert('Ошибка при отправке кода. Пожалуйста, попробуйте снова.');
+        toast.add({ severity: 'error', summary: 'Ошибка!', detail: 'Ошибка при отправке кода.', life: 8000 });
     }
 }
 
-// Очистка таймера при размонтировании компонента
 onUnmounted(() => {
     if (resendTimeout.value) {
         clearInterval(resendTimeout.value);
@@ -174,6 +228,7 @@ onUnmounted(() => {
                         </label>
                         <p v-if="errors.login" class="text-red-500 text-sm">{{ errors.login }}</p>
                         <InputText id="login1" type="text" placeholder="Логин" class="w-full md:w-[30rem] mb-8" v-model="login" />
+
                         <!-- Поле для почты -->
                         <label for="email" class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2">
                             Почта
@@ -188,8 +243,14 @@ onUnmounted(() => {
                                 Пароль
                                 <span class="text-red-500">*</span>
                             </label>
-                            <p v-if="errors.password" class="text-red-500 text-sm">{{ errors.password }}</p>
-                            <Password id="password1" v-model="password" placeholder="Пароль" :toggleMask="true" class="mb-2" fluid :feedback="false"></Password>
+                            <Password id="password1" v-model="password" placeholder="Пароль" :toggleMask="true" class="mb-2" fluid :feedback="false" @input="handlePasswordInput"></Password>
+
+                            <!-- Отображение ошибок пароля -->
+                            <div v-if="errors.password.length > 0" class="text-red-500 text-sm mb-4">
+                                <p v-for="(error, index) in errors.password" :key="index">
+                                    {{ error }}
+                                </p>
+                            </div>
                         </div>
 
                         <!-- Поле для кода подтверждения (появляется после регистрации) -->
@@ -201,23 +262,24 @@ onUnmounted(() => {
                             <p v-if="errors.verificationCode" class="text-red-500 text-sm">{{ errors.verificationCode }}</p>
                             <InputText id="verificationCode" type="text" placeholder="Код подтверждения" class="w-full md:w-[30rem] mb-8" v-model="verificationCode" />
                         </div>
+                        <div>
+                            <Button :to="{ name: 'login' }" label="Уже есть аккаунт" class="w-full" severity="secondary" text @click="goToLogin"></Button>
 
-                        <Button :to="{ name: 'login' }" label="Уже есть аккаунт" class="w-full" severity="secondary" text @click="goToLogin"></Button>
+                            <!-- Кнопка "Зарегистрироваться" (скрывается после отправки кода) -->
+                            <Button v-if="!isCodeSent" label="Зарегистрироваться" class="w-full" @click="registerUser" severity="info" :disabled="isLoading || errors.password.length > 0">
+                                <span v-if="isLoading">Отправляем код на почту...</span>
+                                <span v-else>Зарегистрироваться</span>
+                            </Button>
 
-                        <!-- Кнопка "Зарегистрироваться" (скрывается после отправки кода) -->
-                        <Button v-if="!isCodeSent" label="Зарегистрироваться" class="w-full" @click="registerUser" severity="info" :disabled="isLoading">
-                            <span v-if="isLoading">Отправляем код на почту...</span>
-                            <span v-else>Зарегистрироваться</span>
-                        </Button>
+                            <!-- Кнопка подтверждения кода (появляется после регистрации) -->
+                            <Button v-if="isCodeSent" label="Подтвердить код" class="w-full" @click="verifyCode" severity="info"></Button>
 
-                        <!-- Кнопка подтверждения кода (появляется после регистрации) -->
-                        <Button v-if="isCodeSent" label="Подтвердить код" class="w-full" @click="verifyCode" severity="info"></Button>
-
-                        <!-- Кнопка "Запросить код повторно" (появляется после отправки кода) -->
-                        <Button v-if="isCodeSent" label="Запросить код повторно" class="w-full mt-4" @click="sendVerificationCode" severity="secondary" :disabled="isResendDisabled">
-                            <span v-if="isResendDisabled">Запросить код повторно ({{ countdown }} сек)</span>
-                            <span v-else>Запросить код повторно</span>
-                        </Button>
+                            <!-- Кнопка "Запросить код повторно" (появляется после отправки кода) -->
+                            <Button v-if="isCodeSent" label="Запросить код повторно" class="w-full mt-4" @click="sendVerificationCode" severity="secondary" :disabled="isResendDisabled">
+                                <span v-if="isResendDisabled">Запросить код повторно ({{ countdown }} сек)</span>
+                                <span v-else>Запросить код повторно</span>
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -234,5 +296,14 @@ onUnmounted(() => {
 .pi-eye-slash {
     transform: scale(1.6);
     margin-right: 1rem;
+}
+
+.text-muted-color {
+    color: var(--text-color-secondary);
+}
+
+/* Стиль для списка ошибок */
+ul.list-disc {
+    margin-top: 0.5rem;
 }
 </style>

@@ -35,7 +35,7 @@ export default {
     <div class="topbar">
         <Button @click="goBack" icon="pi pi-chevron-left" class="back-btn" text severity="secondary"></Button>
         <div class="survey-title" style="width: -webkit-fill-available">
-            <input v-model="localTitle" @input="updateTitle" placeholder="Название опроса" class="survey-title-input" />
+            <input v-maxlength="60" v-model="localTitle" @input="updateTitle" placeholder="Название опроса" class="survey-title-input" />
         </div>
         <Button @click="saveSurvey" label="Сохранить" class="back-btn" text severity="info"></Button>
     </div>

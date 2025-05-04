@@ -1,5 +1,14 @@
+//services/SurveyService.js
 const { Survey, Question, Option } = require('../models');
 const { sequelize } = require('../config/database');
+const FileService = require('../services/FileService');
+
+const getFileUrl = (folder, fileName) => {
+    console.log('mnmnmnmnmn', folder, fileName);
+    if (!folder || !fileName) return null;
+    // Формируем URL для доступа к файлу в S3
+    return `https://16b47e3a-6461-497e-b811-1f088c257053.selstorage.ru/${folder}/${fileName}`;
+};
 class SurveyService {
     static async getSurveyById(id) {
         try {
@@ -23,7 +32,7 @@ class SurveyService {
                                 order: [['id', 'ASC']]
                             }
                         ],
-                        attributes: ['id', 'text', 'correct_option']
+                        attributes: ['id', 'text', 'correct_option', 'file_url', 'file_type', 'file_folder', 'file_name'] // Добавляем поле imageUrl
                     }
                 ],
                 attributes: ['id', 'title', 'user_id', 'created_at']
@@ -44,6 +53,8 @@ class SurveyService {
                     ? result.questions.map((q) => ({
                           id: q.id,
                           text: q.text,
+                          file_url: getFileUrl(q.file_folder, q.file_name),
+                          file_type: q.file_type, // Добавляем поле imageUrl
                           correctOption: q.correct_option,
                           // Сохраняем порядок из базы данных
                           options: q.options || []
@@ -73,18 +84,30 @@ class SurveyService {
 
             // 2. Создаем вопросы и варианты ответов
             for (const question of questions) {
-                const { text, correct_option, options } = question;
+                const { text, correct_option, options, file_url, file_folder, file_name, file_type } = question;
+
+                console.log(file_url); // Здесь ты уже получаешь URL изображения
 
                 // Валидация вопроса
                 if (!text || !Array.isArray(options)) {
                     throw new Error('Некорректные данные вопроса');
                 }
 
+                // Проверка на наличие загруженного файла
+                let uploadedFileUrl = null;
+                if (file_url) {
+                    uploadedFileUrl = file_url; // Используем URL, если файл был загружен
+                }
+
                 const createdQuestion = await Question.create(
                     {
                         survey_id: survey.id,
                         text,
-                        correct_option
+                        correct_option,
+                        file_url: uploadedFileUrl,
+                        file_folder: file_folder || null,
+                        file_name: file_name || null,
+                        file_type: file_type || null // Добавляем URL файла в поле
                     },
                     { transaction: t }
                 );
@@ -102,6 +125,7 @@ class SurveyService {
             return survey;
         });
     }
+
     static async deleteSurvey(id) {
         const survey = await Survey.findByPk(id);
         if (!survey) throw new Error('Survey not found');
@@ -109,6 +133,14 @@ class SurveyService {
         return await sequelize.transaction(async (t) => {
             // Удаляем все связанные варианты ответов
             const questions = await Question.findAll({ where: { survey_id: id } });
+
+            for (let question of questions) {
+                if (question.file_url && question.file_folder && question.file_name) {
+                    // Удаляем файл из S3
+                    await FileService.deleteFileFromS3(question.file_folder, question.file_name);
+                }
+            }
+
             const questionIds = questions.map((q) => q.id);
             await Option.destroy({ where: { question_id: questionIds } }, { transaction: t });
 
@@ -145,7 +177,11 @@ class SurveyService {
                     {
                         survey_id: newSurvey.id,
                         text: question.text,
-                        correct_option: question.correct_option
+                        correct_option: question.correct_option,
+                        file_url: question.file_url, // Используем старый URL файла
+                        file_folder: question.file_folder, // Используем старую папку
+                        file_name: question.file_name, // Используем старое имя файла
+                        file_type: question.file_type // Используем старое имя файла
                     },
                     { transaction: t }
                 );
@@ -168,29 +204,59 @@ class SurveyService {
             return newSurvey;
         });
     }
-    static async updateSurvey(surveyId, userId, { title, questions }) {
+    static async updateSurvey(surveyId, userId, { title, questions, files }) {
         return await sequelize.transaction(async (t) => {
-            // 1. Verify survey exists
+            // 1. Проверяем, что опрос существует и принадлежит пользователю
             const survey = await Survey.findOne({
                 where: { id: surveyId, user_id: userId },
                 transaction: t
             });
             if (!survey) throw new Error('Survey not found or not owned by user');
 
-            // 2. Update survey title
+            // 2. Обновляем заголовок опроса
             await survey.update({ title }, { transaction: t });
 
-            // 3. Process each question
+            // 3. Обрабатываем каждый вопрос
+            const incomingQuestionIds = [];
+            console.log('question', questions);
             for (const question of questions) {
-                const { id: questionId, text, correct_option, options } = question;
+                const { id: questionId, text, correct_option, options, file_url, file_folder, file_name, file_type } = question;
 
+                let uploadedFileUrl = file_url || null;
+                let uploadedFileFolder = file_folder || null;
+                let uploadedFileName = file_name || null;
+                let uploadedFileType = file_type || null;
+
+                // Если есть новые файлы с фронта — используем их
+                if (files && files[questionId]) {
+                    uploadedFileUrl = files[questionId].url;
+                    uploadedFileFolder = files[questionId].folder;
+                    uploadedFileName = files[questionId].fileName;
+                    uploadedFileType = files[questionId].fileType;
+                }
+                console.log('questionId', questionId);
                 if (questionId) {
                     // UPDATE EXISTING QUESTION
-                    const [affected] = await Question.update({ text, correct_option }, { where: { id: questionId }, transaction: t });
+                    const [affected] = await Question.update(
+                        {
+                            text,
+                            correct_option,
+                            file_url: uploadedFileUrl,
+                            file_folder: uploadedFileFolder,
+                            file_name: uploadedFileName,
+                            file_type: uploadedFileType
+                        },
+                        {
+                            where: { id: questionId },
+                            transaction: t
+                        }
+                    );
 
                     if (affected === 0) throw new Error(`Question ${questionId} not found`);
 
-                    // Process options
+                    incomingQuestionIds.push(questionId);
+
+                    // Обновляем опции вопроса
                     await this._updateQuestionOptions(questionId, options, t);
                 } else {
                     // CREATE NEW QUESTION
@@ -198,15 +264,22 @@ class SurveyService {
                         {
                             survey_id: surveyId,
                             text,
-                            correct_option
+                            correct_option,
+                            file_url: uploadedFileUrl,
+                            file_folder: uploadedFileFolder,
+                            file_name: uploadedFileName,
+                            file_type: uploadedFileType
                         },
                         { transaction: t }
                     );
 
+                    incomingQuestionIds.push(newQuestion.id);
+
+                    // Создаем опции для нового вопроса
                     await Option.bulkCreate(
                         options.map((opt, index) => ({
                             question_id: newQuestion.id,
-                            text: opt.text,
+                            text: opt,
                             option_order: index
                         })),
                         { transaction: t }
@@ -214,8 +287,7 @@ class SurveyService {
                 }
             }
 
-            // 4. Delete questions that were removed
-            const incomingQuestionIds = questions.map((q) => q.id).filter(Boolean);
+            // 4. Удаляем вопросы, которых нет в новом списке
             const questionsToDelete = await Question.findAll({
                 where: {
                     survey_id: surveyId,
@@ -247,29 +319,41 @@ class SurveyService {
             transaction
         });
 
-        // Update existing options
-        for (let i = 0; i < Math.min(existingOptions.length, newOptions.length); i++) {
-            await existingOptions[i].update(
+        console.log('existingOptions', existingOptions);
+
+        // Обновляем существующие опции
+        const updatePromises = existingOptions.slice(0, newOptions.length).map((opt, i) =>
+            opt.update(
                 {
-                    text: newOptions[i].text
+                    text: newOptions[i],
+                    option_order: i // Обновляем порядок тоже
                 },
                 { transaction }
-            );
-        }
+            )
+        );
 
-        // Add new options if needed
+        await Promise.all(updatePromises);
+
+        // Добавляем новые опции
         if (newOptions.length > existingOptions.length) {
+            const newOptsToCreate = newOptions.slice(existingOptions.length);
+
+            // Проверка, что все новые варианты имеют текст
+            if (newOptsToCreate.some((opt) => !opt)) {
+                throw new Error('New options must have text');
+            }
+
             await Option.bulkCreate(
-                newOptions.slice(existingOptions.length).map((opt, i) => ({
+                newOptsToCreate.map((opt, i) => ({
                     question_id: questionId,
-                    text: opt.text,
+                    opt, // Убедитесь, что это поле присутствует
                     option_order: existingOptions.length + i
                 })),
                 { transaction }
             );
         }
 
-        // Remove excess options
+        // Удаляем лишние опции
         if (existingOptions.length > newOptions.length) {
             await Option.destroy({
                 where: {

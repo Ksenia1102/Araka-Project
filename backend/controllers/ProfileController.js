@@ -5,7 +5,9 @@ class ProfileController {
     // Получение профиля
     static async getProfile(req, res, next) {
         try {
-            const user = await ProfileService.getUser(req.params.userId);
+            const user = await ProfileService.getUser(req.params.userId, {
+                attributes: ['id', 'name', 'surname', 'login', 'email', 'createdAt']
+            });
             if (!user) {
                 return res.status(404).json({ error: 'User not found' });
             }

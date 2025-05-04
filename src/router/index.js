@@ -96,6 +96,11 @@ const router = createRouter({
             name: 'empty',
             component: () => import('@/views/pages/Empty.vue')
         },
+        {
+            path: '/auth/code',
+            name: 'code',
+            component: () => import('@/views/pages/auth/code.vue')
+        },
 
         {
             path: '/auth/login',
@@ -116,6 +121,11 @@ const router = createRouter({
             path: '/auth/error',
             name: 'error',
             component: () => import('@/views/pages/auth/Error.vue')
+        },
+        {
+            path: '/auth/code',
+            name: 'code',
+            component: () => import('@/views/pages/auth/23.vue')
         }
     ]
 });

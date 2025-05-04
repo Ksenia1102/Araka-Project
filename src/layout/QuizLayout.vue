@@ -6,20 +6,33 @@ const apiUrl = import.meta.env.VITE_API_URL;
 const quizData = ref({
     questions: [
         {
-            text: 'Какое животное символизирует мудрость?',
-            options: ['Сова', 'Кошка', 'Лиса', 'Волк']
+            text: 'Какой фактор главным образом влияет на формирование крупнейших пустынь мира (Сахара, Аравийская пустыня)?',
+            options: [
+                'Нисходящие сухие воздушные потоки в зоне субтропических максимумов – они препятствуют образованию облаков и осадков.',
+                'Удалённость от океанов – континентальные воздушные массы теряют влагу ещё до достижения этих регионов.',
+                'Холодные океанические течения у побережья – охлаждают воздух и блокируют испарение, создавая засушливые условия.',
+                'Деятельность человека (вырубка лесов, перевыпас скота) – ускоряет процесс опустынивания, но не является основной причиной.'
+            ],
+            mediaUrl: '/public/demo/images/sahara.jpg',
+            mediaType: 'image'
         },
         {
             text: 'Какая планета самая большая в Солнечной системе?',
-            options: ['Земля', 'Юпитер', 'Сатурн', 'Марс']
+            options: ['Земля', 'Юпитер', 'Сатурн', 'Марс'],
+            mediaUrl: '/public/demo/images/uu.mp4',
+            mediaType: 'video'
         },
         {
             text: 'Как называется столица Франции?',
-            options: ['Лондон', 'Берлин', 'Париж', 'Рим']
+            options: ['Лондон', 'Берлин', 'Париж', 'Рим'],
+            mediaUrl: null,
+            mediaType: null
         },
         {
             text: 'Кто написал "Война и мир"?',
-            options: ['Толстой', 'Достоевский', 'Чехов', 'Пушкин']
+            options: ['Толстой', 'Достоевский', 'Чехов', 'Пушкин'],
+            mediaUrl: '/public/demo/images/pp.mp3',
+            mediaType: 'audio'
         }
     ]
 });
@@ -92,12 +105,27 @@ const fetchSurveyData = async () => {
         const token = localStorage.getItem('authToken');
         const response = await axios.get(`${apiUrl}/api/surveys/${surveyId.value}`, {
             headers: {
-                Authorization: `Bearer ${token}` // Стандартный формат
+                Authorization: `Bearer ${token}`
             }
         });
-        surveyData.value = response.data; // Данные об опросе
-        quizData.value.questions = surveyData.value.questions;
+
+        surveyData.value = response.data;
+
+        // Преобразуем вопросы для корректного отображения медиа
+        quizData.value.questions = surveyData.value.questions.map((question) => {
+            // Формируем полный URL для медиафайлов
+            const mediaUrl = question.file_url ? `${question.file_url}` : null;
+
+            return {
+                ...question,
+                options: question.options || [], // На случай отсутствия options
+                mediaUrl: mediaUrl,
+                mediaType: question.file_type || null
+            };
+        });
+
         currentQuestion.value = quizData.value.questions[0];
+        console.log('Processed questions:', quizData.value.questions);
     } catch (error) {
         console.error('Ошибка получения данных об опросе:', error);
     }
@@ -191,6 +219,7 @@ onMounted(() => {
             </div>
             <div class="flex items-center">
                 <!-- <Button label="ЗАПУЩЕН" class="back-btn" severity="info" style="margin-right: 5px"></Button>
+                 <span class="ques-num" style="margin-right: 0.2em">ЗАПУЩЕН</span>
                 <h2>ДЛЯ КЛАССА: {{ classData?.class.title }}</h2> -->
             </div>
         </div>
@@ -207,7 +236,7 @@ onMounted(() => {
                                     <span class="layout-menuitem-text">{{ student.label }}</span>
                                 </div>
                                 <div class="layout-menuitem-actions">
-                                    <span class="question-number">{{ student.cardNumber }}</span>
+                                    <span class="ques-num">{{ student.cardNumber }}</span>
                                 </div>
                             </li>
                         </template>
@@ -227,8 +256,8 @@ onMounted(() => {
                     <!-- дублирование карточки??? как то это исправить-->
                     <div>
                         <div class="card" style="text-align: center">
-                            <p style="margin-bottom: 1em">Получено ответов: <br /><span class="question-number">нет ответов</span></p>
-                            <p>Правильных ответов: <br /><span class="question-number">нет ответов</span></p>
+                            <p style="margin-bottom: 1em">Получено ответов: <br /><span class="ques-num">нет ответов</span></p>
+                            <p>Правильных ответов: <br /><span class="ques-num">нет ответов</span></p>
                         </div>
                     </div>
                 </div>
@@ -239,7 +268,25 @@ onMounted(() => {
                                 <div style="height: 100%; display: flex; flex-direction: column">
                                     <span class="font-semibold text-xl">Вопрос {{ currentQuestionIndex + 1 }} / {{ quizData.questions.length }}</span>
                                     <div class="centered-content">
-                                        <h2 class="layout-menu-category font-bold mb-12 text-max">{{ currentQuestion.text }}</h2>
+                                        <h2 v-breakwords:[20]="currentQuestion.text" class="layout-menu-category font-bold text-max"></h2>
+                                        <!-- Контейнер изображения: скрывается, если нет картинки -->
+                                        <div v-if="currentQuestion.mediaUrl" class="image-preview">
+                                            <!-- <img :src="currentQuestion.imageUrl" alt="Загруженное изображение" class="uploaded-image" /> -->
+                                            <template v-if="currentQuestion.mediaType === 'image'">
+                                                <img :src="currentQuestion.mediaUrl" alt="Загруженное изображение" class="uploaded-image" />
+                                            </template>
+
+                                            <template v-else-if="currentQuestion.mediaType === 'video'">
+                                                <video :src="currentQuestion.mediaUrl" controls class="uploaded-image"></video>
+                                            </template>
+
+                                            <template v-else-if="currentQuestion.mediaType === 'audio'">
+                                                <audio :src="currentQuestion.mediaUrl" controls class="uploaded-image"></audio>
+                                            </template>
+                                        </div>
+
+                                        <!-- Пустой блок-заглушка для сохранения высоты -->
+                                        <div v-else class="image-placeholder"></div>
                                         <div>
                                             <ul class="sections-list">
                                                 <li v-for="(option, index) in currentQuestion.options" :key="index" class="section-item">
@@ -263,10 +310,10 @@ onMounted(() => {
                         <div>
                             <div class="card" style="text-align: center">
                                 <p style="margin-bottom: 1em">
-                                    Получено ответов: <br /><span class="question-number">{{ answersReceived }}</span>
+                                    Получено ответов: <br /><span class="ques-num">{{ answersReceived }}</span>
                                 </p>
                                 <p>
-                                    Правильных ответов: <br /><span class="question-number">{{ correctAnswers }}</span>
+                                    Правильных ответов: <br /><span class="ques-num">{{ correctAnswers }}</span>
                                 </p>
                             </div>
                         </div>
@@ -312,7 +359,7 @@ onMounted(() => {
     padding: 20px 20px 20px 0;
     margin: 10px 10px 10px 0;
 }
-.question-number {
+.ques-num {
     padding: 4px 8px;
     font-weight: 400;
     color: white;
@@ -338,9 +385,16 @@ onMounted(() => {
     padding: 0 1.5rem;
 }
 
-.text-max {
-    font-size: 2.2em;
-    text-align: center;
+/* Контейнер для изображения */
+.image-preview audio {
+    margin: 10vh 0;
+}
+
+/* Стил для изображения */
+.image-placeholder {
+    /* height: 20vh; */
+    margin: 15vh 0;
+    width: 100%;
 }
 .centered-content {
     display: flex;
@@ -348,15 +402,16 @@ onMounted(() => {
     justify-content: center;
     align-items: center;
     height: 100%;
-    margin-top: 15vh;
+    /* margin-top: 15vh; */
 }
 
-.sections-list {
+/* .sections-list {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* Две колонки */
-    gap: 1rem; /* Отступы между элементами */
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
     padding: 1rem;
-}
+} */
+
 .section-item {
     display: flex;
     align-items: center;
@@ -365,12 +420,39 @@ onMounted(() => {
     /* text-align: center; */
     background-color: #f9f9f9;
     /* transition: background-color 0.3s ease; */
-    border-radius: 5px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
 }
 .action-buttons {
     margin-top: 1rem;
     display: flex;
     justify-content: space-between;
     width: 100%;
+}
+.card {
+    max-width: 120vh;
+    width: 100%;
+}
+
+.text-max {
+    font-size: 2.2em;
+    text-align: center;
+}
+
+.sidebar {
+    width: 20rem;
+    height: 80vh;
+    overflow-y: auto;
+    border-radius: var(--content-border-radius);
+    padding: 0 1.5rem;
+}
+
+.ques-num {
+    padding: 4px 8px;
+    font-weight: 400;
+    color: white;
+    background-color: #0ea5e9;
+    border-radius: 3px;
 }
 </style>

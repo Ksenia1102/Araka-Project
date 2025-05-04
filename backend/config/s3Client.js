@@ -1,25 +1,13 @@
-// config.js
-require('dotenv').config();
-const fs = require('fs');
 const AWS = require('aws-sdk');
-
-// Проверка переменных окружения
-const requiredEnvVars = ['SELECTEL_ENDPOINT', 'SELECTEL_BUCKET', 'SELECTEL_ACCESS_KEY', 'SELECTEL_SECRET_KEY', 'SELECTEL_REGION', 'SSL_CA_PATH'];
-
-for (const envVar of requiredEnvVars) {
-    if (!process.env[envVar]) {
-        console.error(`❌ Ошибка: Переменная окружения ${envVar} не определена`);
-        process.exit(1);
-    }
-}
+const fs = require('fs');
 
 // Инициализация S3 клиента
 const s3 = new AWS.S3({
-    endpoint: process.env.SELECTEL_ENDPOINT,
+    endpoint: 'https://s3.ru-7.storage.selcloud.ru', // endpoint для Selectel
     accessKeyId: process.env.SELECTEL_ACCESS_KEY,
     secretAccessKey: process.env.SELECTEL_SECRET_KEY,
-    region: process.env.SELECTEL_REGION,
-    s3ForcePathStyle: false,
+    region: 'ru-7',
+    s3ForcePathStyle: true, // Используем это для совместимости с Selectel
     signatureVersion: 'v4',
     httpOptions: {
         agent: new require('https').Agent({
@@ -28,4 +16,29 @@ const s3 = new AWS.S3({
     }
 });
 
+// Пример данных файла
+const file = {
+    buffer: Buffer.from('test image content'),
+    originalname: 'test-image.jpg',
+    mimetype: 'image/jpeg'
+};
+
+async function uploadFile() {
+    try {
+        const uploadParams = {
+            Bucket: process.env.SELECTEL_BUCKET,
+            Key: `test-folder/${file.originalname}`,
+            Body: file.buffer,
+            ContentType: file.mimetype
+        };
+
+        // Используем метод .upload() для загрузки файла
+        const uploadData = await s3.upload(uploadParams).promise();
+        console.log('Файл успешно загружен:', uploadData);
+    } catch (error) {
+        console.error('Ошибка при загрузке файла:', error.message);
+    }
+}
+
+uploadFile();
 module.exports = s3;

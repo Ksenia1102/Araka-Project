@@ -1,10 +1,8 @@
 <script setup>
-import axios from 'axios'; // Для работы с запросами
+import axios from 'axios';
 import jwtDecode from 'jwt-decode';
 import { onMounted, ref } from 'vue';
-// import { useRouter } from 'vue-router'; // Импортируйте useRouter
 
-// const router = useRouter(); // Получите доступ к роутеру
 const apiUrl = import.meta.env.VITE_API_URL;
 const displayConfirmation = ref(false);
 function openConfirmation() {
@@ -17,23 +15,20 @@ function closeConfirmation() {
 const username = ref('Иван');
 const lastname = ref('Конов');
 const login = ref('ivanov@ex.com');
+const email = ref('user@example.com'); // Добавлено поле для email
 const pass = ref('*****');
 
-// const newPassword = ref('');
-// const oldPassword = ref('');
-// Флаг режима редактирования
 const isEditingName = ref(false);
 const isEditingAuth = ref(false);
-// Название кнопки
 const buttonLabelName = ref('Изменить данные о пользователе');
 const buttonLabelAuth = ref('Изменить данные аутентификации');
 function getUserIdFromToken() {
-    const token = localStorage.getItem('authToken'); // Или другой способ получения токена
+    const token = localStorage.getItem('authToken');
     if (!token) return null;
 
     try {
         const decoded = jwtDecode(token);
-        return decoded.id; // Зависит от структуры вашего токена
+        return decoded.id;
     } catch (error) {
         console.error('Ошибка декодирования токена:', error);
         return null;
@@ -44,7 +39,6 @@ async function fetchUserData() {
         const userId = getUserIdFromToken();
         const token = localStorage.getItem('authToken');
 
-        // Проверка наличия токена
         if (!token) {
             throw new Error('Токен авторизации не найден');
         }
@@ -59,6 +53,7 @@ async function fetchUserData() {
         username.value = user.name || 'Имя';
         lastname.value = user.surname || 'Фамилия';
         login.value = user.login || '';
+        email.value = user.email || ''; // Получаем email из ответа сервера
         pass.value = '';
     } catch (error) {
         console.error('Ошибка загрузки данных:', error);
@@ -77,7 +72,6 @@ async function fetchUserData() {
     }
 }
 
-// Сохранение измененных данных имени и фамилии
 async function saveUserData() {
     try {
         const userId = getUserIdFromToken();
@@ -87,7 +81,7 @@ async function saveUserData() {
             { name: username.value, surname: lastname.value },
             {
                 headers: {
-                    Authorization: `Bearer ${token}` // Используем стандартный формат
+                    Authorization: `Bearer ${token}`
                 }
             }
         );
@@ -99,7 +93,6 @@ async function saveUserData() {
     }
 }
 
-// Сохранение данных аутентификации
 async function saveAuthData() {
     try {
         const userId = getUserIdFromToken();
@@ -112,7 +105,7 @@ async function saveAuthData() {
             },
             {
                 headers: {
-                    Authorization: `Bearer ${token}` // Используем стандартный формат
+                    Authorization: `Bearer ${token}`
                 }
             }
         );
@@ -124,19 +117,18 @@ async function saveAuthData() {
     }
 }
 
-// Функция для переключения режима для имени
 function toggleEditNameMode() {
     if (isEditingName.value) {
-        saveUserData(); // Сохранение изменений при выключении режима редактирования
+        saveUserData();
     } else {
-        isEditingName.value = true; // Включение режима редактирования
+        isEditingName.value = true;
         buttonLabelName.value = 'Сохранить';
     }
 }
-// Функция для переключения режима для пароля\логина
+
 function toggleEditAuthMode() {
     if (isEditingAuth.value) {
-        saveAuthData(); // Сохраняем изменения
+        saveAuthData();
     } else {
         isEditingAuth.value = true;
         buttonLabelAuth.value = 'Сохранить';
@@ -150,11 +142,10 @@ async function deleteAccount() {
     try {
         await axios.delete(`${apiUrl}/profile/${userId}`, {
             headers: {
-                Authorization: `Bearer ${token}` // Используем стандартный формат
+                Authorization: `Bearer ${token}`
             }
         });
-        // Перенаправление пользователя на страницу логина или главную после удаления аккаунта
-        window.location.replace('/auth/login'); // Замените на путь, куда нужно отправить пользователя
+        window.location.replace('/auth/login');
     } catch (error) {
         console.error('Ошибка удаления аккаунта:', error);
     }
@@ -196,6 +187,14 @@ onMounted(() => {
             </div>
         </div>
         <Button severity="info" :label="buttonLabelAuth" @click="toggleEditAuthMode" style="margin-bottom: 10px" outlined></Button>
+        <!-- Поле для email (только для чтения) -->
+        <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Контактные данные</div>
+        <div class="flex flex-wrap flex-col gap-4" style="margin-bottom: 10px; width: 50%">
+            <div class="flex flex-col grow basis-0 gap-2">
+                <label for="email">Электронная почта</label>
+                <InputText type="text" id="email" v-model="email" disabled />
+            </div>
+        </div>
         <!-- Кнопка удаления аккаунта -->
         <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Другие действия</div>
         <Button severity="danger" style="margin-bottom: 10px" @click="openConfirmation" outlined>Удалить аккаунт</Button>

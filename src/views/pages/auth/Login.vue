@@ -1,8 +1,9 @@
 <script setup>
 import axios from 'axios';
+import { useToast } from 'primevue/usetoast';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-
+const toast = useToast();
 const router = useRouter();
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -28,48 +29,98 @@ function goToRegistration() {
     router.push({ name: 'registration' });
 }
 
+// Функция для перехода на страницу регистрации
+function goToCode() {
+    router.push({ name: 'code' });
+}
+
 // Функция для входа пользователя
+// В вашем компоненте (в секции script setup) должны быть определены эти переменные
+const isLoading = ref(false);
+
 async function loginUser() {
-    errors.value.loginOrEmail = '';
-    errors.value.password = '';
-    serverError.value = '';
+    // Сброс ошибок
+    errors.value = {
+        loginOrEmail: '',
+        password: ''
+    };
 
     // Проверка на пустые поля
     if (!loginOrEmail.value) {
-        errors.value.login = 'Пожалуйста, заполните логин';
+        errors.value.loginOrEmail = 'Пожалуйста, заполните логин или email';
+        return;
     }
     if (!password.value) {
         errors.value.password = 'Пожалуйста, заполните пароль';
-    }
-
-    // Если есть ошибки, прекратить выполнение
-    if (errors.value.loginOrEmail || errors.value.password) {
         return;
     }
 
     try {
-        // Отправляем POST-запрос на сервер с логином и паролем
-        const response = await axios.post(
-            `${apiUrl}/auth/login`, // Используем правильный URL для вашего API
-            {
-                loginOrEmail: loginOrEmail.value,
-                password: password.value
-            }
-        );
+        isLoading.value = true;
+        const response = await axios.post(`${apiUrl}/auth/login`, {
+            loginOrEmail: loginOrEmail.value,
+            password: password.value
+        });
 
-        // Логируем весь ответ от сервера
-
-        // Сохраняем токен в localStorage
+        console.log('User logged in:', response.data);
         const token = response.data.token;
         localStorage.setItem('authToken', token);
         router.push({ name: 'dashboard' });
     } catch (error) {
-        console.error('Error login user:', error);
+        console.error('Error logging in user:', error);
+
         if (error.response) {
-            serverError.value = error.response.data.message || 'Произошла ошибка при попытке входа';
+            console.log('Full error response:', error.response.data);
+
+            const errorData = error.response.data;
+            let errorMessage = '';
+
+            // Обработка разных форматов ошибок
+            if (typeof errorData === 'string') {
+                errorMessage = errorData;
+            } else if (errorData.message) {
+                errorMessage = errorData.message;
+            } else if (errorData.error) {
+                errorMessage = errorData.error;
+            }
+
+            // Проверка на неподтвержденную почту (500 ошибка)
+            if (error.response.status === 500 && (errorMessage.toLowerCase().includes('подтвержден') || errorMessage.toLowerCase().includes('подтвердите'))) {
+                toast.add({
+                    severity: 'warn',
+                    summary: 'Требуется подтверждение',
+                    detail: 'Пожалуйста, подтвердите вашу почту перед входом. Проверьте вашу почту для получения кода подтверждения.',
+                    life: 5000
+                });
+                return;
+            }
+
+            // Общие ошибки авторизации
+            if (error.response.status === 401 || errorMessage.toLowerCase().includes('неверный') || errorMessage.toLowerCase().includes('invalid')) {
+                toast.add({
+                    severity: 'error',
+                    summary: 'Ошибка',
+                    detail: 'Неверный пароль.',
+                    life: 5000
+                });
+            } else {
+                toast.add({
+                    severity: 'error',
+                    summary: 'Ошибка сервера',
+                    detail: errorMessage || 'Произошла ошибка при входе',
+                    life: 3000
+                });
+            }
         } else {
-            serverError.value = 'Произошла ошибка при попытке входа';
+            toast.add({
+                severity: 'error',
+                summary: 'Ошибка сети',
+                detail: 'Не удалось подключиться к серверу. Проверьте соединение.',
+                life: 3000
+            });
         }
+    } finally {
+        isLoading.value = false;
     }
 }
 
@@ -89,7 +140,7 @@ async function requestPasswordReset() {
         await axios.post(`${apiUrl}/auth/login/request-password-reset`, {
             email: emailForReset.value
         });
-        alert('Код подтверждения отправлен на вашу почту');
+        toast.add({ severity: 'success', summary: 'Отлично!', detail: 'Код подтверждения отправлен на вашу почту. Без подтверждения аккаунта вход будет невозоможен.', life: 8000 });
         isCodeSent.value = true; // Показываем поле "Код подтверждения" и кнопку "Проверить код"
 
         // Запускаем таймер для повторной отправки кода
@@ -97,7 +148,7 @@ async function requestPasswordReset() {
     } catch (error) {
         // Или другую страницу по вашему выбору
         console.error('Error requesting password reset:', error);
-        alert('Ошибка при запросе восстановления пароля');
+        toast.add({ severity: 'error', summary: 'Ошибка!', detail: 'Ошибка при отправке кода.', life: 8000 });
     } finally {
         isSendingCode.value = false; // Завершаем отправку кода
     }
@@ -119,7 +170,7 @@ async function verifyResetCode() {
         isCodeVerified.value = true; // Показываем поле "Новый пароль" и кнопку "Обновить пароль"
     } catch (error) {
         console.error('Error verifying reset code:', error);
-        alert('Неверный код подтверждения');
+        toast.add({ severity: 'info', summary: 'Ой!', detail: 'Неверный код подтверждения. Пожалуйста, попробуйте снова', life: 8000 });
     }
 }
 
@@ -151,13 +202,13 @@ async function updatePassword() {
             code: resetCode.value,
             newPassword: newPassword.value
         });
-        alert('Пароль успешно обновлен');
+        toast.add({ severity: 'success', summary: 'Успех!', detail: 'Пароль успешно обновлен.', life: 8000 });
 
         // Автоматически нажимаем кнопку "Назад"
         goBack();
     } catch (error) {
         console.error('Error updating password:', error);
-        alert('Ошибка при обновлении пароля');
+        toast.add({ severity: 'error', summary: 'Ошибка!', detail: 'Ошибка при попытке изменения пароля.', life: 8000 });
     }
 }
 
@@ -189,10 +240,10 @@ function goBack() {
                         <Password id="password1" v-model="password" placeholder="Пароль" :toggleMask="true" class="mb-4" fluid :feedback="false"></Password>
                         <p v-if="serverError" class="text-red-500 text-sm mb-4">{{ serverError }}</p>
                         <Button :to="{ name: 'registration' }" label="Нет аккаунта" class="w-full" severity="secondary" text @click="goToRegistration" />
+                        <Button :to="{ name: 'registration' }" label="Подвтердить почту" class="w-full" severity="secondary" text @click="goToCode" />
                         <Button label="Войти" class="w-full" @click="loginUser" severity="info"></Button>
                         <Button label="Забыли пароль?" class="w-full" @click="isPasswordReset = true" severity="secondary" text></Button>
                     </div>
-
                     <!-- Форма восстановления пароля -->
                     <div v-else>
                         <!-- Поле для почты -->

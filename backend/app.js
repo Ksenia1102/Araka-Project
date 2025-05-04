@@ -88,6 +88,7 @@ const authRoutes = require('./routes/authRoutes');
 const errorHandler = require('./middlewares/errorHandler');
 const fileRoutes = require('./routes/fileRoutes');
 const profileRoutes = require('./routes/profileRoutes');
+const upload = require('./routes/upload');
 const app = express();
 
 app.use(cors()); // Настроим CORS
@@ -97,11 +98,12 @@ app.use('/api', routes); // Подключаем все маршруты
 app.use('/api', userRoutes); // Все маршруты, связанные с пользователями, начинаются с /api
 app.use('/api/classes', classRoutes);
 app.use('/api/students', studentRoutes); // Добавляем новые роуты
-app.use('/api/surveys', surveyRoutes); // Подключаем маршруты опросов
+app.use('/api/surveys', surveyRoutes);
+app.use('/api', upload); // Подключаем маршруты опросов
 // app.use('/api', questionRoutes); // Подключаем маршруты вопросов
 // app.use('/api', optionRoutes); // Подключаем маршруты вариантов ответа
 app.use('/auth', authRoutes);
 app.use('/profile', profileRoutes);
-app.use('/files', fileRoutes);
+app.use('/api', fileRoutes);
 app.use(errorHandler); // Подключаем в конце!
 module.exports = app;

@@ -32,11 +32,11 @@ export default {
     // },
     computed: {
         currentQuestion() {
-            if (this.currentQuestionIndex !== null) {
+            if (this.currentQuestionIndex !== null && this.questions[this.currentQuestionIndex]) {
                 const question = this.questions[this.currentQuestionIndex];
                 return {
                     ...question,
-                    indexedText: `${this.currentQuestionIndex + 1}. ${question.text}` // Нумерация добавляется в шаблоне
+                    indexedText: `${this.currentQuestionIndex + 1}. ${question.text || ''}` // Нумерация добавляется в шаблоне
                 };
             }
             return null;
@@ -53,8 +53,15 @@ export default {
         addQuestion() {
             const newQuestion = {
                 text: `Вопрос ${this.questions.length + 1}`, // Название вопроса по умолчанию
-                options: ['', '', '', ''], // Четыре пустых варианта
-                selectedOption: null // Не выбран правильный вариант
+                options: ['', '', '', ''],
+                selectedOption: null,
+                // imageUrl: null, // Обязательно добавляем image
+                // imageName: '',
+                // imageSize: 0,
+                mediaUrl: null, // Теперь универсально: медиафайл
+                mediaType: null, // Тип медиа (image, video, audio)
+                mediaName: '',
+                mediaSize: 0
             };
             this.questions.push(newQuestion);
             this.selectQuestion(this.questions.length - 1); // Переход к новому вопросу
@@ -62,9 +69,28 @@ export default {
         },
         copyQuestion(index) {
             const questionToCopy = this.questions[index];
+
+            const baseText = questionToCopy.text.replace(/\s*\(Копия\s*\d*\)$/, '');
+
+            let copyNumber = 1;
+            this.questions.forEach((q) => {
+                const match = q.text.match(new RegExp(`^${baseText} \\(Копия (\\d+)\\)$`));
+                if (match) {
+                    copyNumber = Math.max(copyNumber, parseInt(match[1]) + 1);
+                }
+            });
+
             const copiedQuestion = {
-                ...JSON.parse(JSON.stringify(questionToCopy)), // Глубокая копия
-                text: `${questionToCopy.text} (Копия)`
+                text: `${baseText} (Копия ${copyNumber})`,
+                options: [...questionToCopy.options],
+                selectedOption: questionToCopy.selectedOption,
+                // imageUrl: questionToCopy.imageUrl,
+                // imageName: questionToCopy.imageName,
+                // imageSize: questionToCopy.imageSize
+                mediaUrl: questionToCopy.mediaUrl,
+                mediaType: questionToCopy.mediaType,
+                mediaName: questionToCopy.mediaName,
+                mediaSize: questionToCopy.mediaSize
             };
             this.questions.push(copiedQuestion);
             this.selectQuestion(this.questions.length - 1); // Переход к скопированному вопросу
@@ -80,8 +106,50 @@ export default {
         },
         selectOption(index) {
             if (this.currentQuestion) {
-                this.questions[this.currentQuestionIndex].selectedOption = index; // Устанавливаем правильный вариант
+                this.questions[this.currentQuestionIndex].selectedOption = index;
             }
+        },
+        triggerFileInput() {
+            if (this.$refs.fileInput) {
+                this.$refs.fileInput.click();
+            }
+        },
+        handleFileUpload(event) {
+            const file = event.target.files[0];
+            const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+
+            if (file) {
+                if (file.size > MAX_SIZE) {
+                    alert('Файл слишком большой. Максимальный размер: 10 МБ.');
+                    this.$refs.fileInput.value = ''; // Очистить input
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = () => {
+                    if (this.currentQuestion) {
+                        this.questions[this.currentQuestionIndex].mediaUrl = reader.result;
+                        this.questions[this.currentQuestionIndex].mediaName = file.name;
+                        this.questions[this.currentQuestionIndex].mediaSize = (file.size / 1024).toFixed(2);
+                        const fileType = file.type.split('/')[0]; // тип файла
+                        this.questions[this.currentQuestionIndex].mediaType = fileType;
+
+                        // ВАЖНО: Сохраняем сам файл, чтобы потом его отправить на сервер
+                        this.questions[this.currentQuestionIndex].mediaFile = file;
+                    }
+                    this.$refs.fileInput.value = '';
+                };
+                reader.readAsDataURL(file);
+            }
+        },
+        removeMedia() {
+            if (this.currentQuestion) {
+                this.questions[this.currentQuestionIndex].mediaUrl = null;
+                this.questions[this.currentQuestionIndex].mediaType = null;
+                this.questions[this.currentQuestionIndex].mediaName = null;
+                this.questions[this.currentQuestionIndex].mediaSize = null;
+            }
+            this.$refs.fileInput.value = '';
         },
         handleSaveSurvey(data) {
             this.surveyTitle = data.title; // Только обновляем заголовок
@@ -93,50 +161,86 @@ export default {
             }
         },
         // Отправка данных на сервер
-        submitSurvey() {
+        async submitSurvey() {
             if (!this.surveyTitle.trim()) {
                 this.responseMessage = 'Название опроса не может быть пустым.';
                 this.responseClass = 'error';
                 return;
             }
 
+            // Обновление текста текущего вопроса
             this.questions[this.currentQuestionIndex].text = this.currentQuestionText;
-            const surveyData = {
-                user_id: this.userId,
-                title: this.surveyTitle.trim(),
-                questions: this.questions.map((q, index) => ({
-                    text: q.text.trim() || `Вопрос ${index + 1}`,
-                    correct_option: q.selectedOption,
-                    options: q.options.map((opt) => opt.trim())
-                }))
-            };
 
-            const invalidQuestions = surveyData.questions.filter((q) => !q.text || q.correct_option === null || q.options.some((opt) => !opt));
-            if (invalidQuestions.length > 0) {
-                this.responseMessage = 'Убедитесь, что все вопросы заполнены и у каждого есть правильный вариант.';
-                this.responseClass = 'error';
-                return;
-            }
             const token = localStorage.getItem('authToken');
 
-            // Отправляем запрос с токеном в заголовке
-            axios
-                .post(`${apiUrl}/api/surveys`, surveyData, {
-                    headers: {
-                        Authorization: `Bearer ${token}` // Стандартный формат
+            try {
+                // Загружаем изображения, если нужно
+                const imageUploadPromises = this.questions.map(async (question) => {
+                    console.log(question.imageFile, question.mediaUrl);
+                    if (question.mediaUrl && question.mediaFile) {
+                        const formData = new FormData();
+                        formData.append('file', question.mediaFile);
+                        formData.append('mediaType', question.mediaType); // <-- Добавляем тип!
+
+                        // Отправляем запрос на сервер для загрузки изображения
+                        const res = await axios.post(`${apiUrl}/api/upload-image`, formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data',
+                                Authorization: `Bearer ${token}`
+                            }
+                        });
+
+                        // Сохраняем URL изображения в вопросе
+                        question.file_folder = res.data.folder;
+                        question.file_name = res.data.fileName;
+                        question.file_type = res.data.fileType;
+                        question.file_url = res.data.url;
+                        console.log('ссылка на файл', res.data);
                     }
-                })
-                .then((response) => {
-                    console.log('Ответ сервера:', response.data);
-                    this.responseMessage = 'Опрос успешно сохранён.';
-                    this.responseClass = 'success';
-                    this.$router.push({ name: 'dashboard' });
-                })
-                .catch((error) => {
-                    console.error('Ошибка при создании опроса:', error.response?.data || error.message);
-                    this.responseMessage = 'Произошла ошибка при сохранении опроса.';
-                    this.responseClass = 'error';
                 });
+
+                // Ожидаем завершения всех загрузок изображений
+                await Promise.all(imageUploadPromises);
+
+                // Создание объекта с данными для опроса
+                const surveyData = {
+                    user_id: this.userId,
+                    title: this.surveyTitle.trim(),
+                    questions: this.questions.map((q, index) => ({
+                        text: q.text.trim() || `Вопрос ${index + 1}`,
+                        correct_option: q.selectedOption,
+                        options: q.options.map((opt) => opt.trim()),
+                        file_folder: q.file_folder || null,
+                        file_name: q.file_name || null,
+                        file_type: q.file_type || null,
+                        file_url: q.file_url || null // Если изображение было загружено, оно добавляется сюда
+                    }))
+                };
+                console.log('Survey Data:', surveyData.questions); // Добавь это для проверки
+                // Проверка на наличие обязательных данных
+                const invalidQuestions = surveyData.questions.filter((q) => !q.text || q.correct_option === null || q.options.some((opt) => !opt));
+
+                if (invalidQuestions.length > 0) {
+                    this.responseMessage = 'Заполните все поля и выберите правильные ответы.';
+                    this.responseClass = 'error';
+                    return;
+                }
+
+                // Отправка данных на сервер
+                const response = await axios.post(`${apiUrl}/api/surveys`, surveyData, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+
+                this.responseMessage = 'Опрос успешно сохранён.';
+                this.responseClass = 'success';
+                this.$router.push({ name: 'dashboard' });
+            } catch (error) {
+                console.error('Ошибка при сохранении опроса:', error.response?.data || error.message);
+                this.responseMessage = 'Ошибка при сохранении опроса.';
+                this.responseClass = 'error';
+            }
         }
     },
     mounted() {
@@ -170,20 +274,44 @@ export default {
 <template>
     <SurveyLayout v-model:surveyTitle="surveyTitle" :questions="questions" @selectQuestion="selectQuestion" @saveSurvey="handleSaveSurvey" @addQuestion="addQuestion" @copyQuestion="copyQuestion" @deleteQuestion="deleteQuestion" @goBack="goBack">
         <!-- max-width: 120vh -->
-        <div v-if="currentQuestion !== null" class="card" style="height: 80vh">
+        <div v-if="currentQuestion" class="card" style="min-height: 80vh">
             <!-- Текст вопроса -->
             <!-- <input v-model="currentQuestionText" placeholder="Введите текст вопроса" class="question-input" @input="updateQuestionText" /> -->
             <div class="flex items-center">
-                <span class="question-number">{{ currentQuestionIndex !== null ? currentQuestionIndex + 1 : '' }}</span>
-                <input v-model="currentQuestionText" placeholder="Введите текст вопроса" class="question-input" @input="updateQuestionText" />
+                <span class="question-number">{{ currentQuestionIndex + 1 }}</span>
+                <!-- <input v-maxlength="300" v-model="currentQuestionText" placeholder="Введите текст вопроса" class="question-input" @input="updateQuestionText" /> -->
+                <input v-maxlength="200" v-model="questions[currentQuestionIndex].text" placeholder="Введите текст вопроса" class="question-input" />
             </div>
-            <!-- Событие для обновления текста вопроса -->
+            <!-- Медиа  -->
+            <div class="image-container" v-if="!currentQuestion.mediaUrl">
+                <Button @click="triggerFileInput" icon="pi pi-upload" severity="info" class="btn-add-image" outlined />
+                <input ref="fileInput" type="file" @change="handleFileUpload" accept="image/*,video/*,audio/*" style="display: none" />
+            </div>
 
-            <!-- Список вариантов ответа -->
+            <!-- Предпросмотр фото -->
+            <div v-if="currentQuestion.mediaUrl" class="image-container">
+                <div class="image-preview">
+                    <Button class="delete-btn" @click="removeMedia" icon="pi pi-times" severity="danger" rounded />
+
+                    <template v-if="currentQuestion.mediaType === 'image'">
+                        <img :src="currentQuestion.mediaUrl" alt="Загруженное изображение" class="uploaded-image" />
+                    </template>
+
+                    <template v-else-if="currentQuestion.mediaType === 'video'">
+                        <video :src="currentQuestion.mediaUrl" controls class="uploaded-image"></video>
+                    </template>
+
+                    <template v-else-if="currentQuestion.mediaType === 'audio'">
+                        <audio :src="currentQuestion.mediaUrl" controls class="uploaded-image"></audio>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Варианты ответов -->
             <ul>
                 <li v-for="(option, index) in currentQuestion.options" :key="index" :class="{ selected: currentQuestion.selectedOption === index }" @click="selectOption(index)" class="option">
                     <span class="option-label">{{ ['А', 'Б', 'В', 'Г'][index] }}.</span>
-                    <input v-model="currentQuestion.options[index]" placeholder="Введите текст ответа" class="option-input" />
+                    <input v-maxlength="200" v-model="currentQuestion.options[index]" placeholder="Введите текст ответа" class="option-input" />
                 </li>
             </ul>
         </div>
@@ -244,5 +372,69 @@ export default {
 .question-input:focus {
     border-color: none !important; /* Цвет рамки при фокусе */
     outline: none !important;
+}
+.image-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    min-height: 30vh;
+}
+
+/* Стили для кнопки загрузки */
+/* .btn-add-image {
+    width: 100%;
+    height: 30vh;
+    border: dashed 2px #0ea5e9;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-add-image :deep(.pi) {
+    font-size: 2.5rem;
+} */
+
+/* Контейнер изображения */
+.image-preview {
+    position: relative;
+    width: 60%;
+    max-width: 600px;
+    /* height: 40vh;
+    overflow: hidden; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.image-preview img,
+.image-preview video {
+    width: 100%;
+    height: 40vh;
+    object-fit: contain; /* Сохранение пропорций, вписывание в контейнер */
+    border-radius: 4px;
+    border: 0.5px solid #e9e9e9;
+}
+/* Для аудио */
+.image-preview audio {
+    width: 100%;
+    height: 10vh;
+    border: none;
+}
+
+.btn-add-image {
+    width: 100%;
+    height: 30vh;
+    border: dashed 2px #0ea5e9;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-add-image :deep(.pi) {
+    font-size: 2.5rem;
+}
+.delete-btn {
+    position: absolute;
+    top: -5px;
+    right: -20px;
 }
 </style>
