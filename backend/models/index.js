@@ -5,6 +5,7 @@ const Student = require('./Student');
 const Survey = require('./Survey');
 const Question = require('./Question');
 const Option = require('./Option');
+const Folder = require('./Folder'); // Добавляем новую модель
 
 // Устанавливаем связи
 User.hasMany(Class, { foreignKey: 'user_id' });
@@ -16,10 +17,24 @@ Student.belongsTo(Class, { foreignKey: 'class_id' });
 User.hasMany(Survey, { foreignKey: 'user_id' });
 Survey.belongsTo(User, { foreignKey: 'user_id' });
 
+// Добавляем связи для папок
+User.hasMany(Folder, { foreignKey: 'user_id' });
+Folder.belongsTo(User, { foreignKey: 'user_id' });
+
+Folder.hasMany(Survey, {
+    foreignKey: 'folder_id',
+    as: 'surveys'
+});
+Survey.belongsTo(Folder, {
+    foreignKey: 'folder_id',
+    as: 'folder',
+    allowNull: true // Опрос может не принадлежать ни одной папке
+});
+
 // Основные ассоциации для Survey-Question-Option
 Survey.hasMany(Question, {
     foreignKey: 'survey_id',
-    as: 'questions' // Единообразно используем нижний регистр
+    as: 'questions'
 });
 
 Question.belongsTo(Survey, {
@@ -29,7 +44,7 @@ Question.belongsTo(Survey, {
 
 Question.hasMany(Option, {
     foreignKey: 'question_id',
-    as: 'options' // Единообразно используем нижний регистр
+    as: 'options'
 });
 
 Option.belongsTo(Question, {
@@ -37,13 +52,11 @@ Option.belongsTo(Question, {
     as: 'question'
 });
 
-// Ассоциация для правильного ответа (если нужно)
 Question.belongsTo(Option, {
     as: 'correctAnswer',
     foreignKey: 'correct_option',
-    constraints: false // если correct_option может быть NULL
+    constraints: false
 });
-// Question.belongsTo(Option, { as: 'correctAnswer', foreignKey: 'correct_option' });
 
 module.exports = {
     sequelize,
@@ -52,5 +65,6 @@ module.exports = {
     Student,
     Survey,
     Question,
-    Option
+    Option,
+    Folder // Добавляем Folder в экспорт
 };
