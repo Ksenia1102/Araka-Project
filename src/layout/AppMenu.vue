@@ -124,23 +124,20 @@ async function createClasses() {
 async function fetchClasses() {
     try {
         const token = localStorage.getItem('authToken');
-        // const userId = getUserID();
         const response = await axios.get(`${apiUrl}/api/classes/user/my`, {
             headers: {
                 Authorization: `Bearer ${token}`
-                // 'Accept': 'application/json'
             }
         });
 
-        // const classes = response.data;
         const classMenu = model1.value[0].items.find((item) => item.label === 'Классы');
-        console.log(response);
+
         classMenu.items = response.data.map((classItem) => ({
             label: classItem.title,
             icon: 'pi pi-fw pi-bookmark',
-            to: `/uikit/class/${response.data[5].id}/${classItem.title}`,
+            to: `/uikit/class/${classItem.id}/${classItem.title}`,
             state: {
-                classTitle: classItem.title // Дополнительные данные в маршруте
+                classTitle: classItem.title
             },
             badge: classItem.studentsCount > 0 ? classItem.studentsCount.toString() : null
         }));

@@ -46,9 +46,16 @@ async function loadUnfolderedSurveys() {
         const response = await axios.get(`${apiUrl}/api/folders/unfoldered/surveys`, {
             headers: {
                 Authorization: `Bearer ${token}`
+            },
+            validateStatus: function (status) {
+                // Считаем 404 (Not Found) валидным статусом
+                return (status >= 200 && status < 300) || status === 404;
             }
         });
-
+        // Если 404 - возвращаем пустой массив
+        if (response.status === 404) {
+            return [];
+        }
         // Преобразуем в формат TreeTable
         return response.data.map((survey) => ({
             key: `survey-${survey.id}`,
@@ -218,9 +225,9 @@ function sortSurveyTree(nodes) {
 }
 
 // Когда начали перетаскивать опрос или папку
-function onDragStart(node) {
-    draggedNode.value = node;
-}
+// function onDragStart(node) {
+//     draggedNode.value = node;
+// }
 
 // Когда бросили на папку
 function onDropOnFolder(targetFolderNode) {
@@ -232,13 +239,21 @@ function onDropOnFolder(targetFolderNode) {
 }
 
 // Когда бросили в пустое пространство ("корень")
-function onDropOnRoot() {
-    console.log('Когда бросили в пустое пространство');
-    if (draggedNode.value) {
-        moveNodeToRoot(draggedNode.value);
-        draggedNode.value = null;
-    }
-}
+// function onDropOnRoot() {
+//     console.log('Когда бросили в пустое пространство');
+//     if (draggedNode.value) {
+//         moveNodeToRoot(draggedNode.value);
+//         draggedNode.value = null;
+//     }
+// }
+
+// function onDropOnRoot(event) {
+//     event.preventDefault();
+//     if (draggedNode.value && draggedNode.value.data.type === 'survey') {
+//         moveNodeToRoot(draggedNode.value);
+//     }
+//     draggedNode.value = null;
+// }
 
 // Переместить узел в папку
 // Перемещение опроса в папку
@@ -267,19 +282,53 @@ async function moveNodeIntoFolder(dragged, targetFolder) {
     }
 }
 
+const isDragOverRoot = ref(false);
+
+// Обработчик перетаскивания в корень
+async function handleRootDrop(event) {
+    event.preventDefault();
+    isDragOverRoot.value = false;
+
+    if (draggedNode.value?.data?.type === 'survey') {
+        await moveNodeToRoot(draggedNode.value);
+    }
+}
+
+// Обработчик начала перетаскивания
+function onDragStart(node, event) {
+    event.dataTransfer.setData('text/plain', node.key);
+    draggedNode.value = node;
+}
+
+// Обработчик входа в зону корня
+function handleDragEnter(event) {
+    event.preventDefault();
+    isDragOverRoot.value = true;
+}
+
+// Обработчик выхода из зоны корня
+function handleDragLeave(event) {
+    event.preventDefault();
+    isDragOverRoot.value = false;
+}
+
 // Перемещение опроса в корень
-async function moveNodeToRoot(dragged) {
+async function moveNodeToRoot(node) {
     try {
         const token = localStorage.getItem('authToken');
-        await axios.delete(`${apiUrl}/api/folders/surveys/${dragged.data.id}`, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
+        await axios.delete(`${apiUrl}/api/folders/surveys/${node.data.id}`, {
+            headers: { Authorization: `Bearer ${token}` }
         });
 
         await loadSurveyTree();
+        toast.add({
+            severity: 'success',
+            summary: 'Успех',
+            detail: 'Опрос перемещён в корень',
+            life: 3000
+        });
     } catch (error) {
-        console.error('Ошибка перемещения опроса:', error);
+        console.error('Ошибка перемещения:', error);
         toast.add({
             severity: 'error',
             summary: 'Ошибка',
@@ -448,13 +497,21 @@ function onDropOnFolderWrapper(event, targetFolderNode) {
         />
 
         <!-- Обёртка вокруг TreeTable для drop в "корень" -->
-        <div @drop.prevent="onDropOnRoot" @dragover.prevent style="min-height: 200px">
+        <div class="tree-container" @drop="handleRootDrop" @dragover.prevent @dragenter="handleDragEnter" @dragleave="handleDragLeave" :class="{ 'drag-over': isDragOverRoot }">
             <TreeTable :value="surveyTree" selectionMode="single" v-model:selectionKeys="selectedNode">
                 <Column field="name" header="Имя" :expander="true">
                     <template #body="slotProps">
-                        <div draggable="true" @dragstart="onDragStart(slotProps.node)" @drop.prevent="onDropOnFolderWrapper($event, slotProps.node)" @dragover.prevent @contextmenu.prevent="openContextMenu($event, slotProps.node)">
-                            <i v-if="slotProps.node.data.type === 'folder'" class="pi pi-folder mr-2" />
-                            <i v-else class="pi pi-file mr-2" />
+                        <div
+                            draggable="true"
+                            @dragstart="onDragStart(slotProps.node, $event)"
+                            @drop="onDropOnFolderWrapper($event, slotProps.node)"
+                            @dragover.prevent
+                            @dragenter.prevent
+                            @contextmenu.prevent="openContextMenu($event, slotProps.node)"
+                            @click.stop
+                            :class="{ 'folder-item': slotProps.node.data.type === 'folder' }"
+                        >
+                            <i :class="slotProps.node.data.type === 'folder' ? 'pi pi-folder' : 'pi pi-file'" />
                             {{ slotProps.node.data.name }}
                         </div>
                     </template>
