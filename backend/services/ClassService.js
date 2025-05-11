@@ -6,6 +6,7 @@ class ClassService {
     }
 
     static async getClassesByUser(userId) {
+        console.log('12121');
         return await Class.findAll({
             where: { user_id: userId },
             attributes: ['id', 'title'],

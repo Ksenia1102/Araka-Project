@@ -134,7 +134,7 @@ async function fetchClasses() {
 
         // const classes = response.data;
         const classMenu = model1.value[0].items.find((item) => item.label === 'Классы');
-        console.log(response.data[5].id);
+        console.log(response);
         classMenu.items = response.data.map((classItem) => ({
             label: classItem.title,
             icon: 'pi pi-fw pi-bookmark',

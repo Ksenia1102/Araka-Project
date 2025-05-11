@@ -89,6 +89,7 @@ const errorHandler = require('./middlewares/errorHandler');
 const fileRoutes = require('./routes/fileRoutes');
 const folderRoutes = require('./routes/FolderRoutes');
 const profileRoutes = require('./routes/profileRoutes');
+const conductRoutes = require('./routes/conducting');
 const upload = require('./routes/upload');
 const app = express();
 
@@ -106,6 +107,7 @@ app.use('/api', upload); // Подключаем маршруты опросов
 app.use('/auth', authRoutes);
 app.use('/profile', profileRoutes);
 app.use('/api', fileRoutes);
+app.use('/api/conducting', conductRoutes);
 app.use('/api/folders', folderRoutes);
 app.use(errorHandler); // Подключаем в конце!
 module.exports = app;
