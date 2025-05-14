@@ -39,7 +39,7 @@ class ConductingController {
                 status: 'success',
                 data: {
                     taken_survey_id: survey.id,
-                    survey_title: survey.survey_title,
+                    title: survey.title,
                     class_name: survey.class_name,
                     was_created: created,
                     was_reactivated: !created && !survey.is_active

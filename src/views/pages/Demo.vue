@@ -1,6 +1,5 @@
 <script setup>
 import axios from 'axios';
-import Button from 'primevue/button';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -33,7 +32,7 @@ async function fetchCurrentQuestion() {
     if (response.data.active) {
       currentQuestion.value = response.data;
       surveyInfo.value = {
-        title: response.data.survey_title,
+        title: response.data.title,
         class: response.data.class_name,
         survey_id: response.data.survey_id,
         class_id: response.data.class_id
@@ -116,7 +115,7 @@ onMounted(async () => {
       if (event.data.data) {
         currentQuestion.value = event.data.data;
         surveyInfo.value = {
-          title: event.data.data.survey_title,
+          title: event.data.data.title,
           class: event.data.data.class_name,
           survey_id: event.data.data.survey_id,
           class_id: event.data.data.class_id
@@ -154,13 +153,6 @@ onUnmounted(() => {
       <div class="survey-header">
         <h2>{{ surveyInfo.title }}</h2>
         <p>Класс: {{ surveyInfo.class }}</p>
-        <Button 
-          label="Остановить тест" 
-          @click="stopSurvey" 
-          severity="danger" 
-          class="mt-2"
-          icon="pi pi-stop-circle"
-        />
       </div>
       
       <div class="question-container">

@@ -146,69 +146,72 @@ class ConductingService {
         };
     }
     async getActiveSurvey() {
-        const latestSurvey = await TakenSurvey.findOne({
-            where: {is_active: true},
-            order: [['date', 'DESC']],
-            include: [
-            {
-                model: Survey,
-                as: 'survey',
-                attributes: ['title']
+        return await TakenSurvey.findOne({
+            where: {
+                is_active: true // Важно: проверяем активность
             },
-            {
-                model: Class,
-                as: 'class',
-                attributes: ['title']
-            }
-            ]
+            attributes: ['id', 'survey_id', 'class_id'],
+            raw: true
         });
-
-        if (!latestSurvey) return null;
-
-        return {
-            survey_title: latestSurvey.survey.title,
-            class_name: latestSurvey.class.title,
-            taken_survey_id: latestSurvey.id
-        };
     }
 
     async getCurrentQuestion() {
-        const activeSurvey = await this.getActiveSurvey();
-        if (!activeSurvey) return null;
+        try {
+            // Получаем активный тест с проверкой is_active
+            const activeSurvey = await this.getActiveSurvey();
+            if (!activeSurvey) {
+                console.log('Активный тест не найден');
+                return null;
+            }
 
-        const currentQuestion = await TakenQuestion.findOne({
-            where: { 
-            taken_survey_id: activeSurvey.taken_survey_id,
-            },
-            order: [['id', 'DESC']],
-            include: [
-            {
-                model: Question,
-                as: 'question',
+            // Ищем последний вопрос для активного теста
+            const currentQuestion = await TakenQuestion.findOne({
+                where: { 
+                    taken_survey_id: activeSurvey.id // Используем id вместо taken_survey_id
+                },
+                order: [['id', 'DESC']], // Сортируем по дате создания
+                include: [{
+                    model: Question,
+                    as: 'question',
+                    attributes: ['id', 'text']
+                }]
+            });
+
+            if (!currentQuestion) {
+                console.log('Вопросы для теста не найдены');
+                return {
+                    ...activeSurvey,
+                    active: true,
+                    message: 'В тесте пока нет вопросов'
+                };
+            }
+
+            // Получаем варианты ответов
+            const options = await Option.findAll({
+                where: { question_id: currentQuestion.question.id },
+                order: [['order', 'ASC']], // Сортируем по полю order
                 attributes: ['id', 'text']
-            }
-            ]
-        });
+            });
 
-        if (!currentQuestion) return null;
+            // Форматируем ответ
+            return {
+                active: true,
+                title: activeSurvey.title,
+                class_name: activeSurvey.class_name,
+                taken_survey_id: activeSurvey.id,
+                taken_question_id: currentQuestion.id,
+                question_id: currentQuestion.question.id,
+                question_text: currentQuestion.question.text,
+                options: options.reduce((acc, option, index) => {
+                    acc[index + 1] = option.text;
+                    return acc;
+                }, {})
+            };
 
-        const options = await Option.findAll({
-            where: { question_id: currentQuestion.question.id },
-            order: [['text', 'ASC']]
-        });
-
-        return {
-            ...activeSurvey,
-            taken_question_id: currentQuestion.id,
-            question_id: currentQuestion.question.id,
-            question_text: currentQuestion.question.text,
-            options: {
-            1: options[0]?.text,
-            2: options[1]?.text,
-            3: options[2]?.text,
-            4: options[3]?.text
-            }
-        };
+        } catch (error) {
+            console.error('Ошибка в getCurrentQuestion:', error);
+            throw error;
+        }
     }
 }
 
