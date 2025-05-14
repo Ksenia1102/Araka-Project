@@ -2,7 +2,9 @@
 import SurveyLayout from '@/layout/SurveyLayout.vue';
 import axios from 'axios'; // Используем axios для запросов на сервер
 import jwtDecode from 'jwt-decode';
+import { useToast } from 'primevue/usetoast';
 const apiUrl = import.meta.env.VITE_API_URL;
+const toast = useToast();
 //import Toastify from 'toastify-js'; // Библиотека для уведомлений
 export default {
     components: {
@@ -99,7 +101,12 @@ export default {
 
             if (file) {
                 if (file.size > MAX_SIZE) {
-                    alert('Файл слишком большой. Максимальный размер: 10 МБ.');
+                    toast.add({
+                        severity: 'warn',
+                        summary: 'Внимание',
+                        detail: 'Файл слишком большой. Максимальный размер: 10 МБ.',
+                        life: 3000
+                    });
                     this.$refs.fileInput.value = ''; // Очистить input
                     return;
                 }

@@ -145,6 +145,71 @@ class ConductingService {
             taken_survey_id: takenSurveyId
         };
     }
+    async getActiveSurvey() {
+        const latestSurvey = await TakenSurvey.findOne({
+            where: {is_active: true},
+            order: [['date', 'DESC']],
+            include: [
+            {
+                model: Survey,
+                as: 'survey',
+                attributes: ['title']
+            },
+            {
+                model: Class,
+                as: 'class',
+                attributes: ['title']
+            }
+            ]
+        });
+
+        if (!latestSurvey) return null;
+
+        return {
+            survey_title: latestSurvey.survey.title,
+            class_name: latestSurvey.class.title,
+            taken_survey_id: latestSurvey.id
+        };
+    }
+
+    async getCurrentQuestion() {
+        const activeSurvey = await this.getActiveSurvey();
+        if (!activeSurvey) return null;
+
+        const currentQuestion = await TakenQuestion.findOne({
+            where: { 
+            taken_survey_id: activeSurvey.taken_survey_id,
+            },
+            order: [['id', 'DESC']],
+            include: [
+            {
+                model: Question,
+                as: 'question',
+                attributes: ['id', 'text']
+            }
+            ]
+        });
+
+        if (!currentQuestion) return null;
+
+        const options = await Option.findAll({
+            where: { question_id: currentQuestion.question.id },
+            order: [['text', 'ASC']]
+        });
+
+        return {
+            ...activeSurvey,
+            taken_question_id: currentQuestion.id,
+            question_id: currentQuestion.question.id,
+            question_text: currentQuestion.question.text,
+            options: {
+            1: options[0]?.text,
+            2: options[1]?.text,
+            3: options[2]?.text,
+            4: options[3]?.text
+            }
+        };
+    }
 }
 
 module.exports = new ConductingService();

@@ -1,4 +1,5 @@
 import AppLayout from '@/layout/AppLayout.vue';
+import axios from 'axios';
 import { createRouter, createWebHistory } from 'vue-router';
 
 const router = createRouter({
@@ -121,6 +122,12 @@ const router = createRouter({
             path: '/auth/error',
             name: 'error',
             component: () => import('@/views/pages/auth/Error.vue')
+        },
+        {
+            path: '/demo',
+            name: 'demo',
+            component: () => import('@/views/pages/Demo.vue'),
+            meta: { requiresAuth: true }
         }
         // {
         //     path: '/auth/code',
@@ -132,15 +139,27 @@ const router = createRouter({
 
 // Добавляем глобальный навигационный хук для проверки авторизации
 router.beforeEach((to, from, next) => {
-    const isAuthenticated = false; // Здесь добавьте логику для проверки, авторизован ли пользователь
+  const token = localStorage.getItem('authToken');
+  const isAuthenticated = !!token;
 
-    if (to.matched.some((record) => record.meta.requiresAuth) && !isAuthenticated) {
-        // Если маршрут требует авторизации и пользователь не авторизован
-        next({ name: 'login' }); // Перенаправляем на страницу логина
-    } else {
-        // Если авторизация не требуется или пользователь авторизован
-        next(); // Продолжаем переход
+  if (to.matched.some(record => record.meta.requiresAuth)) {
+    if (!isAuthenticated) {
+      next({ name: 'login' });
+      return;
     }
+    
+    // Дополнительная проверка токена
+    axios.get(`${import.meta.env.VITE_API_URL}/api/validate-token`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    }).catch(() => {
+      localStorage.removeItem('authToken');
+      next({ name: 'login' });
+      return;
+    });
+  }
+
+  next();
 });
+
 
 export default router;

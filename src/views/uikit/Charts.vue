@@ -1,5 +1,7 @@
 <script setup>
+import { useToast } from 'primevue/usetoast';
 import { computed, ref } from 'vue';
+const toast = useToast();
 // Данные для графика
 const barData = ref(null);
 //const barOptions = ref(null);
@@ -72,11 +74,21 @@ const surveyResults = ref([
 // Построение графика на основе выбранных фильтров
 function generateChart() {
     if (!dropdownValue.value) {
-        alert('Выберите тест');
+        toast.add({
+            severity: 'warn',
+            summary: 'Внимание',
+            detail: 'Выберите тест',
+            life: 3000
+        });
         return;
     }
     if (!multiselectValue.value.length) {
-        alert('Выберите хотя бы один класс');
+        toast.add({
+            severity: 'warn',
+            summary: 'Внимание',
+            detail: 'Выберите хотя бы один класс',
+            life: 3000
+        });
         return;
     }
     // Фильтруем данные по выбранному тесту и классам

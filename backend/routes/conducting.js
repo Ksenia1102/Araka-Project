@@ -4,5 +4,8 @@ const ConductingController = require('../controllers/ConductingController');
 
 router.post('/start', ConductingController.startSession);
 router.post('/answers', ConductingController.saveAnswers);
+router.get('/active', ConductingController.getActiveSurvey);
+router.get('/current', ConductingController.getCurrentQuestion);
+router.post('/stop', ConductingController.stopSession);
 
 module.exports = router;

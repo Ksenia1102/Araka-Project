@@ -1,8 +1,9 @@
 <script setup>
 import axios from 'axios';
 import jwtDecode from 'jwt-decode';
+import { useToast } from 'primevue/usetoast';
 import { onMounted, ref } from 'vue';
-
+const toast = useToast();
 const apiUrl = import.meta.env.VITE_API_URL;
 const displayConfirmation = ref(false);
 function openConfirmation() {
@@ -67,7 +68,12 @@ async function fetchUserData() {
             // router.push('/login');
 
             // 3. Показываем сообщение пользователю
-            alert('Сессия истекла. Пожалуйста, войдите снова.');
+            toast.add({
+                severity: 'warn',
+                summary: 'Внимание',
+                detail: 'Сессия истекла. Пожалуйста, войдите снова.',
+                life: 3000
+            });
         }
     }
 }

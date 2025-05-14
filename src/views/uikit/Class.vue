@@ -1,8 +1,9 @@
 <script setup>
 import axios from 'axios';
+import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-
+const toast = useToast();
 // Локальное состояние поиска
 const searchQuery = ref('');
 const filters = ref({ global: { value: null, matchMode: 'contains' } });
@@ -91,12 +92,7 @@ function addStudent() {
     studentPreview.value = [];
 }
 
-// function addManyStudents() {
-//     // display.value = true; // Открываем модальное окно
-//     // studentInput.value = ''; // Очищаем ввод
-//     // studentPreview.value = []; // Очищаем предпросмотр
-//     alert('add');
-// }
+
 
 function generatePreview() {
     const lines = studentInput.value.trim().split('\n');
@@ -117,7 +113,12 @@ async function addStudentsToTable() {
     }));
 
     if (!studentsToAdd.length) {
-        alert('Список для добавления пуст.');
+        toast.add({
+            severity: 'warn',
+            summary: 'Внимание',
+            detail: 'Список для добавления пуст.',
+            life: 3000
+        });
         return;
     }
 
@@ -148,10 +149,19 @@ async function addStudentsToTable() {
         showStudentTable.value = true;
         saveClassData();
         // Уведомление об успехе
-        alert('Студенты успешно добавлены!');
+        toast.add({
+            severity: 'success',
+            summary: 'Успех!',
+            detail: 'Студенты успешно добавлен!',
+            life: 3000
+        });
     } catch (error) {
-        console.error('Ошибка при добавлении студентов:', error);
-        alert(error.response?.data?.error || 'Не удалось добавить студентов');
+        toast.add({
+            severity: 'error',
+            summary: 'Ошибка',
+            detail: error.response?.data?.error || 'Не удалось добавить студентов',
+            life: 3000
+        });
     }
 }
 
@@ -160,15 +170,24 @@ async function quickAddStudent() {
     const quickInput = quickAddInput.value.trim();
 
     if (!quickInput) {
-        alert('Введите имя и фамилию ученика.');
-        return;
+        toast.add({
+            severity: 'warn',
+            summary: 'Внимание',
+            detail: 'Введите имя и фамилию ученика.',
+            life: 3000
+        });
     }
 
     const [firstName, ...lastNameParts] = quickInput.split(' ');
     const lastName = lastNameParts.join(' ');
 
     if (!firstName || !lastName) {
-        alert('Введите полное имя и фамилию ученика.');
+        toast.add({
+            severity: 'warn',
+            summary: 'Внимание',
+            detail: 'Введите полное имя и фамилию ученика.',
+            life: 3000
+        });
         return;
     }
 
@@ -197,14 +216,24 @@ async function quickAddStudent() {
         showStudentTable.value = true;
         saveClassData();
         // Уведомление об успехе
-        alert('Ученик успешно добавлен!');
+        toast.add({
+            severity: 'success',
+            summary: 'Успех!',
+            detail: 'Ученик успешно добавлен!',
+            life: 3000
+        });
     } catch (error) {
         console.error('Ошибка добавления:', error);
 
         // Улучшенная обработка ошибок
         const errorMessage = error.response?.data?.error || 'Не удалось добавить ученика. Проверьте данные и попробуйте снова.';
 
-        alert(errorMessage);
+        toast.add({
+            severity: 'error',
+            summary: 'Ошибка',
+            detail: errorMessage,
+            life: 3000
+        });
 
         // Дополнительные действия при ошибке (опционально)
         if (error.response?.status === 401) {
@@ -243,7 +272,12 @@ async function fetchStudents() {
         // Улучшенная обработка ошибок
         const errorMessage = error.response?.data?.error || 'Не удалось загрузить список студентов';
 
-        alert(errorMessage);
+        toast.add({
+            severity: 'error',
+            summary: 'Ошибка',
+            detail: errorMessage,
+            life: 3000
+        });
 
         // Сброс данных
         students.value = [];
@@ -301,13 +335,27 @@ async function deleteStudent(studentId) {
             // Удаляем ученика из локального состояния
             students.value = students.value.filter((student) => student.id !== studentId);
             saveClassData(); // Сохраняем изменения
-            alert('Студент успешно удалён.');
+            toast.add({
+            severity: 'success',
+            summary: 'Успех!',
+            detail: 'Студент успешно удалён.',
+            life: 3000
+        });
         } else {
-            alert('Не удалось удалить ученика. Сервер вернул ошибку.');
+            toast.add({
+            severity: 'error',
+            summary: 'Ошибка',
+            detail: 'Не удалось удалить ученика. Сервер вернул ошибку.',
+            life: 3000
+        });
         }
     } catch (error) {
-        console.error('Ошибка при удалении ученика:', error);
-        alert('Не удалось удалить ученика. Попробуйте снова.');
+        toast.add({
+            severity: 'error',
+            summary: 'Ошибка',
+            detail: 'Не удалось удалить ученика. Попробуйте снова.',
+            life: 3000
+        });
     } finally {
         closeConfirmation(); // Закрываем окно подтверждения
     }

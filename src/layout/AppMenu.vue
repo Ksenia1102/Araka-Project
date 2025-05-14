@@ -1,9 +1,11 @@
 <!-- меню!!! -->
 <script setup>
 import axios from 'axios';
+import { useToast } from 'primevue/usetoast';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import AppMenuItem from './AppMenuItem.vue';
+const toast = useToast();
 const apiUrl = import.meta.env.VITE_API_URL;
 const router = useRouter();
 const display = ref(false);
@@ -47,7 +49,12 @@ const newClassInputs = ref(Array(8).fill('')); // Поля для ввода н�
 async function saveClass(classTitle) {
     // Валидация входных данных
     if (!classTitle?.trim()) {
-        alert('Пожалуйста, укажите корректные данные класса');
+        toast.add({
+            severity: 'error',
+            summary: 'Ошибка',
+            detail: 'Пожалуйста, укажите корректные данные класса',
+            life: 3000
+        });
         return null;
     }
     try {
@@ -70,12 +77,22 @@ async function saveClass(classTitle) {
             title: response.data.title
         };
     } catch (error) {
-        console.error('Ошибка создания класса:', error);
+        toast.add({
+            severity: 'error',
+            summary: 'Ошибка',
+            detail: 'Ошибка создания класса',
+            life: 3000
+        });
 
         // Детализированная обработка ошибок
         const errorMessage = error.response?.data?.error || 'Не удалось создать класс. Проверьте данные и попробуйте снова.';
 
-        alert(errorMessage);
+       toast.add({
+            severity: 'error',
+            summary: 'Ошибка',
+            detail: errorMessage,
+            life: 3000
+        });
 
         // // Автоматический logout при 401
         // if (error.response?.status === 401) {
@@ -105,7 +122,12 @@ async function createClasses() {
                     });
                 }
             } catch (error) {
-                console.error(`Ошибка при сохранении класса "${name}":`, error);
+                toast.add({
+                severity: 'error',
+                summary: 'Ошибка',
+                detail: `Ошибка при сохранении класса "${name}":`,
+                life: 3000
+            });
             }
         }
 
@@ -117,7 +139,12 @@ async function createClasses() {
         const firstCreatedClass = classMenu.items[classMenu.items.length - newClasses.length];
         router.push(firstCreatedClass.to);
     } else {
-        alert('Введите хотя бы одно название класса.');
+        toast.add({
+            severity: 'warn',
+            summary: 'Внимание',
+            detail: 'Введите хотя бы одно название класса.',
+            life: 3000
+        });
     }
 }
 
@@ -142,8 +169,12 @@ async function fetchClasses() {
             badge: classItem.studentsCount > 0 ? classItem.studentsCount.toString() : null
         }));
     } catch (error) {
-        console.error('Ошибка при загрузке классов:', error);
-        alert('Не удалось загрузить классы. Попробуйте снова.');
+        toast.add({
+            severity: 'error',
+            summary: 'Ошибка',
+            detail: 'Не удалось загрузить классы. Попробуйте снова.',
+            life: 3000
+        });
     }
 }
 

@@ -1,8 +1,10 @@
 <script setup>
 import { ProductService } from '@/service/ProductService';
 import axios from 'axios';
+import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+const toast = useToast();
 const apiUrl = import.meta.env.VITE_API_URL;
 // const router = useRoute(); // Используем роутер для навигации
 const router = useRouter();
@@ -52,7 +54,12 @@ const copySurvey = async () => {
         // Получаем токен аутентификации
         const token = localStorage.getItem('authToken');
         if (!token) {
-            alert('Требуется авторизация. Пожалуйста, войдите.');
+            toast.add({
+                severity: 'warn',
+                summary: 'Внимание',
+                detail: 'Требуется авторизация. Пожалуйста, войдите.',
+                life: 3000
+            });
             router.push({ name: 'login' });
             return;
         }
@@ -75,12 +82,27 @@ const copySurvey = async () => {
         });
 
         if (error.response?.status === 401) {
-            alert('Сессия истекла. Пожалуйста, войдите заново.');
+            toast.add({
+                severity: 'warn',
+                summary: 'Внимание',
+                detail: 'Требуется авторизация. Пожалуйста, войдите.',
+                life: 3000
+            });
             this.$router.push({ name: 'login' });
         } else if (error.response?.status === 500) {
-            alert(`Ошибка сервера: ${error.response.data?.error || 'Попробуйте позже'}`);
+            toast.add({
+                severity: 'error',
+                summary: 'Ошибка',
+                detail: `Ошибка сервера: ${error.response.data?.error || 'Попробуйте позже'}`,
+                life: 3000
+            });
         } else {
-            alert(`Ошибка: ${error.message || 'Неизвестная ошибка'}`);
+            toast.add({
+                severity: 'error',
+                summary: 'Ошибка',
+                detail: `Ошибка: ${error.message || 'Неизвестная ошибка'}`,
+                life: 3000
+            });
         }
     }
 };
@@ -100,7 +122,6 @@ const deleteSurvey = async () => {
 
         // После успешного удаления, можно перенаправить на страницу с опросами
         // Например, на главную страницу опросов или перечень всех опросов
-        // alert('Опрос успешно удален!');
 
         router
             .push({ name: 'dashboard' }) // Навигация по маршруту в ту же вкладку
@@ -111,8 +132,12 @@ const deleteSurvey = async () => {
                 console.error('Ошибка при перенаправлении:', error);
             });
     } catch (error) {
-        console.error('Ошибка при удалении опроса:', error);
-        alert('Произошла ошибка при удалении опроса.');
+        toast.add({
+            severity: 'error',
+            summary: 'Ошибка',
+            detail: 'Произошла ошибка при удалении опроса.',
+            life: 3000
+        });
     }
 };
 
@@ -204,7 +229,12 @@ function openSurvey() {
 
 function startSur(classId) {
     if (!classId) {
-        alert('Пожалуйста, выберите класс');
+        toast.add({
+            severity: 'warn',
+            summary: 'Внимание',
+            detail: 'Пожалуйста, выберите класс',
+            life: 3000
+        });
         return;
     }
     displaySur.value = false;
