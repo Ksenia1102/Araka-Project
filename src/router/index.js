@@ -20,11 +20,11 @@ const router = createRouter({
                     name: 'dashboard',
                     component: () => import('@/views/pages/Dashboard.vue')
                 },
-                {
-                    path: '/pages/survey',
-                    name: 'survey',
-                    component: () => import('@/views/pages/Survey.vue')
-                },
+                // {
+                //     path: '/pages/survey',
+                //     name: 'survey',
+                //     component: () => import('@/views/pages/Survey.vue')
+                // },
                 {
                     path: '/uikit/class/:classId/:title',
                     name: 'class',
@@ -139,27 +139,29 @@ const router = createRouter({
 
 // Добавляем глобальный навигационный хук для проверки авторизации
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('authToken');
-  const isAuthenticated = !!token;
+    const token = localStorage.getItem('authToken');
+    const isAuthenticated = !!token;
 
-  if (to.matched.some(record => record.meta.requiresAuth)) {
-    if (!isAuthenticated) {
-      next({ name: 'login' });
-      return;
+    if (to.matched.some((record) => record.meta.requiresAuth)) {
+        if (!isAuthenticated) {
+            return next({ name: 'login' });
+        }
+
+        axios
+            .get(`${import.meta.env.VITE_API_URL}/auth/validate-token`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            .then(() => {
+                console.log('демонстрация');
+                next(); // токен валиден
+            })
+            .catch(() => {
+                localStorage.removeItem('authToken');
+                next({ name: 'login' }); // токен невалиден
+            });
+    } else {
+        next(); // не требуется авторизация
     }
-    
-    // Дополнительная проверка токена
-    axios.get(`${import.meta.env.VITE_API_URL}/api/validate-token`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    }).catch(() => {
-      localStorage.removeItem('authToken');
-      next({ name: 'login' });
-      return;
-    });
-  }
-
-  next();
 });
-
 
 export default router;

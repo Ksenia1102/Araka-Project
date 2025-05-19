@@ -40,66 +40,61 @@ function logout() {
     // Перенаправляем пользователя на главную страницу
     router.push({ name: 'Home' });
 }
-
-
 // Добавляем новые переменные
 const activeSurvey = ref(null);
-
-// Функция для открытия демонстрации
 async function openDemoWindow() {
-  try {
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      toast.add({
-            severity: 'warn',
-            summary: 'Внимание',
-            detail: 'Пожалуйста, авторизуйтесь.',
-            life: 3000
-        });
-      return;
-    }
+    try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            toast.add({
+                severity: 'warn',
+                summary: 'Внимание',
+                detail: 'Пожалуйста, авторизуйтесь.',
+                life: 3000
+            });
+            return;
+        }
 
-    const demoUrl = `${window.location.origin}/demo?token=${encodeURIComponent(token)}`;
-    const newWindow = window.open('', '_blank', 'width=1000,height=800');
-    
-    if (newWindow) {
-      newWindow.location.href = demoUrl;
-    } else {
-      router.push('/demo');
-    }
-  } catch (error) {
-    toast.add({
+        const demoUrl = `${window.location.origin}/demo?token=${encodeURIComponent(token)}`;
+
+        const newWindow = window.open(demoUrl, '_blank', 'width=1000,height=800');
+
+        if (!newWindow) {
+            // Если окно не открылось (заблокировано браузером), делаем router.push с query
+            router.push({ name: 'demo', query: { token } });
+        }
+    } catch (error) {
+        toast.add({
             severity: 'error',
             summary: 'Ошибка',
             detail: 'Произошла ошибка при открытии демо-страницы.',
             life: 3000
         });
-  }
+    }
 }
 
 // Функция для проверки активного теста
 async function checkActiveSurvey() {
-  try {
-    const token = localStorage.getItem('authToken');
-    if (!token) throw new Error("Токен не найден");
-    
-    const response = await axios.get(`${apiUrl}/api/conducting/active`, {
-      headers: { 
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json' // Исправлено с ContentType на Content-Type
-      }
-    });
-    
-    console.log("Активный опрос:", response.data);
-    activeSurvey.value = response.data?.active || false;
-    return activeSurvey.value;
-  } catch (error) {
-    console.error("Ошибка:", error.response?.data || error.message);
-    activeSurvey.value = false;
-    return false;
-  }
-}
+    try {
+        const token = localStorage.getItem('authToken');
+        if (!token) throw new Error('Токен не найден');
 
+        const response = await axios.get(`${apiUrl}/api/conducting/active`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json' // Исправлено с ContentType на Content-Type
+            }
+        });
+
+        console.log('Активный опрос:', response.data);
+        activeSurvey.value = response.data?.active || false;
+        return activeSurvey.value;
+    } catch (error) {
+        console.error('Ошибка:', error.response?.data || error.message);
+        activeSurvey.value = false;
+        return false;
+    }
+}
 
 const { onMenuToggle } = useLayout();
 </script>
@@ -123,12 +118,7 @@ const { onMenuToggle } = useLayout();
                     <AppConfigurator />
                 </div>
             </div>
-            <Button 
-                label="Демонстрация запущенного теста" 
-                @click="openDemoWindow" 
-                class="ml-auto mr-2 mb-2"
-                icon="pi pi-plus" severity="info" 
-            />
+            <Button label="Демонстрация запущенного теста" @click="openDemoWindow" class="ml-auto mr-2 mb-2" icon="pi pi-plus" severity="info" />
             <button
                 class="layout-topbar-menu-button layout-topbar-action"
                 v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"

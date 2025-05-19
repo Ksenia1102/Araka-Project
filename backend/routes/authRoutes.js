@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const validateToken = require('../middlewares/authMiddleware');
 const AuthController = require('../controllers/AuthController');
 
 router.post('/register', AuthController.register);
@@ -12,7 +13,9 @@ router.post('/code/verify', AuthController.verifyRegistrationCode);
 router.post('/login/request-password-reset', AuthController.requestPasswordReset);
 router.post('/login/verify-reset-code', AuthController.verifyResetCode);
 router.post('/login/reset-password', AuthController.resetPassword);
-
+router.get('/validate-token', validateToken, (req, res) => {
+    res.json({ valid: true, user: req.user });
+});
 // router.post('/code/send', AuthController.sendVerificationCode); // Было /registration/send-code
 // router.post('/code/verify', AuthController.verifyRegistrationCode); // Было /registration/verify-codeм
 

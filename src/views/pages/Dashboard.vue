@@ -82,6 +82,7 @@ async function loadUnfolderedSurveys() {
 async function loadSurveyTree() {
     try {
         const token = localStorage.getItem('authToken');
+        console.log('TOKEEN', token);
 
         // Загружаем параллельно папки и опросы без папок
         const [foldersRes, unfolderedSurveys] = await Promise.all([

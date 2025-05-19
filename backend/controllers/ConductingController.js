@@ -5,47 +5,21 @@ const TakenSurvey = require('../models/TakenSurvey');
 class ConductingController {
     async startSession(req, res) {
         try {
-            // Валидация входных данных
+            // 1. Валидация входных данных
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
                 return res.status(400).json({ errors: errors.array() });
             }
 
+            // 2. Вызов сервиса, передавая нужные параметры
             const { survey_id, class_id } = req.body;
-            
-            // Атомарная операция поиска/создания/обновления
-            const [survey, created] = await TakenSurvey.findOrCreate({
-                where: {
-                    survey_id: parseInt(survey_id),
-                    class_id: parseInt(class_id)
-                },
-                defaults: {
-                    is_active: true,
-                    date: new Date(),
-                    // Другие обязательные поля
-                }
-            });
+            const sessionData = await ConductingService.startSession(survey_id, class_id);
 
-            // Если запись существовала, но была неактивна
-            if (!created && !survey.is_active) {
-                await survey.update({
-                    is_active: true,
-                    date: new Date()
-                });
-            }
-
-            // Возвращаем результат без дополнительного создания в ConductingService
+            // 3. Отправка ответа клиенту
             res.status(200).json({
                 status: 'success',
-                data: {
-                    taken_survey_id: survey.id,
-                    title: survey.title,
-                    class_name: survey.class_name,
-                    was_created: created,
-                    was_reactivated: !created && !survey.is_active
-                }
+                data: sessionData
             });
-
         } catch (error) {
             console.error('Error starting session:', error);
             res.status(500).json({
@@ -58,30 +32,31 @@ class ConductingController {
         try {
             const activeSurvey = await ConductingService.getActiveSurvey();
             res.status(200).json({
-            active: !!activeSurvey,
-            ...activeSurvey
+                active: !!activeSurvey,
+                ...activeSurvey
             });
         } catch (error) {
             console.error('Error getting active survey:', error);
             res.status(500).json({
-            status: 'error',
-            message: error.message || 'Internal server error'
+                status: 'error',
+                message: error.message || 'Internal server error'
             });
         }
-        }
+    }
 
-        async getCurrentQuestion(req, res) {
+    async getCurrentQuestion(req, res) {
         try {
             const currentQuestion = await ConductingService.getCurrentQuestion();
+            console.log(currentQuestion);
             res.status(200).json({
-            active: !!currentQuestion,
-            ...currentQuestion
+                active: !!currentQuestion,
+                ...currentQuestion
             });
         } catch (error) {
             console.error('Error getting current question:', error);
             res.status(500).json({
-            status: 'error',
-            message: error.message || 'Internal server error'
+                status: 'error',
+                message: error.message || 'Internal server error'
             });
         }
     }
@@ -111,19 +86,19 @@ class ConductingController {
     async stopSession(req, res) {
         try {
             const { survey_id, class_id } = req.body;
-            
+
             if (!survey_id || !class_id) {
-                return res.status(400).json({ 
-                    status: 'error', 
-                    message: 'Не указаны survey_id или class_id' 
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Не указаны survey_id или class_id'
                 });
             }
 
             // Обновляем только если тест активен
             const [updatedCount] = await TakenSurvey.update(
-                { 
+                {
                     is_active: false,
-                    date: new Date() 
+                    date: new Date()
                 },
                 {
                     where: {
@@ -135,22 +110,21 @@ class ConductingController {
             );
 
             if (updatedCount === 0) {
-                return res.status(404).json({ 
-                    status: 'error', 
-                    message: 'Активный тест не найден' 
+                return res.status(404).json({
+                    status: 'error',
+                    message: 'Активный тест не найден'
                 });
             }
 
-            return res.json({ 
+            return res.json({
                 status: 'success',
                 message: 'Тест успешно остановлен',
                 updatedCount
             });
-
         } catch (error) {
             console.error('Ошибка в stopSession:', error);
-            return res.status(500).json({ 
-                status: 'error', 
+            return res.status(500).json({
+                status: 'error',
                 message: error.message || 'Ошибка сервера'
             });
         }
