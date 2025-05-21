@@ -36,15 +36,87 @@
 //     console.log(`Server running on port ${PORT}`);
 // });
 // index.js
-require('dotenv').config(); // Загружаем переменные окружения
-const { connectDB } = require('./config/database'); // Подключаем БД
-const app = require('./app'); // Импортируем основное приложение
+require('dotenv').config();
+const { connectDB } = require('./config/database');
+const app = require('./app');
+const http = require('http');
+const WebSocket = require('ws');
+const jwt = require('jsonwebtoken');
+
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+const clients = new Set();
+
+function heartbeat() {
+    this.isAlive = true;
+}
+
+wss.on('connection', (ws) => {
+    console.log('🟢 Новый WebSocket клиент подключён');
+    clients.add(ws);
+    ws.isAlive = true;
+    ws.on('pong', heartbeat);
+
+    ws.on('message', async (data) => {
+        try {
+            const message = JSON.parse(data);
+
+            if (message.type === 'auth') {
+                const decoded = jwt.verify(message.token, process.env.JWT_SECRET_KEY);
+                ws.userId = decoded.id;
+                console.log('[WS] Пользователь авторизован по WS:', ws.userId);
+                clients.add(ws);
+            }
+
+            // TODO: обработка других типов сообщений
+        } catch (e) {
+            console.error('[WS] Ошибка обработки сообщения:', e.message);
+        }
+    });
+
+    ws.on('close', (code, reason) => {
+        console.log(`🔴 Клиент отключился (userId=${ws.userId}) Код: ${code}, Причина: ${reason.toString()}`);
+        clients.delete(ws);
+    });
+});
+
+const pingInterval = setInterval(() => {
+    for (const ws of clients) {
+        if (!ws.isAlive) {
+            console.log(`Закрываем неактивное соединение userId=${ws.userId}`);
+            clients.delete(ws);
+            return ws.terminate();
+        }
+        ws.isAlive = false;
+        ws.ping();
+    }
+}, 30000);
+
+wss.on('close', () => clearInterval(pingInterval));
+
+function sendToUser(userId, message) {
+    const jsonData = JSON.stringify(message);
+    let found = false;
+
+    for (const client of clients) {
+        if (client.readyState === WebSocket.OPEN && client.userId === userId) {
+            client.send(jsonData);
+            found = true;
+        }
+    }
+
+    if (!found) {
+        console.warn('No active WS client found for userId:', userId);
+    }
+}
+
+app.set('sendToUser', sendToUser);
 
 const PORT = process.env.APP_PORT || 3000;
 const HOST = process.env.APP_HOST || '0.0.0.0';
 
-app.listen(PORT, async () => {
+server.listen(PORT, HOST, async () => {
     console.log(`🚀 Сервер запущен на http://${HOST}:${PORT}`);
     await connectDB();
 });
- 

@@ -1,4 +1,4 @@
-export function getMediaType(url) {
+function getMediaType(url) {
     if (!url) return null;
     const extension = url.split('.').pop().toLowerCase();
 
@@ -8,3 +8,25 @@ export function getMediaType(url) {
 
     return null;
 }
+
+// userId → sessionData
+const activeSessions = new Map();
+
+function setSession(userId, sessionData) {
+    activeSessions.set(userId, sessionData);
+}
+
+function getSession(userId) {
+    return activeSessions.get(userId) || null;
+}
+
+function removeSession(userId) {
+    activeSessions.delete(userId);
+}
+
+module.exports = {
+    getMediaType,
+    setSession,
+    getSession,
+    removeSession
+};

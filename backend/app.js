@@ -76,7 +76,7 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const jwtMiddleware = require('./middlewares/authMiddleware');
+const authMiddleware = require('./middlewares/authMiddleware');
 const routes = require('./routes'); // Импортируем маршруты
 const userRoutes = require('./routes/UserRoutes');
 const classRoutes = require('./routes/ClassRoutes');
@@ -95,7 +95,7 @@ const app = express();
 
 app.use(cors()); // Настроим CORS
 app.use(bodyParser.json()); // Разбираем JSON
-app.use('/api', jwtMiddleware); // Добавляем middleware для защиты API
+app.use('/api', authMiddleware); // Добавляем middleware для защиты API
 app.use('/api', routes); // Подключаем все маршруты
 app.use('/api', userRoutes); // Все маршруты, связанные с пользователями, начинаются с /api
 app.use('/api/classes', classRoutes);

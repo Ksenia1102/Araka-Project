@@ -11,14 +11,95 @@ const noActiveSurvey = ref(true);
 const isLoading = ref(true);
 const errorMessage = ref('');
 let intervalId = null;
-
+let ws = null;
 const getToken = () => {
     const urlParams = new URLSearchParams(window.location.search);
+    console.log(urlParams.get('token') || localStorage.getItem('authToken'));
     return urlParams.get('token') || localStorage.getItem('authToken');
 };
 
+function initWebSocket() {
+    const token = getToken();
+    if (!token) {
+        errorMessage.value = 'Требуется авторизация';
+        return;
+    }
+
+    // Преобразуем apiUrl в ws:// или wss://
+    const wsProtocol = apiUrl.startsWith('https') ? 'wss' : 'ws';
+    const apiHost = new URL(apiUrl).host; // ← 'localhost:3000'
+    const wsUrl = `${wsProtocol}://${apiHost}/?token=${token}&clientType=web`;
+
+    console.log(wsUrl);
+
+    ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+        console.log('WebSocket подключён');
+
+        // Отправляем авторизационное сообщение
+        ws.send(
+            JSON.stringify({
+                type: 'auth',
+                token: token
+            })
+        );
+    };
+
+    ws.onmessage = (event) => {
+        try {
+            const message = JSON.parse(event.data);
+            console.log('[WS] Message received:', message); // ✅ Добавь лог
+            // Предположим, что сервер шлёт типы сообщений с данными сессии
+            if (message.type === 'session_started' || message.type === 'survey_update') {
+                const data = message.data;
+
+                currentQuestion.value = {
+                    ...data,
+                    mediaUrl: data.file_url,
+                    mediaType: data.file_type
+                };
+
+                surveyInfo.value = {
+                    title: data.title,
+                    class: data.class_name,
+                    survey_id: data.survey_id,
+                    class_id: data.class_id,
+                    mediaUrl: data.file_url,
+                    mediaType: data.file_type
+                };
+
+                noActiveSurvey.value = false;
+                errorMessage.value = '';
+                isLoading.value = false;
+            }
+
+            if (message.type === 'session_stopped') {
+                // например, если тест остановлен сервером
+                noActiveSurvey.value = true;
+                currentQuestion.value = null;
+                errorMessage.value = 'Тест остановлен';
+                isLoading.value = false;
+            }
+        } catch (e) {
+            console.error('Ошибка разбора WS сообщения:', e);
+        }
+    };
+
+    ws.onerror = (error) => {
+        console.error('WebSocket ошибка:', error);
+        errorMessage.value = 'Ошибка WebSocket соединения';
+        isLoading.value = false;
+    };
+
+    ws.onclose = () => {
+        console.log('WebSocket закрыт');
+    };
+}
+
 async function fetchCurrentQuestion() {
     try {
+        console.log('fetchCurrentQuestion');
         const token = getToken();
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
@@ -28,7 +109,7 @@ async function fetchCurrentQuestion() {
                 'Content-Type': 'application/json'
             }
         });
-
+        console.log(response.data);
         if (response.data.active) {
             console.log(response.data);
             currentQuestion.value = {
@@ -138,8 +219,10 @@ onMounted(async () => {
     }
 
     isLoading.value = true;
+    // 🟢 Сначала попробуй получить актуальные данные
     await fetchCurrentQuestion();
-    startPolling();
+
+    initWebSocket();
 
     // Слушаем внешние сообщения (например, с другой вкладки)
     window.addEventListener('message', (event) => {
