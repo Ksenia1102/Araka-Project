@@ -4,7 +4,6 @@ import axios from 'axios'; // Используем axios для запросов
 import jwtDecode from 'jwt-decode';
 import { useToast } from 'primevue/usetoast';
 const apiUrl = import.meta.env.VITE_API_URL;
-const toast = useToast();
 //import Toastify from 'toastify-js'; // Библиотека для уведомлений
 export default {
     components: {
@@ -21,17 +20,9 @@ export default {
             userId: null // ID пользователя (инициализируйте здесь или получайте из других данных)
         };
     },
-    // created() {
-    //     // Получаем ID пользователя из localStorage (или из других мест)
-    //     const userId = localStorage.getItem('userId');
-    //     if (userId) {
-    //         this.userId = userId; // Присваиваем ID пользователя
-    //     } else {
-    //         console.error('User is not authenticated');
-    //         // Вы можете перенаправить на страницу входа, если пользователь не авторизован
-    //         this.$router.push({ name: 'login' });
-    //     }
-    // },
+    created() {
+        this.toast = useToast(); // Инициализируем toast в created
+    },
     computed: {
         currentQuestion() {
             if (this.currentQuestionIndex !== null && this.questions[this.currentQuestionIndex]) {
@@ -117,12 +108,13 @@ export default {
             }
         },
         handleFileUpload(event) {
+            const toast = useToast();
             const file = event.target.files[0];
             const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
 
             if (file) {
                 if (file.size > MAX_SIZE) {
-                    toast.add({
+                    toast.add({ // Используем this.toast
                         severity: 'warn',
                         summary: 'Внимание',
                         detail: 'Файл слишком большой. Максимальный размер: 10 МБ.',
