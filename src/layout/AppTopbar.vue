@@ -9,6 +9,7 @@ import AppConfigurator from './AppConfigurator.vue';
 const toast = useToast();
 const apiUrl = import.meta.env.VITE_API_URL;
 const router = useRouter();
+const demoWindowOpen = ref(false);
 function goToUser() {
     router.push({ name: 'user' });
 }
@@ -59,8 +60,18 @@ async function openDemoWindow() {
 
         const newWindow = window.open(demoUrl, '_blank', 'width=1000,height=800');
 
-        if (!newWindow) {
-            // Если окно не открылось (заблокировано браузером), делаем router.push с query
+        if (newWindow) {
+            demoWindowOpen.value = true;
+
+            // Проверка, закрыто ли окно
+            const checkClosed = setInterval(() => {
+                if (newWindow.closed) {
+                    clearInterval(checkClosed);
+                    demoWindowOpen.value = false;
+                }
+            }, 500); // проверяем каждые полсекунды
+        } else {
+            // Если блокируется popup
             router.push({ name: 'demo', query: { token } });
         }
     } catch (error) {
@@ -155,7 +166,17 @@ const { onMenuToggle } = useLayout();
                     <AppConfigurator />
                 </div>
             </div>
-            <Button label="Демонстрация запущенного теста" @click="openDemoWindow" :disabled="!activeSurvey" class="ml-auto mr-2 mb-2" icon="pi pi-plus" :class="{ 'p-button-info': activeSurvey, 'p-button-secondary': !activeSurvey }"></Button>
+            <Button
+                label="Демонстрация запущенного теста"
+                @click="openDemoWindow"
+                :disabled="!activeSurvey || demoWindowOpen"
+                class="ml-auto mr-2 mb-2"
+                icon="pi pi-plus"
+                :class="{
+                    'p-button-info': activeSurvey && !demoWindowOpen,
+                    'p-button-secondary': !activeSurvey || demoWindowOpen
+                }"
+            ></Button>
 
             <button
                 class="layout-topbar-menu-button layout-topbar-action"

@@ -16,7 +16,28 @@ class ConductingService {
             attributes: ['id']
         });
 
+        const userClassIds = (await Class.findAll({ where: { user_id: userId }, attributes: ['id'] })).map((c) => c.id);
+
+        const userSurveyIds = (await Survey.findAll({ where: { user_id: userId }, attributes: ['id'] })).map((s) => s.id);
+
+        const hasAccessToClass = userClassIds.includes(parseInt(classId));
+        const hasAccessToSurvey = userSurveyIds.includes(parseInt(surveyId));
+
+        if (!hasAccessToClass && !hasAccessToSurvey) {
+            throw new Error('Пользователь не имеет доступа к указанному классу и опросу');
+        }
+        if (!hasAccessToClass) {
+            throw new Error('Пользователь не имеет доступа к указанному классу');
+        }
+        if (!hasAccessToSurvey) {
+            throw new Error('Пользователь не имеет доступа к указанному опросу');
+        }
+
         const classIds = userClasses.map((c) => c.id);
+        // Проверка доступа
+        if (!classIds.includes(parseInt(classId))) {
+            throw new Error('Пользователь не имеет доступа к указанному классу');
+        }
 
         // Деактивируем все активные тесты в этих классах
         await TakenSurvey.update(
@@ -109,7 +130,7 @@ class ConductingService {
         // Есть TakenSurvey — находим последний TakenQuestion
         const lastTakenQuestion = await TakenQuestion.findOne({
             where: { taken_survey_id: takenSurvey.id },
-            order: [['id', 'DESC']]
+            order: [['id', 'ASC']]
         });
 
         if (!lastTakenQuestion) {
@@ -234,14 +255,32 @@ class ConductingService {
                 }
             };
 
-            return { mobileData, frontendData };
+            return {
+                status: 'next_question',
+                mobileData,
+                frontendData,
+                taken_survey_id: takenSurveyId
+            };
         }
 
         // Если вопросов больше нет
         // Останавливаем тест, деактивируем текущий TakenSurvey
         await TakenSurvey.update({ is_active: false }, { where: { id: takenSurveyId } });
+        const takenSurvey = await TakenSurvey.findByPk(takenSurveyId, {
+            include: ['survey', 'class']
+        });
+
+        const frontendData = {
+            active: false,
+            title: takenSurvey?.survey?.title || '',
+            class_name: takenSurvey?.class?.title || '',
+            taken_survey_id: takenSurveyId
+        };
+
         return {
             status: 'survey_completed',
+            mobileData: null,
+            frontendData,
             taken_survey_id: takenSurveyId
         };
     }

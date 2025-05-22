@@ -63,13 +63,17 @@ class ConductingController {
             this.validate(req);
 
             const { taken_survey_id, taken_question_id, answers } = req.body;
-            const { mobileData, frontendData } = await ConductingService.saveAnswers(taken_survey_id, taken_question_id, answers);
+            const result = await ConductingService.saveAnswers(taken_survey_id, taken_question_id, answers);
 
-            this.sendWsAndSetSession(req.app, req.user.id, frontendData);
+            if (result.status === 'survey_completed') {
+                this.sendWsAndDeleteSession(req.app, req.user.id, result.frontendData);
+            } else if (result.status === 'next_question') {
+                this.sendWsAndSetSession(req.app, req.user.id, result.frontendData);
+            }
 
             res.status(200).json({
                 status: 'success',
-                data: mobileData
+                data: result.mobileData
             });
         } catch (error) {
             this.handleError(res, error);
