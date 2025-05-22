@@ -197,18 +197,37 @@ async function updatePassword() {
     }
 
     try {
-        await axios.post(`${apiUrl}/auth/login/reset-password`, {
+        const response = await axios.post(`${apiUrl}/auth/login/reset-password`, {
             email: emailForReset.value,
             code: resetCode.value,
             newPassword: newPassword.value
         });
-        toast.add({ severity: 'success', summary: 'Успех!', detail: 'Пароль успешно обновлен.', life: 8000 });
+        
+        toast.add({ 
+            severity: 'success', 
+            summary: 'Успех!', 
+            detail: response.data.message || 'Пароль успешно обновлен.', 
+            life: 8000 
+        });
 
         // Автоматически нажимаем кнопку "Назад"
         goBack();
     } catch (error) {
         console.error('Error updating password:', error);
-        toast.add({ severity: 'error', summary: 'Ошибка!', detail: 'Ошибка при попытке изменения пароля.', life: 8000 });
+        
+        let errorMessage = 'Ошибка при попытке изменения пароля.';
+        if (error.response?.data?.error) {
+            errorMessage = error.response.data.error;
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        toast.add({ 
+            severity: 'error', 
+            summary: 'Ошибка!', 
+            detail: errorMessage, 
+            life: 8000 
+        });
     }
 }
 

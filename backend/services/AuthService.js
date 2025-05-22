@@ -195,23 +195,26 @@ class AuthService {
     }
 
     static async resetPassword(email, newPassword) {
-        // Проверка сложности нового пароля
-        if (!this.validatePassword(newPassword)) {
-            throw new Error('Пароль должен содержать минимум 8 символов, включая цифры, заглавные и строчные буквы');
+        try {
+            // Проверка сложности нового пароля
+            this.validatePassword(newPassword);
+
+            const user = await User.findOne({ where: { email } });
+            if (!user) throw new Error('Пользователь не найден');
+
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+            await user.update({
+                password: hashedPassword,
+                resetCode: null // Очищаем код после смены пароля
+            });
+
+            return { success: true, message: 'Пароль успешно обновлён' };
+        } catch (error) {
+            console.error('Error resetting password:', error);
+            throw new Error(error.message || 'Ошибка при сбросе пароля');
         }
-
-        const user = await User.findOne({ where: { email } });
-        if (!user) throw new Error('Пользователь не найден');
-
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-        await user.update({
-            password: hashedPassword,
-            resetCode: null // Очищаем код после смены пароля
-        });
-
-        return { success: true, message: 'Пароль успешно обновлён' };
     }
 }
 
