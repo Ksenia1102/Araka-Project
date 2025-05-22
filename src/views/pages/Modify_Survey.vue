@@ -1,342 +1,301 @@
-<script>
+<script setup>
 import SurveyLayout from '@/layout/SurveyLayout.vue';
-import axios from 'axios'; // Используем axios для запросов на сервер
+import axios from 'axios';
 import jwtDecode from 'jwt-decode';
 import { useToast } from 'primevue/usetoast';
+import { computed, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+
 const apiUrl = import.meta.env.VITE_API_URL;
 const toast = useToast();
-//import Toastify from 'toastify-js'; // Библиотека для уведомлений
-export default {
-    components: {
-        SurveyLayout
-    },
-    data() {
+const router = useRouter();
+const route = useRoute();
+
+// STATE
+const surveyTitle = ref('');
+const questions = ref([]);
+const currentQuestionIndex = ref(null);
+const currentQuestionText = ref('');
+const responseMessage = ref('');
+const responseClass = ref('');
+const userId = ref(null);
+
+// COMPUTED
+const currentQuestion = computed(() => {
+    if (currentQuestionIndex.value !== null) {
+        const question = questions.value[currentQuestionIndex.value];
         return {
-            surveyTitle: '',
-            questions: [], // Начинаем с пустого массива вопросов
-            currentQuestionIndex: null, // Индекс текущего вопроса
-            currentQuestionText: '', // Локальная переменная для текста вопроса
-            responseMessage: '', // Сообщение от сервера
-            responseClass: '', // Класс для отображения успеха или ошибки
-            userId: null // ID пользователя (инициализируйте здесь или получайте из других данных)
+            ...question,
+            indexedText: `${currentQuestionIndex.value + 1}. ${question.text}`
         };
-    },
-    // created() {
-    //     // Получаем ID пользователя из localStorage (или из других мест)
-    //     const userId = localStorage.getItem('userId');
-    //     if (userId) {
-    //         this.userId = userId; // Присваиваем ID пользователя
-    //     } else {
-    //         console.error('User is not authenticated');
-    //         // Вы можете перенаправить на страницу входа, если пользователь не авторизован
-    //         this.$router.push({ name: 'login' });
-    //     }
-    // },
-    computed: {
-        currentQuestion() {
-            if (this.currentQuestionIndex !== null) {
-                const question = this.questions[this.currentQuestionIndex];
-                return {
-                    ...question,
-                    indexedText: `${this.currentQuestionIndex + 1}. ${question.text}` // Нумерация добавляется в шаблоне
-                };
-            }
-            return null;
-        }
-    },
-    methods: {
-        goBackAndReload() {
-            window.history.back(); // Вернуться на предыдущую страницу
-            // Для перезагрузки страницы, на которой вы оказались, можно использовать:
-            window.location.reload(); // Но это нужно делать на самой предыдущей странице
-        },
-        goBack() {
-            this.$router.push('/pages/dashboard'); // Возврат на страницу dashboard
-        },
-        selectQuestion(index) {
-            this.currentQuestionIndex = index;
-            this.currentQuestionText = this.questions[index].text; // Устанавливаем текст текущего вопроса
-        },
-        addQuestion() {
-            const newQuestion = {
-                text: `Вопрос ${this.questions.length + 1}`, // Название вопроса по умолчанию
-                options: ['', '', '', ''], // Четыре пустых варианта
-                selectedOption: null // Не выбран правильный вариант
-            };
-            this.questions.push(newQuestion);
-            this.selectQuestion(this.questions.length - 1); // Переход к новому вопросу
-            this.currentQuestionText = newQuestion.text; // Устанавливаем текст для текущего вопроса
-        },
-        copyQuestion(index) {
-            const questionToCopy = this.questions[index];
-            const copiedQuestion = {
-                ...JSON.parse(JSON.stringify(questionToCopy)), // Глубокая копия
-                text: `${questionToCopy.text} (Копия)`
-            };
-            this.questions.push(copiedQuestion);
-            this.selectQuestion(this.questions.length - 1); // Переход к скопированному вопросу
-        },
-        deleteQuestion(index) {
-            this.questions.splice(index, 1);
-            if (this.questions.length === 0) {
-                this.currentQuestionIndex = null;
-                this.addQuestion(); // Добавляем новый вопрос, если список пуст
-            } else {
-                this.currentQuestionIndex = Math.min(index, this.questions.length - 1); // Сохраняем доступный индекс
-            }
-        },
-        selectOption(index) {
-            if (this.currentQuestion) {
-                this.questions[this.currentQuestionIndex].selectedOption = index; // Устанавливаем правильный вариант
-            }
-        },
-        triggerFileInput() {
-            if (this.$refs.fileInput) {
-                this.$refs.fileInput.click();
-            }
-        },
-        handleFileUpload(event) {
-            const file = event.target.files[0];
-            const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+    }
+    return null;
+});
 
-            if (file) {
-                if (file.size > MAX_SIZE) {
-                    toast.add({
-                        severity: 'warn',
-                        summary: 'Внимание',
-                        detail: 'Файл слишком большой. Максимальный размер: 10 МБ.',
-                        life: 3000
-                    });
-                    this.$refs.fileInput.value = ''; // Очистить input
-                    return;
-                }
+// METHODS
 
-                const reader = new FileReader();
-                reader.onload = () => {
-                    if (this.currentQuestion) {
-                        this.questions[this.currentQuestionIndex].mediaUrl = reader.result;
-                        this.questions[this.currentQuestionIndex].mediaName = file.name;
-                        this.questions[this.currentQuestionIndex].mediaSize = (file.size / 1024).toFixed(2);
-                        const fileType = file.type.split('/')[0]; // тип файла
-                        this.questions[this.currentQuestionIndex].mediaType = fileType;
+function goBack() {
+    router.push('/pages/dashboard');
+}
 
-                        // ВАЖНО: Сохраняем сам файл, чтобы потом его отправить на сервер
-                        this.questions[this.currentQuestionIndex].mediaFile = file;
-                    }
-                    this.$refs.fileInput.value = '';
-                };
-                reader.readAsDataURL(file);
-            }
-        },
-        removeMedia() {
-            if (this.currentQuestion) {
-                this.questions[this.currentQuestionIndex].mediaUrl = null;
-                this.questions[this.currentQuestionIndex].mediaType = null;
-                this.questions[this.currentQuestionIndex].mediaName = null;
-                this.questions[this.currentQuestionIndex].mediaSize = null;
-            }
-            this.$refs.fileInput.value = '';
-        },
-        handleSaveSurvey(data) {
-            if (!this.surveyTitle.trim()) {
-                this.surveyTitle = data.title;
-            } // Только обновляем заголовок
-            this.submitSurvey(); // Отправляем опрос
-        },
-        updateQuestionText() {
-            if (this.currentQuestionIndex !== null) {
-                this.questions[this.currentQuestionIndex].text = this.currentQuestionText;
-            }
-        },
-        // Отправка данных на сервер
-        async submitSurvey() {
-            if (!this.surveyTitle.trim()) {
-                this.responseMessage = 'Название опроса не может быть пустым.';
-                this.responseClass = 'error';
-                return;
-            }
+function selectQuestion(index) {
+    currentQuestionIndex.value = index;
+    currentQuestionText.value = questions.value[index].text;
+}
 
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                this.responseMessage = 'Ошибка авторизации. Пожалуйста, войдите заново.';
-                this.responseClass = 'error';
-                return;
-            }
+function addQuestion() {
+    const newQuestion = {
+        text: `Вопрос ${questions.value.length + 1}`,
+        options: ['', '', '', ''],
+        selectedOption: null
+    };
+    questions.value.push(newQuestion);
+    selectQuestion(questions.value.length - 1);
+}
 
-            // Загружаем только новые файлы
-            const imageUploadPromises = this.questions.map(async (question) => {
-                // Если есть новый файл для загрузки (mediaFile) и нет file_url (значит это новый файл)
-                // ИЛИ если есть mediaFile и он отличается от текущего file_name (пользователь заменил файл)
-                if (question.mediaFile && (!question.file_url || question.mediaFile.name !== question.file_name)) {
-                    const formData = new FormData();
-                    formData.append('file', question.mediaFile);
-                    formData.append('mediaType', question.mediaType);
+function copyQuestion(index) {
+    const questionToCopy = questions.value[index];
+    const copiedQuestion = {
+        ...JSON.parse(JSON.stringify(questionToCopy)),
+        text: `${questionToCopy.text} (Копия)`
+    };
+    questions.value.push(copiedQuestion);
+    selectQuestion(questions.value.length - 1);
+}
 
-                    try {
-                        const res = await axios.post(`${apiUrl}/api/upload-image`, formData, {
-                            headers: {
-                                'Content-Type': 'multipart/form-data',
-                                Authorization: `Bearer ${token}`
-                            }
-                        });
+function deleteQuestion(index) {
+    questions.value.splice(index, 1);
+    if (questions.value.length === 0) {
+        currentQuestionIndex.value = null;
+        addQuestion();
+    } else {
+        currentQuestionIndex.value = Math.min(index, questions.value.length - 1);
+    }
+}
 
-                        // Обновляем данные о файле в вопросе
-                        question.file_folder = res.data.folder;
-                        question.file_name = res.data.fileName;
-                        question.file_type = res.data.fileType;
-                        question.file_url = res.data.url;
-                        console.log('Новый файл загружен:', res.data);
-                    } catch (error) {
-                        console.error('Ошибка загрузки файла:', error);
-                        throw error;
-                    }
-                } else if (question.file_url && !question.mediaFile) {
-                    // Файл уже был загружен ранее и не был изменен - оставляем как есть
-                    console.log('Файл уже загружен ранее, оставляем без изменений');
-                }
+function selectOption(index) {
+    if (currentQuestion.value) {
+        questions.value[currentQuestionIndex.value].selectedOption = index;
+    }
+}
+
+const fileInput = ref(null);
+function triggerFileInput() {
+    fileInput.value?.click();
+}
+
+function handleFileUpload(event) {
+    const file = event.target.files[0];
+    const MAX_SIZE = 10 * 1024 * 1024;
+
+    if (file) {
+        if (file.size > MAX_SIZE) {
+            toast.add({
+                severity: 'warn',
+                summary: 'Внимание',
+                detail: 'Файл слишком большой. Максимальный размер: 10 МБ.',
+                life: 3000
             });
+            fileInput.value.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            if (currentQuestion.value) {
+                const question = questions.value[currentQuestionIndex.value];
+                question.mediaUrl = reader.result;
+                question.mediaName = file.name;
+                question.mediaSize = (file.size / 1024).toFixed(2);
+                question.mediaType = file.type.split('/')[0];
+                question.mediaFile = file;
+            }
+            fileInput.value.value = '';
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function removeMedia() {
+    if (currentQuestion.value) {
+        const question = questions.value[currentQuestionIndex.value];
+        question.mediaUrl = null;
+        question.mediaType = null;
+        question.mediaName = null;
+        question.mediaSize = null;
+    }
+    fileInput.value.value = '';
+}
+
+function updateQuestionText() {
+    if (currentQuestionIndex.value !== null) {
+        questions.value[currentQuestionIndex.value].text = currentQuestionText.value;
+    }
+}
+
+async function handleSaveSurvey(data) {
+    if (!surveyTitle.value.trim()) {
+        surveyTitle.value = data.title;
+    }
+    await submitSurvey();
+}
+
+async function submitSurvey() {
+    if (!surveyTitle.value.trim()) {
+        responseMessage.value = 'Название опроса не может быть пустым.';
+        responseClass.value = 'error';
+        return;
+    }
+
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        responseMessage.value = 'Ошибка авторизации. Пожалуйста, войдите заново.';
+        responseClass.value = 'error';
+        return;
+    }
+
+    const imageUploadPromises = questions.value.map(async (question) => {
+        if (question.mediaFile && (!question.file_url || question.mediaFile.name !== question.file_name)) {
+            const formData = new FormData();
+            formData.append('file', question.mediaFile);
+            formData.append('mediaType', question.mediaType);
 
             try {
-                // Дожидаемся загрузки всех новых файлов
-                await Promise.all(imageUploadPromises);
-
-                // Подготавливаем данные для отправки
-                const surveyData = {
-                    user_id: this.userId,
-                    title: this.surveyTitle.trim(),
-                    questions: this.questions.map((q, index) => ({
-                        id: q.id,
-                        text: q.text.trim() || `Вопрос ${index + 1}`,
-                        correct_option: q.selectedOption,
-                        options: q.options.map((opt) => opt.trim()).filter((opt) => opt !== ''),
-                        file_folder: q.file_folder || null,
-                        file_name: q.file_name || null,
-                        file_type: q.file_type || null,
-                        file_url: q.file_url || null
-                    }))
-                };
-
-                // Проверка валидности данных
-                const invalidQuestions = surveyData.questions.filter((q) => !q.text || q.correct_option === null || q.options.some((opt) => !opt));
-
-                if (invalidQuestions.length > 0) {
-                    this.responseMessage = 'Убедитесь, что все вопросы заполнены и у каждого есть правильный вариант.';
-                    this.responseClass = 'error';
-                    return;
-                }
-
-                const surveyId = this.$route.query.id;
-                const method = surveyId ? 'put' : 'post';
-                const url = surveyId ? `${apiUrl}/api/surveys/${surveyId}` : `${apiUrl}/api/surveys`;
-
-                // Отправка данных опроса
-                const response = await axios[method](url, surveyData, {
+                const res = await axios.post(`${apiUrl}/api/upload-image`, formData, {
                     headers: {
+                        'Content-Type': 'multipart/form-data',
                         Authorization: `Bearer ${token}`
                     }
                 });
 
-                console.log('Ответ сервера:', response.data);
-                this.responseMessage = surveyId ? 'Опрос успешно обновлён.' : 'Опрос успешно сохранён.';
-                this.responseClass = 'success';
-                this.$router.push({ name: 'dashboard' });
+                question.file_folder = res.data.folder;
+                question.file_name = res.data.fileName;
+                question.file_type = res.data.fileType;
+                question.file_url = res.data.url;
             } catch (error) {
-                console.error('Ошибка при сохранении опроса:', error.response?.data || error.message);
-                this.responseMessage = 'Произошла ошибка при сохранении опроса.';
-                this.responseClass = 'error';
-            }
-        },
-        async loadSurvey(surveyId) {
-            try {
-                const token = localStorage.getItem('authToken'); // Получаем токен из локального хранилища
-                if (!token) {
-                    console.error('Токен отсутствует. Необходимо авторизоваться.');
-                    this.responseMessage = 'Ошибка авторизации. Пожалуйста, войдите заново.';
-                    this.responseClass = 'error';
-                    return;
-                }
-
-                // Запрос данных с сервера
-                const response = await axios.get(`${apiUrl}/api/surveys/${surveyId}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}` // Стандартный формат
-                    } // Передаём токен в заголовках
-                });
-
-                // Обработка успешного ответа
-                const survey = response.data;
-
-                // Устанавливаем заголовок опроса
-                this.surveyTitle = survey.title || 'Без названия';
-
-                this.questions = survey.questions.map((question) => {
-                    // Проверяем и форматируем варианты ответов
-                    const options = question.options && question.options.length > 0 ? question.options.map((opt) => opt.text || '') : ['', '', '', ''];
-                    console.log('232323', question);
-                    return {
-                        id: question.id, // Сохраняем ID вопроса
-                        text: question.text || 'Без текста',
-                        options: options,
-                        selectedOption: question.correct_option_id !== undefined ? question.correct_option_id : null,
-                        mediaUrl: question.file_url || '', // URL медиа (если есть)
-                        mediaType: question.file_type || '' // Тип медиа (например, image, video, audio)
-                    };
-                });
-
-                console.log('23232343433', this.questions);
-
-                // Если вопросов нет, создаём один новый
-                if (this.questions.length === 0) {
-                    this.addQuestion();
-                }
-
-                // Устанавливаем текущий вопрос
-                this.selectQuestion(0);
-
-                this.responseMessage = 'Данные опроса успешно загружены.';
-                this.responseClass = 'success';
-            } catch (error) {
-                // Обработка ошибок
-                console.error('Ошибка загрузки данных опроса:', error.response?.data || error.message);
-                this.responseMessage = 'Ошибка загрузки данных опроса. Попробуйте позже.';
-                this.responseClass = 'error';
+                console.error('Ошибка загрузки файла:', error);
+                throw error;
             }
         }
-    },
-    mounted() {
-        const token = localStorage.getItem('authToken'); // Извлекаем токен из localStorage
-        if (!token) {
-            console.error('Пользователь не авторизован');
-            this.$router.push({ name: 'login' }); // Перенаправление на страницу входа
+    });
+
+    try {
+        await Promise.all(imageUploadPromises);
+
+        const surveyData = {
+            user_id: userId.value,
+            title: surveyTitle.value.trim(),
+            questions: questions.value.map((q, index) => ({
+                id: q.id,
+                text: q.text.trim() || `Вопрос ${index + 1}`,
+                correct_option: q.selectedOption,
+                options: q.options.map((opt) => opt.trim()).filter((opt) => opt !== ''),
+                file_folder: q.file_folder || null,
+                file_name: q.file_name || null,
+                file_type: q.file_type || null,
+                file_url: q.file_url || null
+            }))
+        };
+
+        const invalidQuestions = surveyData.questions.filter((q) => !q.text || q.correct_option === null || q.options.some((opt) => !opt));
+        if (invalidQuestions.length > 0) {
+            responseMessage.value = 'Заполните все вопросы и правильные варианты.';
+            responseClass.value = 'error';
             return;
         }
 
-        try {
-            // Используем jwt-decode для извлечения данных из токена
-            const decoded = jwtDecode(token);
-            if (decoded && decoded.id) {
-                this.userId = decoded.id; // Устанавливаем userId из токена
-            } else {
-                throw new Error('ID пользователя отсутствует в токене');
-            }
+        const surveyId = route.query.id;
+        const method = surveyId ? 'put' : 'post';
+        const url = surveyId ? `${apiUrl}/api/surveys/${surveyId}` : `${apiUrl}/api/surveys`;
 
-            const surveyId = this.$route.query.id; // Получаем ID опроса из маршрута
-            if (surveyId) {
-                this.loadSurvey(surveyId); // Загружаем данные
-            } else {
-                console.error('ID опроса отсутствует. Перенаправление на главную страницу.');
-                this.$router.push('/pages/dashboard'); // Перенаправление на дашборд
+        const response = await axios[method](url, surveyData, {
+            headers: {
+                Authorization: `Bearer ${token}`
             }
-        } catch (err) {
-            console.error('Ошибка декодирования токена:', err);
-            this.$router.push({ name: 'login' }); // Перенаправление на страницу входа
-        }
+        });
 
-        if (this.questions.length === 0) {
-            this.addQuestion();
-        }
+        responseMessage.value = surveyId ? 'Опрос обновлён.' : 'Опрос сохранён.';
+        responseClass.value = 'success';
+        router.push({ name: 'dashboard' });
+    } catch (error) {
+        console.error('Ошибка сохранения опроса:', error);
+        responseMessage.value = 'Ошибка при сохранении.';
+        responseClass.value = 'error';
     }
-};
+}
+
+async function loadSurvey(surveyId) {
+    try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            responseMessage.value = 'Ошибка авторизации. Пожалуйста, войдите заново.';
+            responseClass.value = 'error';
+            return;
+        }
+
+        const response = await axios.get(`${apiUrl}/api/surveys/${surveyId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        const survey = response.data;
+        surveyTitle.value = survey.title || 'Без названия';
+
+        questions.value = survey.questions.map((q) => ({
+            id: q.id,
+            text: q.text || 'Без текста',
+            options: q.options?.map((opt) => opt.text || '') ?? ['', '', '', ''],
+            selectedOption: q.correct_option_id ?? null,
+            mediaUrl: q.file_url || '',
+            mediaType: q.file_type || ''
+        }));
+
+        if (questions.value.length === 0) {
+            addQuestion();
+        }
+
+        selectQuestion(0);
+        responseMessage.value = 'Опрос успешно загружен.';
+        responseClass.value = 'success';
+    } catch (error) {
+        console.error('Ошибка загрузки опроса:', error);
+        responseMessage.value = 'Ошибка загрузки.';
+        responseClass.value = 'error';
+    }
+}
+
+// MOUNTED
+onMounted(() => {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        router.push({ name: 'login' });
+        return;
+    }
+
+    try {
+        const decoded = jwtDecode(token);
+        if (decoded?.id) {
+            userId.value = decoded.id;
+        } else {
+            throw new Error('ID пользователя отсутствует');
+        }
+
+        const surveyId = route.query.id;
+        if (surveyId) {
+            loadSurvey(surveyId);
+        } else {
+            router.push('/pages/dashboard');
+        }
+    } catch (err) {
+        console.error('Ошибка токена:', err);
+        router.push({ name: 'login' });
+    }
+
+    if (questions.value.length === 0) {
+        addQuestion();
+    }
+});
 </script>
 
 <template>

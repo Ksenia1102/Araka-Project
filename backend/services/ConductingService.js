@@ -53,7 +53,7 @@ class ConductingService {
         const formatReturnData = async (takenSurvey, takenQuestion, question) => {
             const options = await Option.findAll({
                 where: { question_id: question.id },
-                order: [['text', 'ASC']]
+                order: [['id', 'ASC']]
             });
 
             const activeSurvey = await this.getActiveSurvey();
@@ -221,7 +221,7 @@ class ConductingService {
 
             const options = await Option.findAll({
                 where: { question_id: newQuestion.id },
-                order: [['text', 'ASC']]
+                order: [['id', 'ASC']]
             });
 
             const mobileData = {
@@ -269,6 +269,7 @@ class ConductingService {
         const takenSurvey = await TakenSurvey.findByPk(takenSurveyId, {
             include: ['survey', 'class']
         });
+        console.log(takenSurvey);
 
         const frontendData = {
             active: false,
