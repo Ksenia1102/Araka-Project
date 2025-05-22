@@ -142,7 +142,7 @@ function sendToUser(userId, message) {
 app.set('sendToUser', sendToUser);
 
 const PORT = process.env.APP_PORT || 3000;
-const HOST = process.env.APP_HOST || '0.0.0.0';
+const HOST = '0.0.0.0';
 
 server.listen(PORT, HOST, async () => {
     console.log(`🚀 Сервер запущен на http://${HOST}:${PORT}`);
