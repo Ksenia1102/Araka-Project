@@ -91,6 +91,7 @@ const folderRoutes = require('./routes/FolderRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const conductRoutes = require('./routes/conducting');
 const upload = require('./routes/upload');
+const downloadCardsRoutes1 = require('./routes/download_cards_1');
 const app = express();
 
 app.use(cors()); // Настроим CORS
@@ -104,6 +105,7 @@ app.use('/api/surveys', surveyRoutes);
 app.use('/api', upload); // Подключаем маршруты опросов
 // app.use('/api', questionRoutes); // Подключаем маршруты вопросов
 // app.use('/api', optionRoutes); // Подключаем маршруты вариантов ответа
+app.use('/cards', downloadCardsRoutes1);
 app.use('/auth', authRoutes);
 app.use('/profile', profileRoutes);
 app.use('/api', fileRoutes);

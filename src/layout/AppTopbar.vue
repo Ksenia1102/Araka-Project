@@ -3,7 +3,7 @@ import { useLayout } from '@/layout/composables/layout';
 import axios from 'axios';
 import * as FileSaver from 'file-saver'; // Правильный способ импорта
 import { useToast } from 'primevue/usetoast';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import AppConfigurator from './AppConfigurator.vue';
 const toast = useToast();
@@ -96,6 +96,43 @@ async function checkActiveSurvey() {
     }
 }
 
+onMounted(() => {
+    const token = localStorage.getItem('authToken');
+    if (!token) return;
+    // Преобразуем apiUrl в ws:// или wss://
+    const wsProtocol = apiUrl.startsWith('https') ? 'wss' : 'ws';
+    const apiHost = new URL(apiUrl).host; // ← 'localhost:3000'
+    const wsUrl = `${wsProtocol}://${apiHost}/?token=${token}&clientType=web`;
+
+    console.log(wsUrl);
+    const ws = new WebSocket(wsUrl); // Подставь правильный адрес
+    ws.onopen = () => {
+        // Авторизация
+        ws.send(JSON.stringify({ type: 'auth', token }));
+
+        // Запрос текущего состояния
+        ws.send(JSON.stringify({ type: 'get_current_state' }));
+    };
+
+    ws.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+
+        if (message.type === 'session_started') {
+            activeSurvey.value = true;
+            console.log('[WS] Получено session_started через init:', message);
+        }
+
+        if (message.type === 'session_stopped') {
+            activeSurvey.value = false;
+            console.log('[WS] Получено session_stopped — выключаем кнопку');
+        }
+    };
+
+    ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+    };
+});
+
 const { onMenuToggle } = useLayout();
 </script>
 
@@ -118,7 +155,8 @@ const { onMenuToggle } = useLayout();
                     <AppConfigurator />
                 </div>
             </div>
-            <Button label="Демонстрация запущенного теста" @click="openDemoWindow" class="ml-auto mr-2 mb-2" icon="pi pi-plus" severity="info" />
+            <Button label="Демонстрация запущенного теста" @click="openDemoWindow" :disabled="!activeSurvey" class="ml-auto mr-2 mb-2" icon="pi pi-plus" :class="{ 'p-button-info': activeSurvey, 'p-button-secondary': !activeSurvey }"></Button>
+
             <button
                 class="layout-topbar-menu-button layout-topbar-action"
                 v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"

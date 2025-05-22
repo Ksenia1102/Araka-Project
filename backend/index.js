@@ -68,6 +68,34 @@ wss.on('connection', (ws) => {
                 console.log('[WS] Пользователь авторизован по WS:', ws.userId);
                 clients.add(ws);
             }
+            if (message.type === 'get_current_state') {
+                if (!ws.userId) return;
+
+                const { TakenSurvey, Survey, Class } = require('./models'); // Убедись, что путь к моделям правильный
+
+                const active = await TakenSurvey.findOne({
+                    where: { is_active: true },
+                    include: [
+                        { model: Survey, as: 'survey' },
+                        { model: Class, as: 'class' }
+                    ]
+                });
+
+                if (active) {
+                    ws.send(
+                        JSON.stringify({
+                            type: 'session_started',
+                            frontendData: {
+                                active: true,
+                                title: active.survey?.title,
+                                class_name: active.class?.title,
+                                taken_survey_id: active.id
+                                // Добавь сюда любые другие поля по желанию
+                            }
+                        })
+                    );
+                }
+            }
 
             // TODO: обработка других типов сообщений
         } catch (e) {

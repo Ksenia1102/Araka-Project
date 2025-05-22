@@ -107,6 +107,7 @@ class ConductingController {
                     message: 'Активный тест не найден'
                 });
             }
+            this.sendWsAndDeleteSession(req.app, req.user.id, {});
 
             return res.json({
                 status: 'success',
@@ -135,6 +136,12 @@ class ConductingController {
     sendWsAndSetSession(app, userId, frontendData) {
         const sendToUser = app.get('sendToUser');
         sendToUser(userId, { type: 'session_started', data: frontendData });
+        setSession(userId, frontendData);
+    }
+
+    sendWsAndDeleteSession(app, userId, frontendData) {
+        const sendToUser = app.get('sendToUser');
+        sendToUser(userId, { type: 'session_stopped', data: frontendData });
         setSession(userId, frontendData);
     }
 
