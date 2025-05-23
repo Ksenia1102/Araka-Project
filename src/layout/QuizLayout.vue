@@ -254,12 +254,6 @@ onMounted(() => {
                         </div>
                     </div>
                     <!-- дублирование карточки??? как то это исправить-->
-                    <div>
-                        <div class="card" style="text-align: center">
-                            <p style="margin-bottom: 1em">Получено ответов: <br /><span class="ques-num">нет ответов</span></p>
-                            <p>Правильных ответов: <br /><span class="ques-num">нет ответов</span></p>
-                        </div>
-                    </div>
                 </div>
                 <div v-else>
                     <div class="flex flex-col md:flex-row">
@@ -308,14 +302,6 @@ onMounted(() => {
                             </div>
                         </div>
                         <div>
-                            <div class="card" style="text-align: center">
-                                <p style="margin-bottom: 1em">
-                                    Получено ответов: <br /><span class="ques-num">{{ answersReceived }}</span>
-                                </p>
-                                <p>
-                                    Правильных ответов: <br /><span class="ques-num">{{ correctAnswers }}</span>
-                                </p>
-                            </div>
                         </div>
                     </div>
                 </div>

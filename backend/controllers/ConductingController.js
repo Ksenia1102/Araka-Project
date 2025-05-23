@@ -1,7 +1,7 @@
 const ConductingService = require('../services/ConductingService');
 const { validationResult } = require('express-validator');
-const TakenSurvey = require('../models/TakenSurvey');
 const { getSession, setSession } = require('../utils');
+const { Class, Student, Survey, TakenSurvey, TakenQuestion, TakenQuestionAnswer } = require('../models');
 
 class ConductingController {
     constructor() {
@@ -10,6 +10,114 @@ class ConductingController {
         this.getCurrentQuestion = this.getCurrentQuestion.bind(this);
         this.saveAnswers = this.saveAnswers.bind(this);
         this.stopSession = this.stopSession.bind(this);
+        this.getClassStudents = this.getClassStudents.bind(this);
+        this.getStudentAnswers = this.getStudentAnswers.bind(this);
+        this.handleError = this.handleError.bind(this); // Добавляем привязку для handleError
+    }
+    async getClassStudents(req, res) {
+        try {
+            const { class_id } = req.query;
+            if (!class_id) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Не указан class_id'
+                });
+            }
+
+            // Проверяем доступ пользователя к классу
+            const userClasses = await Class.findAll({
+                where: { user_id: req.user.id },
+                attributes: ['id']
+            });
+            const userClassIds = userClasses.map(c => c.id);
+
+            if (!userClassIds.includes(parseInt(class_id))) {
+                return res.status(403).json({
+                    status: 'error',
+                    message: 'Нет доступа к указанному классу'
+                });
+            }
+
+            // Получаем студентов класса
+            const students = await Student.findAll({
+                where: { class_id },
+                attributes: ['id', 'name', 'aruco_num'],
+                order: [['name', 'ASC']]
+            });
+
+            res.status(200).json({
+                status: 'success',
+                data: students
+            });
+        } catch (error) {
+            console.error('Error in getClassStudents:', error);
+            this.handleError(res, error);
+        }
+    }
+
+    async getStudentAnswers(req, res) {
+        try {
+            const { survey_id } = req.query;
+            if (!survey_id) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Не указан survey_id'
+                });
+            }
+
+            // Проверяем доступ пользователя к опросу
+            const userSurveys = await Survey.findAll({
+                where: { user_id: req.user.id },
+                attributes: ['id']
+            });
+            const userSurveyIds = userSurveys.map(s => s.id);
+
+            if (!userSurveyIds.includes(parseInt(survey_id))) {
+                return res.status(403).json({
+                    status: 'error',
+                    message: 'Нет доступа к указанному опросу'
+                });
+            }
+
+            // Получаем ответы студентов
+            const answers = await TakenQuestionAnswer.findAll({
+                include: [
+                    {
+                        model: Student,
+                        attributes: ['id', 'name'],
+                        required: true
+                    },
+                    {
+                        model: TakenQuestion,
+                        attributes: ['id'],
+                        include: [{
+                            model: TakenSurvey,
+                            where: { survey_id },
+                            attributes: []
+                        }],
+                        required: true
+                    }
+                ],
+                attributes: ['id', 'answer', 'createdAt'],
+                order: [['createdAt', 'DESC']]
+            });
+
+            const formattedAnswers = answers.map(answer => ({
+                id: answer.id,
+                student_id: answer.student.id,
+                student_name: answer.student.name,
+                answer: answer.answer,
+                date: answer.createdAt
+            }));
+
+            res.status(200).json({
+                status: 'success',
+                data: formattedAnswers
+            });
+        } catch (error) {
+            console.error('Error in getStudentAnswers:', error);
+            this.handleError(res, error);
+        }
     }
     async startSession(req, res) {
         try {
