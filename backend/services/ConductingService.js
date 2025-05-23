@@ -79,6 +79,7 @@ class ConductingService {
                 active: true,
                 title: activeSurvey.survey.title,
                 class_name: activeSurvey.class.title,
+                class_id: activeSurvey.class_id,
                 taken_survey_id: activeSurvey.id,
                 taken_question_id: takenQuestion.id,
                 question_id: question.id,
@@ -241,6 +242,7 @@ class ConductingService {
                 active: true,
                 title: activeSurvey.survey.title,
                 class_name: activeSurvey.class.title,
+                class_id: activeSurvey.class_id, 
                 taken_survey_id: activeSurvey.id,
                 taken_question_id: takenQuestion.id,
                 question_id: newQuestion.id,
@@ -297,7 +299,7 @@ class ConductingService {
     async getActiveSurvey() {
         return await TakenSurvey.findOne({
             where: { is_active: true },
-            attributes: ['id', 'survey_id', 'class_id'],
+            attributes: ['id', 'survey_id', 'class_id'], // Уже есть class_id
             include: [
                 {
                     model: Survey,
@@ -307,34 +309,43 @@ class ConductingService {
                 {
                     model: Class,
                     as: 'class',
-                    attributes: ['id', 'title'] //
+                    attributes: ['id', 'title']
                 }
             ]
         });
     }
 
-    // async getCurrentQuestion(userId) {
-    //     // Пример: ищем активную сессию по userId (или по userId → класс → survey)
-    //     const session = await SessionModel.findOne({
-    //         user_id: userId,
-    //         is_active: true
-    //     })
-    //         .populate('current_question')
-    //         .populate('class');
+    async getClassStudents(classId) {
+        return await Student.findAll({
+            where: { class_id: classId },
+            attributes: ['id', 'name', 'aruco_num'],
+            order: [['name', 'ASC']]
+        });
+    }
 
-    //     if (!session || !session.current_question) return null;
-
-    //     return {
-    //         title: session.title,
-    //         class_name: session.class.name,
-    //         survey_id: session.survey_id,
-    //         class_id: session.class_id,
-    //         question_text: session.current_question.text,
-    //         options: session.current_question.options,
-    //         file_url: session.current_question.file_url,
-    //         file_type: session.current_question.file_type
-    //     };
-    // }
+    async getStudentAnswers(surveyId) {
+        return await TakenQuestionAnswer.findAll({
+            include: [
+                {
+                    model: Student,
+                    attributes: ['id', 'name'],
+                    required: true
+                },
+                {
+                    model: TakenQuestion,
+                    attributes: ['id'],
+                    include: [{
+                        model: TakenSurvey,
+                        where: { survey_id: surveyId },
+                        attributes: []
+                    }],
+                    required: true
+                }
+            ],
+            attributes: ['id', 'answer', 'createdAt'],
+            order: [['createdAt', 'DESC']]
+        });
+    }
 }
 
 module.exports = new ConductingService();

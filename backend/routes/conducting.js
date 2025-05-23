@@ -7,5 +7,6 @@ router.post('/answers', ConductingController.saveAnswers);
 router.get('/active', ConductingController.getActiveSurvey);
 router.get('/current', ConductingController.getCurrentQuestion);
 router.post('/stop', ConductingController.stopSession);
+router.get('/students', ConductingController.getClassStudents);
 
 module.exports = router;
