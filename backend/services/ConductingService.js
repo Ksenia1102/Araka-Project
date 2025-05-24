@@ -16,28 +16,28 @@ class ConductingService {
             attributes: ['id']
         });
 
-        const userClassIds = (await Class.findAll({ where: { user_id: userId }, attributes: ['id'] })).map((c) => c.id);
+        // const userClassIds = (await Class.findAll({ where: { user_id: userId }, attributes: ['id'] })).map((c) => c.id);
 
-        const userSurveyIds = (await Survey.findAll({ where: { user_id: userId }, attributes: ['id'] })).map((s) => s.id);
+        // const userSurveyIds = (await Survey.findAll({ where: { user_id: userId }, attributes: ['id'] })).map((s) => s.id);
 
-        const hasAccessToClass = userClassIds.includes(parseInt(classId));
-        const hasAccessToSurvey = userSurveyIds.includes(parseInt(surveyId));
+        // const hasAccessToClass = userClassIds.includes(parseInt(classId));
+        // const hasAccessToSurvey = userSurveyIds.includes(parseInt(surveyId));
 
-        if (!hasAccessToClass && !hasAccessToSurvey) {
-            throw new Error('Пользователь не имеет доступа к указанному классу и опросу');
-        }
-        if (!hasAccessToClass) {
-            throw new Error('Пользователь не имеет доступа к указанному классу');
-        }
-        if (!hasAccessToSurvey) {
-            throw new Error('Пользователь не имеет доступа к указанному опросу');
-        }
+        // if (!hasAccessToClass && !hasAccessToSurvey) {
+        //     throw new Error('Пользователь не имеет доступа к указанному классу и опросу')
+        // }
+        // if (!hasAccessToClass) {
+        //     throw new Error('Пользователь не имеет доступа к указанному классу');
+        // }
+        // if (!hasAccessToSurvey) {
+        //     throw new Error('Пользователь не имеет доступа к указанному опросу');
+        // }
 
         const classIds = userClasses.map((c) => c.id);
         // Проверка доступа
-        if (!classIds.includes(parseInt(classId))) {
-            throw new Error('Пользователь не имеет доступа к указанному классу');
-        }
+        // if (!classIds.includes(parseInt(classId))) {
+        //     throw new Error('Пользователь не имеет доступа к указанному классу');
+        // }
 
         // Деактивируем все активные тесты в этих классах
         await TakenSurvey.update(
@@ -242,7 +242,7 @@ class ConductingService {
                 active: true,
                 title: activeSurvey.survey.title,
                 class_name: activeSurvey.class.title,
-                class_id: activeSurvey.class_id, 
+                class_id: activeSurvey.class_id,
                 taken_survey_id: activeSurvey.id,
                 taken_question_id: takenQuestion.id,
                 question_id: newQuestion.id,
@@ -334,11 +334,13 @@ class ConductingService {
                 {
                     model: TakenQuestion,
                     attributes: ['id'],
-                    include: [{
-                        model: TakenSurvey,
-                        where: { survey_id: surveyId },
-                        attributes: []
-                    }],
+                    include: [
+                        {
+                            model: TakenSurvey,
+                            where: { survey_id: surveyId },
+                            attributes: []
+                        }
+                    ],
                     required: true
                 }
             ],
