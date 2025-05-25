@@ -42,7 +42,7 @@ function logout() {
     router.push({ name: 'Home' });
 }
 // Добавляем новые переменные
-const activeSurvey = ref(null);
+const activeSurvey = ref(false);
 async function openDemoWindow() {
     try {
         const token = localStorage.getItem('authToken');

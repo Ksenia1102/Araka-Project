@@ -37,91 +37,187 @@
 // });
 // index.js
 require('dotenv').config();
-const { connectDB } = require('./config/database');
-const app = require('./app');
-const http = require('http');
+// const { connectDB } = require('./config/database');
+// const app = require('./app');
+// const http = require('http');
 const WebSocket = require('ws');
 const jwt = require('jsonwebtoken');
 
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
-
 const clients = new Set();
 
-function heartbeat() {
-    this.isAlive = true;
+function setupWebSocket(server) {
+    const wss = new WebSocket.Server({ server });
+
+    wss.on('connection', (ws) => {
+        console.log('🟢 Новый WebSocket клиент подключён');
+        clients.add(ws);
+        ws.isAlive = true;
+        ws.on('pong', () => (ws.isAlive = true));
+
+        ws.on('message', async (data) => {
+            try {
+                const message = JSON.parse(data);
+
+                if (message.type === 'auth') {
+                    const decoded = jwt.verify(message.token, process.env.JWT_SECRET_KEY);
+                    ws.userId = decoded.id;
+                    console.log('[WS] Пользователь авторизован по WS:', ws.userId);
+                    clients.add(ws);
+                }
+                if (message.type === 'get_current_state') {
+                    if (!ws.userId) return;
+
+                    const { TakenSurvey, Survey, Class, User } = require('./models'); // Убедись, что путь к моделям правильный
+
+                    const active = await TakenSurvey.findOne({
+                        where: {
+                            is_active: true,
+                            '$class.user_id$': ws.userId // Проверяем принадлежность пользователю
+                        },
+                        include: [
+                            {
+                                model: Survey,
+                                as: 'survey',
+                                attributes: ['title'] // Выбираем только нужные поля
+                            },
+                            {
+                                model: Class,
+                                as: 'class',
+                                include: [
+                                    {
+                                        model: User,
+                                        where: { id: ws.userId }, // Фильтр по владельцу
+                                        attributes: [] // Не возвращаем данные пользователя
+                                    }
+                                ],
+                                attributes: ['title']
+                            }
+                        ]
+                    });
+
+                    console.log(`Active survey for user ${ws.userId}:`, active);
+
+                    if (active) {
+                        ws.send(
+                            JSON.stringify({
+                                type: 'session_started',
+                                frontendData: {
+                                    active: true,
+                                    title: active.survey?.title,
+                                    class_name: active.class?.title,
+                                    taken_survey_id: active.id
+                                },
+                                userId: ws.userId // Добавляем ID пользователя в ответ
+                            })
+                        );
+                    } else {
+                        // Явно сообщаем, что активных тестов нет
+                        ws.send(
+                            JSON.stringify({
+                                type: 'session_stopped',
+                                userId: ws.userId
+                            })
+                        );
+                    }
+                }
+
+                // TODO: обработка других типов сообщений
+            } catch (e) {
+                console.error('[WS] Ошибка обработки сообщения:', e.message);
+            }
+        });
+
+        ws.on('close', () => clients.delete(ws));
+    });
+
+    const pingInterval = setInterval(() => {
+        clients.forEach((ws) => {
+            if (!ws.isAlive) return ws.terminate();
+            ws.isAlive = false;
+            ws.ping();
+        });
+    }, 30000);
+
+    wss.on('close', () => clearInterval(pingInterval));
 }
 
-wss.on('connection', (ws) => {
-    console.log('🟢 Новый WebSocket клиент подключён');
-    clients.add(ws);
-    ws.isAlive = true;
-    ws.on('pong', heartbeat);
+// const server = http.createServer(app);
+// const wss = new WebSocket.Server({ server });
 
-    ws.on('message', async (data) => {
-        try {
-            const message = JSON.parse(data);
+// function heartbeat() {
+//     this.isAlive = true;
+// }
 
-            if (message.type === 'auth') {
-                const decoded = jwt.verify(message.token, process.env.JWT_SECRET_KEY);
-                ws.userId = decoded.id;
-                console.log('[WS] Пользователь авторизован по WS:', ws.userId);
-                clients.add(ws);
-            }
-            if (message.type === 'get_current_state') {
-                if (!ws.userId) return;
+// wss.on('connection', (ws) => {
+//     console.log('🟢 Новый WebSocket клиент подключён');
+//     clients.add(ws);
+//     ws.isAlive = true;
+//     ws.on('pong', heartbeat);
 
-                const { TakenSurvey, Survey, Class } = require('./models'); // Убедись, что путь к моделям правильный
+//     ws.on('message', async (data) => {
+//         try {
+//             const message = JSON.parse(data);
 
-                const active = await TakenSurvey.findOne({
-                    where: { is_active: true },
-                    include: [
-                        { model: Survey, as: 'survey' },
-                        { model: Class, as: 'class' }
-                    ]
-                });
+//             if (message.type === 'auth') {
+//                 const decoded = jwt.verify(message.token, process.env.JWT_SECRET_KEY);
+//                 ws.userId = decoded.id;
+//                 console.log('[WS] Пользователь авторизован по WS:', ws.userId);
+//                 clients.add(ws);
+//             }
+//             if (message.type === 'get_current_state') {
+//                 if (!ws.userId) return;
 
-                if (active) {
-                    ws.send(
-                        JSON.stringify({
-                            type: 'session_started',
-                            frontendData: {
-                                active: true,
-                                title: active.survey?.title,
-                                class_name: active.class?.title,
-                                taken_survey_id: active.id
-                                // Добавь сюда любые другие поля по желанию
-                            }
-                        })
-                    );
-                }
-            }
+//                 const { TakenSurvey, Survey, Class } = require('./models'); // Убедись, что путь к моделям правильный
 
-            // TODO: обработка других типов сообщений
-        } catch (e) {
-            console.error('[WS] Ошибка обработки сообщения:', e.message);
-        }
-    });
+//                 const active = await TakenSurvey.findOne({
+//                     where: { is_active: true },
+//                     include: [
+//                         { model: Survey, as: 'survey' },
+//                         { model: Class, as: 'class' }
+//                     ]
+//                 });
 
-    ws.on('close', (code, reason) => {
-        console.log(`🔴 Клиент отключился (userId=${ws.userId}) Код: ${code}, Причина: ${reason.toString()}`);
-        clients.delete(ws);
-    });
-});
+//                 if (active) {
+//                     ws.send(
+//                         JSON.stringify({
+//                             type: 'session_started',
+//                             frontendData: {
+//                                 active: true,
+//                                 title: active.survey?.title,
+//                                 class_name: active.class?.title,
+//                                 taken_survey_id: active.id
+//                                 // Добавь сюда любые другие поля по желанию
+//                             }
+//                         })
+//                     );
+//                 }
+//             }
 
-const pingInterval = setInterval(() => {
-    for (const ws of clients) {
-        if (!ws.isAlive) {
-            console.log(`Закрываем неактивное соединение userId=${ws.userId}`);
-            clients.delete(ws);
-            return ws.terminate();
-        }
-        ws.isAlive = false;
-        ws.ping();
-    }
-}, 30000);
+//             // TODO: обработка других типов сообщений
+//         } catch (e) {
+//             console.error('[WS] Ошибка обработки сообщения:', e.message);
+//         }
+//     });
 
-wss.on('close', () => clearInterval(pingInterval));
+//     ws.on('close', (code, reason) => {
+//         console.log(`🔴 Клиент отключился (userId=${ws.userId}) Код: ${code}, Причина: ${reason.toString()}`);
+//         clients.delete(ws);
+//     });
+// });
+
+// const pingInterval = setInterval(() => {
+//     for (const ws of clients) {
+//         if (!ws.isAlive) {
+//             console.log(`Закрываем неактивное соединение userId=${ws.userId}`);
+//             clients.delete(ws);
+//             return ws.terminate();
+//         }
+//         ws.isAlive = false;
+//         ws.ping();
+//     }
+// }, 30000);
+
+// wss.on('close', () => clearInterval(pingInterval));
 
 function sendToUser(userId, message) {
     const jsonData = JSON.stringify(message);
@@ -139,12 +235,14 @@ function sendToUser(userId, message) {
     }
 }
 
-app.set('sendToUser', sendToUser);
+module.exports = { setupWebSocket, sendToUser };
 
-const PORT = process.env.APP_PORT || 3000;
-const HOST = '0.0.0.0';
+// app.set('sendToUser', sendToUser);
 
-server.listen(PORT, HOST, async () => {
-    console.log(`🚀 Сервер запущен на http://${HOST}:${PORT}`);
-    await connectDB();
-});
+// const PORT = process.env.APP_PORT || 3000;
+// const HOST = process.env.APP_HOST || '0.0.0.0';
+
+// server.listen(PORT, HOST, async () => {
+//     console.log(`🚀 Сервер запущен на http://${HOST}:${PORT}`);
+//     await connectDB();
+// });
