@@ -262,8 +262,8 @@ function openNewTab() {
                 <template #start>
                     <Button label="Запустить" severity="info" icon="pi pi-caret-right" text @click="openSurvey" />
                     <Button label="Редактировать" @click="openNewTab" icon="pi pi-file-edit" severity="secondary" text />
-                    <Button label="Копировать опрос" icon="pi pi-clone" severity="secondary" text @click="copySurvey" />
-                    <Dialog header="Выберите класс, в котором будет запущен опрос" v-model:visible="displaySur" :style="{ width: '350px' }" :modal="true">
+                    <Button label="Копировать тест" icon="pi pi-clone" severity="secondary" text @click="copySurvey" />
+                    <Dialog header="Выберите класс, в котором будет запущен тест" v-model:visible="displaySur" :style="{ width: '500px' }" :modal="true">
                         <div v-if="selectedClass">
                             <p>Выбранный класс: {{ selectedClassName }}</p>
                         </div>
@@ -277,7 +277,7 @@ function openNewTab() {
                             </div>
                         </div>
                         <template #footer>
-                            <Button label="Начать опрос" @click="startSur(selectedClass)" text severity="info" :disabled="!selectedClass" />
+                            <Button label="Начать тест" @click="startSur(selectedClass)" text severity="info" :disabled="!selectedClass" />
                         </template>
                     </Dialog>
                 </template>
@@ -287,7 +287,7 @@ function openNewTab() {
                     <Dialog header="Предупреждение" v-model:visible="displayConfirmation" :style="{ width: '350px' }" :modal="true">
                         <div class="flex items-center justify-center">
                             <i class="pi pi-exclamation-triangle mr-4" style="font-size: 2rem" />
-                            <span>Вы действительно хотите удалить опрос?</span>
+                            <span>Вы действительно хотите удалить тест?</span>
                         </div>
                         <template #footer>
                             <Button label="Нет" icon="pi pi-times" @click="closeConfirmation" text severity="secondary" />
@@ -329,9 +329,9 @@ function openNewTab() {
                                                     </div>
                                                 </div>
                                             </div> -->
-                                            <div v-if="item.file_url" class="flex items-center mt-2">
+                                            <div style="width: 100%" v-if="item.file_url" class="flex items-center mt-2">
                                                 <template v-if="getMediaType(item.file_url) === 'image'">
-                                                    <img :src="item.file_url" alt="Изображение вопроса" style="max-width: 150px; max-height: 150px; border-radius: 8px" />
+                                                    <img :src="item.file_url" alt="Изображение вопроса" style="width: 100px; height: auto; border-radius: 8px" />
                                                 </template>
 
                                                 <template v-else-if="getMediaType(item.file_url) === 'audio'">
@@ -387,13 +387,4 @@ function openNewTab() {
     </div>
 </template>
 
-<style scoped>
-.selected {
-    font-weight: bold;
-    color: #0ea5e9;
-}
-.demo-image {
-    display: flex;
-    align-items: center;
-}
-</style>
+<style scoped></style>

@@ -97,7 +97,7 @@ async function checkActiveSurvey() {
             }
         });
 
-        console.log('Активный опрос:', response.data);
+        console.log('Активный тест:', response.data);
         activeSurvey.value = response.data?.active || false;
         return activeSurvey.value;
     } catch (error) {

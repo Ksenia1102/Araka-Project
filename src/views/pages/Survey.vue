@@ -152,7 +152,7 @@ function handleSaveSurvey(data) {
 
 async function submitSurvey() {
     if (!surveyTitle.value.trim()) {
-        responseMessage.value = 'Название опроса не может быть пустым.';
+        responseMessage.value = 'Название теста не может быть пустым.';
         responseClass.value = 'error';
         return;
     }
@@ -210,12 +210,12 @@ async function submitSurvey() {
             headers: { Authorization: `Bearer ${token}` }
         });
 
-        responseMessage.value = 'Опрос успешно сохранён.';
+        responseMessage.value = 'Тест успешно сохранён.';
         responseClass.value = 'success';
         router.push({ name: 'dashboard' });
     } catch (error) {
-        console.error('Ошибка при сохранении опроса:', error.response?.data || error.message);
-        responseMessage.value = 'Ошибка при сохранении опроса.';
+        console.error('Ошибка при сохранении теста:', error.response?.data || error.message);
+        responseMessage.value = 'Ошибка при сохранении теста.';
         responseClass.value = 'error';
     }
 }
@@ -294,108 +294,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.question-display {
-    padding: 20px;
-    background-color: #ffffff;
-    border-radius: 8px;
-}
-
-.option {
-    display: flex;
-    align-items: center;
-    padding: 10px;
-    cursor: pointer;
-    margin: 10px;
-}
-
-.option-label {
-    margin-right: 10px;
-    font-weight: bold;
-}
-
-.option-input {
-    border: none;
-    outline: none;
-    background-color: #f9f9f9;
-    width: 100%;
-    padding: 5px;
-}
-
-.option.selected {
-    border: 1px solid var(--p-primary-color); /* Зеленая рамка для правильного варианта */
-    border-radius: 8px;
-}
-
-.question-input {
-    width: 100%;
-    padding: 8px;
-    font-size: 18px;
-    margin-bottom: 15px;
-    background-color: #f9f9f9;
-}
-
-.question-number {
-    padding: 8px 16px;
-    font-size: 20px;
-    margin-bottom: 15px;
-    margin-right: 15px;
-    font-weight: bold;
-    color: white; /* Используйте переменные темы, если нужно */
-    background-color: #0ea5e9;
-    border-radius: 3px;
-}
-.question-input:focus {
-    border-color: none !important; /* Цвет рамки при фокусе */
-    outline: none !important;
-}
-.image-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    min-height: 30vh;
-}
-
-/* Стили для кнопки загрузки */
-/* .btn-add-image {
-    width: 100%;
-    height: 30vh;
-    border: dashed 2px #0ea5e9;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.btn-add-image :deep(.pi) {
-    font-size: 2.5rem;
-} */
-
-/* Контейнер изображения */
-.image-preview {
-    position: relative;
-    width: 60%;
-    max-width: 600px;
-    /* height: 40vh;
-    overflow: hidden; */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.image-preview img,
-.image-preview video {
-    width: 100%;
-    height: 40vh;
-    object-fit: contain; /* Сохранение пропорций, вписывание в контейнер */
-    border-radius: 4px;
-    border: 0.5px solid #e9e9e9;
-}
-/* Для аудио */
-.image-preview audio {
-    width: 100%;
-    height: 10vh;
-    border: none;
-}
-
 .btn-add-image {
     width: 100%;
     height: 30vh;

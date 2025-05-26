@@ -38,16 +38,16 @@ function goToSection(link) {
         </div>
         <div>
             <div class="flex items-center justify-between" style="border-bottom: 1px solid var(--surface-border)">
-                <div class="font-semibold text-xl">Пройденные классом опросы</div>
+                <div class="font-semibold text-xl">Пройденные классом тесты</div>
             </div>
             <!-- если не было опросов -->
-            <div class="font-semibold text-xl" style="margin: 20px; text-align: center" v-if="Object.keys(groupedSurveys).length === 0">Опросы пока не проводились</div>
+            <div class="font-semibold text-xl" style="margin: 20px; text-align: center" v-if="Object.keys(groupedSurveys).length === 0">Тесты пока не проводились</div>
             <!-- Список опросов по месяцам -->
             <div v-else>
                 <div v-for="(surveyList, month) in groupedSurveys" :key="month" class="month-section">
                     <h3 class="month-header">{{ month }}</h3>
-                    <div class="sections-list">
-                        <div v-for="survey in surveyList" :key="survey.id" class="section-item" @click="goToSection(survey.link)">
+                    <div class="sec-list">
+                        <div v-for="survey in surveyList" :key="survey.id" class="sec-item" @click="goToSection(survey.link)">
                             <div class="survey-details">
                                 <div class="survey-name">{{ survey.name }}</div>
                                 <div class="survey-completion">Пройден на: {{ survey.completion }}%</div>
@@ -60,48 +60,4 @@ function goToSection(link) {
         </div>
     </div>
 </template>
-<style scoped>
-.month-header {
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin: 1rem 0;
-    border-bottom: 1px solid var(--surface-border);
-    padding-bottom: 0.5rem;
-}
-.sections-list {
-    display: grid;
-    gap: 1rem;
-    padding: 1rem;
-}
-.section-item {
-    padding: 1rem;
-    margin: 1em 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    text-align: left;
-    cursor: pointer;
-    background-color: #f9f9f9;
-    border: 1px solid var(--surface-border);
-    border-radius: 8px;
-    transition:
-        background-color 0.3s ease,
-        box-shadow 0.3s ease;
-}
-.section-item:hover {
-    background-color: #e6f7ff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-.survey-details {
-    display: flex;
-    flex-direction: column;
-}
-.survey-name {
-    font-size: 1.2rem;
-    font-weight: bold;
-}
-.survey-completion {
-    font-size: 0.9rem;
-    color: var(--text-color-secondary);
-}
-</style>
+<style scoped></style>
