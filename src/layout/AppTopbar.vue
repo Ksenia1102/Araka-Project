@@ -13,6 +13,9 @@ const demoWindowOpen = ref(false);
 function goToUser() {
     router.push({ name: 'user' });
 }
+function goToApp() {
+    router.push({ name: 'app' });
+}
 
 async function downloadFile() {
     try {
@@ -191,7 +194,7 @@ const { onMenuToggle } = useLayout();
                         <i class="pi pi-download"></i>
                         <span>download</span>
                     </button>
-                    <button v-tooltip.bottom="'Скачать приложение'" type="button" class="layout-topbar-action">
+                    <button v-tooltip.bottom="'Скачать приложение'" type="button" class="layout-topbar-action" :to="{ name: 'app' }" as="router-link" @click="goToApp">
                         <i class="pi pi-android"></i>
                         <span>question</span>
                     </button>

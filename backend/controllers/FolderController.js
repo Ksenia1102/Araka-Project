@@ -31,8 +31,8 @@ class FolderController {
     // Создать новую папку
     static async createFolder(req, res) {
         try {
-            const { name } = req.body;
-            const folder = await FolderService.createFolder(name, req.user.id);
+            const { name, survey_ids } = req.body;
+            const folder = await FolderService.createFolder(name, req.user.id, survey_ids);
             res.status(201).json(folder);
         } catch (error) {
             console.error(error);

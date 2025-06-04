@@ -2,6 +2,7 @@
 const { Survey, Question, Option } = require('../models');
 const { sequelize } = require('../config/database');
 const FileService = require('../services/FileService');
+const { Op } = require('sequelize');
 
 const getFileUrl = (folder, fileName) => {
     console.log('mnmnmnmnmn', folder, fileName);
@@ -237,22 +238,30 @@ class SurveyService {
                 console.log('questionId', questionId);
                 if (questionId) {
                     // UPDATE EXISTING QUESTION
+                    // UPDATE EXISTING QUESTION
+                    const existingQuestion = await Question.findOne({
+                        where: { id: questionId },
+                        transaction: t
+                    });
+
+                    if (!existingQuestion) throw new Error(`Question ${questionId} not found`);
+
                     const [affected] = await Question.update(
                         {
                             text,
                             correct_option,
-                            file_url: uploadedFileUrl,
-                            file_folder: uploadedFileFolder,
-                            file_name: uploadedFileName,
-                            file_type: uploadedFileType
+                            file_url: uploadedFileUrl ?? existingQuestion.file_url,
+                            file_folder: uploadedFileFolder ?? existingQuestion.file_folder,
+                            file_name: uploadedFileName ?? existingQuestion.file_name,
+                            file_type: uploadedFileType ?? existingQuestion.file_type
                         },
                         {
                             where: { id: questionId },
                             transaction: t
                         }
                     );
-
-                    if (affected === 0) throw new Error(`Question ${questionId} not found`);
+                    console.log('affected:', affected);
+                    // if (affected === 0) throw new Error(`Question ${questionId} not found`);
 
                     incomingQuestionIds.push(questionId);
 
@@ -291,7 +300,7 @@ class SurveyService {
             const questionsToDelete = await Question.findAll({
                 where: {
                     survey_id: surveyId,
-                    id: { [Option.notIn]: incomingQuestionIds }
+                    id: { [Op.notIn]: incomingQuestionIds }
                 },
                 transaction: t
             });

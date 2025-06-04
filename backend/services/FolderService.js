@@ -32,12 +32,17 @@ class FolderService {
         });
     }
 
-    // Создать новую папку
-    static async createFolder(name, userId) {
-        return await Folder.create({
+    static async createFolder(name, userId, surveyIds = []) {
+        const folder = await Folder.create({
             name,
             user_id: userId
         });
+
+        if (Array.isArray(surveyIds) && surveyIds.length > 0) {
+            await Survey.update({ folder_id: folder.id }, { where: { id: surveyIds } });
+        }
+
+        return folder;
     }
 
     // Обновить папку

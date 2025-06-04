@@ -60,6 +60,11 @@ const router = createRouter({
                     component: () => import('@/views/uikit/User.vue')
                 },
                 {
+                    path: '/uikit/app',
+                    name: 'app',
+                    component: () => import('@/views/uikit/App1.vue')
+                },
+                {
                     path: '/pages/empty',
                     name: 'empty',
                     component: () => import('@/views/pages/Empty.vue')
