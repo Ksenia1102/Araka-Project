@@ -187,6 +187,19 @@ class ConductingController {
             this.handleError(res, error);
         }
     }
+    // результаты студентов (класс - тест) Не доработано!!!!!!!!!!!!!
+    async getSurveyResults(req, res) {
+        console.log('start');
+        const { surveyId } = req.params;
+
+        try {
+            const results = await ConductingService.getSurveyResults(surveyId);
+            res.json(results);
+        } catch (error) {
+            console.error('Ошибка в контроллере getSurveyResults:', error);
+            res.status(500).json({ message: 'Ошибка при получении ответов студентов' });
+        }
+    }
     async stopSession(req, res) {
         try {
             const { survey_id, class_id } = req.body;

@@ -1,4 +1,6 @@
+
 <script setup>
+// Недоделанная страничка
 import { computed, ref } from 'vue';
 import { useRoute } from 'vue-router';
 

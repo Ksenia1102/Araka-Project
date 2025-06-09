@@ -168,7 +168,7 @@ class ConductingService {
             throw new Error('Question does not belong to this survey session');
         }
 
-        // Сохраняем ответы
+        // Сохраняем ответы ПРАВИЛЬНО
         const answerRecords = await Promise.all(
             answers.map(async (answer) => {
                 // Проверяем существование студента
@@ -177,11 +177,27 @@ class ConductingService {
                     throw new Error(`Student with id ${answer.student_id} not found`);
                 }
 
-                return TakenQuestionAnswer.create({
-                    taken_question_id: takenQuestionId,
-                    student_id: answer.student_id,
-                    answer: answer.answer
+                // Проверка на наличие уже сохранённого ответа
+                const existingAnswer = await TakenQuestionAnswer.findOne({
+                    where: {
+                        taken_question_id: takenQuestionId,
+                        student_id: answer.student_id
+                    }
                 });
+
+                if (existingAnswer) {
+                    // Обновляем существующий ответ
+                    return await existingAnswer.update({
+                        answer: answer.answer
+                    });
+                } else {
+                    // Создаём новый, если не найден
+                    return await TakenQuestionAnswer.create({
+                        taken_question_id: takenQuestionId,
+                        student_id: answer.student_id,
+                        answer: answer.answer
+                    });
+                }
             })
         );
 
@@ -207,11 +223,20 @@ class ConductingService {
                 },
                 order: [['text', 'ASC']]
             });
-            // Создаем запись о новом взятом вопросе
-            const newTakenQuestion = await TakenQuestion.create({
-                taken_survey_id: takenSurveyId,
-                question_id: nextQuestion.id
+            // Создаем запись о новом взятом вопросе Правильно!!)
+            let newTakenQuestion = await TakenQuestion.findOne({
+                where: {
+                    taken_survey_id: takenSurveyId,
+                    question_id: nextQuestion.id
+                }
             });
+
+            if (!newTakenQuestion) {
+                newTakenQuestion = await TakenQuestion.create({
+                    taken_survey_id: takenSurveyId,
+                    question_id: nextQuestion.id
+                });
+            }
 
             const lastTakenQuestion = await TakenQuestion.findOne({
                 where: { taken_survey_id: takenSurveyId },
@@ -242,7 +267,7 @@ class ConductingService {
                 active: true,
                 title: activeSurvey.survey.title,
                 class_name: activeSurvey.class.title,
-                class_id: activeSurvey.class_id, 
+                class_id: activeSurvey.class_id,
                 taken_survey_id: activeSurvey.id,
                 taken_question_id: takenQuestion.id,
                 question_id: newQuestion.id,
@@ -287,6 +312,35 @@ class ConductingService {
             taken_survey_id: takenSurveyId
         };
     }
+    // НЕ Доработано!!!(((:(
+    async getSurveyResults(surveyId) {
+        console.log('werwerwerw');
+        const result = TakenQuestionAnswer.findAll({
+            include: [
+                {
+                    model: TakenQuestion,
+                    as: 'takenQuestion',
+                    attributes: [],
+                    include: [
+                        {
+                            model: TakenSurvey,
+                            as: 'takenSurvey',
+                            where: { survey_id: surveyId },
+                            attributes: []
+                        }
+                    ]
+                },
+                {
+                    model: Student,
+                    as: 'student',
+                    attributes: ['id', 'name']
+                }
+            ]
+        });
+        console.log('werwerwerw', (await result).length);
+        return result;
+    }
+
     async activateSurvey(takenSurveyId) {
         // Деактивируем все остальные активные тесты
         console.log('Деактивируем все остальные активные тесты');
