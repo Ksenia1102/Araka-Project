@@ -165,6 +165,37 @@ async function addStudentsToTable() {
     }
 }
 
+// Получение последних опросов с сервера
+async function fetchRecentSurveys() {
+    const classId = route.params.classId;
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await axios.get(`${apiUrl}/api/classes/${classId}/recent-surveys`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        
+        // Преобразуем данные в нужный формат
+        surveys.value = response.data.map(survey => ({
+            id: survey.survey_id,
+            name: `Опрос №${survey.survey_id}`,
+            link: `/uikit/chart-sur/${survey.survey_id}`,
+            completion: 0, // Можно добавить реальный процент завершения, если есть такие данные
+            month: new Date(survey.date).toLocaleString('ru-RU', { month: 'long' }),
+            isRecent: true
+        }));
+    } catch (error) {
+        console.error('Ошибка загрузки последних опросов:', error);
+        toast.add({
+            severity: 'error',
+            summary: 'Ошибка',
+            detail: 'Не удалось загрузить последние опросы',
+            life: 3000
+        });
+    }
+}
+
 async function quickAddStudent() {
     const classId = route.params.classId;
     const quickInput = quickAddInput.value.trim();
@@ -292,12 +323,14 @@ async function fetchStudents() {
 
 onMounted(() => {
     fetchStudents();
+    fetchRecentSurveys();
 });
 
 // Обработка изменения класса
 function handleClassChange() {
     updateClassName(); // Обновляем имя класса
     fetchStudents(); // Загружаем список студентов с сервера
+    fetchRecentSurveys();
 }
 
 // Удаление ученика

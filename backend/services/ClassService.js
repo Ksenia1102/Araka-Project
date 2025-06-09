@@ -1,4 +1,4 @@
-const { Class, Student } = require('../models');
+const { Class, Student, TakenSurvey} = require('../models');
 
 class ClassService {
     static async createClass(user_id, title) {
@@ -37,6 +37,15 @@ class ClassService {
             attributes: ['title']
         });
         return cls ? cls.title : null;
+    }
+
+    static async getRecentSurveys(classId, limit = 5) {
+        return await TakenSurvey.findAll({
+            where: { class_id: classId },
+            order: [['date', 'DESC']],
+            limit: limit,
+            raw: true
+        });
     }
 }
 

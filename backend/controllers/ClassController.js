@@ -31,6 +31,14 @@ class ClassController {
             res.status(500).json({ error: error.message });
         }
     }
+    static async getRecentSurveys(req, res) {
+        try {
+            const surveys = await ClassService.getRecentSurveys(req.params.classId);
+            res.json(surveys);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
 }
 
 module.exports = ClassController;
