@@ -1,8 +1,9 @@
 <script setup>
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
-import { ref } from 'vue';
+import { inject, ref } from 'vue';
 import { useRouter } from 'vue-router';
+const loading = inject('loading');
 const toast = useToast();
 const router = useRouter();
 const apiUrl = import.meta.env.VITE_API_URL;
@@ -57,6 +58,7 @@ async function loginUser() {
 
     try {
         isLoading.value = true;
+        loading.show('Вход в систему...'); // Показываем индикатор
         const response = await axios.post(`${apiUrl}/auth/login`, {
             loginOrEmail: loginOrEmail.value,
             password: password.value
@@ -121,6 +123,7 @@ async function loginUser() {
         }
     } finally {
         isLoading.value = false;
+        loading.hide(); // Скрываем индикатор
     }
 }
 
@@ -137,6 +140,7 @@ async function requestPasswordReset() {
 
     // Перенаправляем на страницу с опросом
     try {
+        loading.show('Отправка кода подтверждения...');
         await axios.post(`${apiUrl}/auth/login/request-password-reset`, {
             email: emailForReset.value
         });
@@ -151,6 +155,7 @@ async function requestPasswordReset() {
         toast.add({ severity: 'error', summary: 'Ошибка!', detail: 'Ошибка при отправке кода.', life: 8000 });
     } finally {
         isSendingCode.value = false; // Завершаем отправку кода
+        loading.hide();
     }
 }
 // Функция для проверки кода подтверждения
@@ -163,6 +168,7 @@ async function verifyResetCode() {
     }
 
     try {
+        loading.show('Проверка кода...');
         await axios.post(`${apiUrl}/auth/login/verify-reset-code`, {
             email: emailForReset.value,
             code: resetCode.value
@@ -171,6 +177,8 @@ async function verifyResetCode() {
     } catch (error) {
         console.error('Error verifying reset code:', error);
         toast.add({ severity: 'info', summary: 'Ой!', detail: 'Неверный код подтверждения. Пожалуйста, попробуйте снова', life: 8000 });
+    } finally {
+        loading.hide();
     }
 }
 
@@ -202,31 +210,31 @@ async function updatePassword() {
             code: resetCode.value,
             newPassword: newPassword.value
         });
-        
-        toast.add({ 
-            severity: 'success', 
-            summary: 'Успех!', 
-            detail: response.data.message || 'Пароль успешно обновлен.', 
-            life: 8000 
+
+        toast.add({
+            severity: 'success',
+            summary: 'Успех!',
+            detail: response.data.message || 'Пароль успешно обновлен.',
+            life: 8000
         });
 
         // Автоматически нажимаем кнопку "Назад"
         goBack();
     } catch (error) {
         console.error('Error updating password:', error);
-        
+
         let errorMessage = 'Ошибка при попытке изменения пароля.';
         if (error.response?.data?.error) {
             errorMessage = error.response.data.error;
         } else if (error.message) {
             errorMessage = error.message;
         }
-        
-        toast.add({ 
-            severity: 'error', 
-            summary: 'Ошибка!', 
-            detail: errorMessage, 
-            life: 8000 
+
+        toast.add({
+            severity: 'error',
+            summary: 'Ошибка!',
+            detail: errorMessage,
+            life: 8000
         });
     }
 }
@@ -252,7 +260,7 @@ function goBack() {
                     <div v-if="!isPasswordReset">
                         <label for="loginOrEmail" class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2">Логин или почта</label>
                         <p v-if="errors.loginOrEmail" class="text-red-500 text-sm">{{ errors.loginOrEmail }}</p>
-                        <InputText id="loginOrEmail" type="text" placeholder="Логин или почта" class="w-full md:w-[30rem] mb-8" v-model="loginOrEmail" />
+                        <InputText id="loginOrEmail" type="text" placeholder="Логин или почта" class="w-full mb-8" v-model="loginOrEmail" />
 
                         <label for="password1" class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2">Пароль</label>
                         <p v-if="errors.password" class="text-red-500 text-sm">{{ errors.password }}</p>

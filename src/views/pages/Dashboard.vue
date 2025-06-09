@@ -7,6 +7,7 @@ import { useRouter } from 'vue-router';
 const apiUrl = import.meta.env.VITE_API_URL;
 const toast = useToast();
 const router = useRouter();
+const hasSurveys = ref(false);
 
 // const surveyTree = ref([
 //     {
@@ -67,11 +68,11 @@ async function loadUnfolderedSurveys() {
             }
         }));
     } catch (error) {
-        console.error('Ошибка загрузки опросов без папок:', error);
+        console.error('Ошибка загрузки тестов без папок:', error);
         toast.add({
             severity: 'error',
             summary: 'Ошибка',
-            detail: 'Не удалось загрузить опросы без папок',
+            detail: 'Не удалось загрузить тесты без папок',
             life: 3000
         });
         return [];
@@ -97,6 +98,9 @@ async function loadSurveyTree() {
 
         // Объединяем: папки + опросы без папок (после папок)
         surveyTree.value = [...folders, ...unfolderedSurveys];
+
+        // Проверяем, есть ли хотя бы одна папка или один опрос
+        hasSurveys.value = surveyTree.value.length > 0;
 
         // Сортировка: папки сверху, опросы снизу (на всякий случай)
         sortSurveyTree(surveyTree.value);
@@ -273,11 +277,11 @@ async function moveNodeIntoFolder(dragged, targetFolder) {
 
         await loadSurveyTree();
     } catch (error) {
-        console.error('Ошибка перемещения опроса:', error);
+        console.error('Ошибка перемещения теста:', error);
         toast.add({
             severity: 'error',
             summary: 'Ошибка',
-            detail: 'Не удалось переместить опрос',
+            detail: 'Не удалось переместить тест',
             life: 3000
         });
     }
@@ -325,7 +329,7 @@ async function moveNodeToRoot(node) {
         toast.add({
             severity: 'success',
             summary: 'Успех',
-            detail: 'Опрос перемещён в корень',
+            detail: 'Тест перемещён в корень',
             life: 3000
         });
     } catch (error) {
@@ -333,7 +337,7 @@ async function moveNodeToRoot(node) {
         toast.add({
             severity: 'error',
             summary: 'Ошибка',
-            detail: 'Не удалось переместить опрос',
+            detail: 'Не удалось переместить тест',
             life: 3000
         });
     }
@@ -391,7 +395,7 @@ async function renameFolder() {
 
 // Удаление папки
 async function deleteFolder() {
-    const confirmed = confirm('Удалить папку и все вложенные опросы?');
+    const confirmed = confirm('Удалить папку и все вложенные тесты?');
     if (!confirmed) return;
 
     try {
@@ -432,104 +436,110 @@ function onDropOnFolderWrapper(event, targetFolderNode) {
 </script>
 
 <template>
-    <div class="card">
+    <div class="card start">
         <!-- если не было опросов -->
-        <div style="margin: 30px" hidden>
-            <h1 class="font-semibold text-4xl mb-6">Вы еще не создавали опросы</h1>
-            <p class="font-semibold text-xl mb-4">Проведите свой первый опрос и вы увидите их здесь!</p>
+        <div v-if="!hasSurveys" class="start">
+            <div style="margin: 30px">
+                <h1 class="font-semibold text-4xl mb-6">У вас еще нет тестов в библиотеке</h1>
+                <p class="font-semibold text-xl mb-4">Создайте свой первый тест</p>
+                <Button label="Создать тест" severity="info" icon="pi pi-plus" />
+            </div>
         </div>
 
-        <div class="flex" style="gap: 0.5rem; align-items: stretch">
-            <i class="pi pi-book" style="font-size: 2.3rem"></i>
-            <h2 class="font-semibold text-4xl mb-6">Библиотека</h2>
-        </div>
+        <!-- если опросы есть -->
+        <div v-else>
+            <div class="flex" style="gap: 0.5rem; align-items: stretch">
+                <i class="pi pi-book" style="font-size: 2.3rem"></i>
+                <h2 class="font-semibold text-4xl mb-6">Библиотека</h2>
+            </div>
 
-        <Dialog header="Создание новой папки" v-model:visible="display" :breakpoints="{ '960px': '75vw' }" :style="{ width: '30vw' }" :modal="true">
-            <div class="flex flex-col gap-4">
-                <div>
-                    <label class="block mb-2 font-semibold">Название папки</label>
-                    <InputText v-model="newFolderName" placeholder="Введите название папки" class="w-full" />
-                </div>
+            <Dialog header="Создание новой папки" v-model:visible="display" :breakpoints="{ '960px': '75vw' }" :style="{ width: '30vw' }" :modal="true">
+                <div class="flex flex-col gap-4">
+                    <div>
+                        <label class="block mb-2 font-semibold">Название папки</label>
+                        <InputText v-model="newFolderName" placeholder="Введите название папки" class="w-full" />
+                    </div>
 
-                <div>
-                    <label class="block mb-2 font-semibold">Добавить опросы</label>
-                    <div class="flex flex-col gap-2" style="max-height: 200px; overflow-y: auto">
-                        <div v-for="survey in freeSurveys" :key="survey.key" class="flex items-center gap-2">
-                            <Checkbox v-model="selectedSurveys" :inputId="survey.key" :value="survey.key" />
-                            <label :for="survey.key">{{ survey.data.name }}</label>
+                    <div>
+                        <label class="block mb-2 font-semibold">Добавить тест</label>
+                        <div class="flex flex-col gap-2" style="max-height: 200px; overflow-y: auto">
+                            <div v-for="survey in freeSurveys" :key="survey.key" class="flex items-center gap-2">
+                                <Checkbox v-model="selectedSurveys" :inputId="survey.key" :value="survey.key" />
+                                <label :for="survey.key">{{ survey.data.name }}</label>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <template #footer>
+                    <Button label="Отмена" severity="secondary" @click="closeCreateFolderDialog" />
+                    <Button label="Сохранить" severity="info" @click="saveNewFolder" />
+                </template>
+            </Dialog>
+
+            <div class="card flex flex-col gap-4 w-full" style="padding: initial">
+                <Toolbar>
+                    <template #start>
+                        <IconField>
+                            <InputIcon>
+                                <i class="pi pi-search" />
+                            </InputIcon>
+                            <InputText placeholder="Поиск по тестам" style="width: 100%" />
+                        </IconField>
+                    </template>
+
+                    <template #end>
+                        <Button type="button" icon="pi pi-plus" @click="openCreateFolderDialog" label="Создать папку" class="mr-2" severity="secondary" text />
+                        <!-- <Button v-tooltip="'Click to proceed'" :model="items" type="button" icon="pi pi-ellipsis-v" severity="secondary" text /> -->
+                    </template>
+                </Toolbar>
             </div>
 
-            <template #footer>
-                <Button label="Отмена" severity="secondary" @click="closeCreateFolderDialog" />
-                <Button label="Сохранить" @click="saveNewFolder" />
-            </template>
-        </Dialog>
+            <!-- Папки и опросы -->
+            <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Папки и тесты</div>
 
-        <div class="card flex flex-col gap-4 w-full" style="padding: initial">
-            <Toolbar>
-                <template #start>
-                    <IconField>
-                        <InputIcon>
-                            <i class="pi pi-search" />
-                        </InputIcon>
-                        <InputText placeholder="Поиск по опросам" style="width: 100%" />
-                    </IconField>
-                </template>
+            <ContextMenu
+                ref="contextMenu"
+                :model="[
+                    { label: 'Переименовать', icon: 'pi pi-pencil', command: renameFolder },
+                    { label: 'Удалить', icon: 'pi pi-trash', command: deleteFolder }
+                ]"
+            />
 
-                <template #end>
-                    <Button type="button" icon="pi pi-plus" @click="openCreateFolderDialog" label="Создать папку" class="mr-2" severity="secondary" text />
-                    <!-- <Button v-tooltip="'Click to proceed'" :model="items" type="button" icon="pi pi-ellipsis-v" severity="secondary" text /> -->
-                </template>
-            </Toolbar>
-        </div>
+            <!-- Обёртка вокруг TreeTable для drop в "корень" -->
+            <div class="tree-container" @drop="handleRootDrop" @dragover.prevent @dragenter="handleDragEnter" @dragleave="handleDragLeave" :class="{ 'drag-over': isDragOverRoot }" style="min-height: 200px; padding-bottom: 30px">
+                <TreeTable :value="surveyTree" selectionMode="single" v-model:selectionKeys="selectedNode">
+                    <Column field="name" header="Имя" :expander="true">
+                        <template #body="slotProps">
+                            <div
+                                draggable="true"
+                                @dragstart="onDragStart(slotProps.node, $event)"
+                                @drop="onDropOnFolderWrapper($event, slotProps.node)"
+                                @dragover.prevent
+                                @dragenter.prevent
+                                @contextmenu.prevent="openContextMenu($event, slotProps.node)"
+                                @click.stop
+                                :class="{ 'folder-item': slotProps.node.data.type === 'folder' }"
+                            >
+                                <i :class="slotProps.node.data.type === 'folder' ? 'pi pi-folder' : 'pi pi-file'" />
+                                {{ slotProps.node.data.name }}
+                            </div>
+                        </template>
+                    </Column>
 
-        <!-- Папки и опросы -->
-        <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Папки и опросы</div>
+                    <Column field="modified" header="Последнее изменение">
+                        <template #body="slotProps">
+                            <span v-if="slotProps.node.data.modified">{{ formatDate(slotProps.node.data.modified) }}</span>
+                        </template>
+                    </Column>
 
-        <ContextMenu
-            ref="contextMenu"
-            :model="[
-                { label: 'Переименовать', icon: 'pi pi-pencil', command: renameFolder },
-                { label: 'Удалить', icon: 'pi pi-trash', command: deleteFolder }
-            ]"
-        />
-
-        <!-- Обёртка вокруг TreeTable для drop в "корень" -->
-        <div class="tree-container" @drop="handleRootDrop" @dragover.prevent @dragenter="handleDragEnter" @dragleave="handleDragLeave" :class="{ 'drag-over': isDragOverRoot }">
-            <TreeTable :value="surveyTree" selectionMode="single" v-model:selectionKeys="selectedNode">
-                <Column field="name" header="Имя" :expander="true">
-                    <template #body="slotProps">
-                        <div
-                            draggable="true"
-                            @dragstart="onDragStart(slotProps.node, $event)"
-                            @drop="onDropOnFolderWrapper($event, slotProps.node)"
-                            @dragover.prevent
-                            @dragenter.prevent
-                            @contextmenu.prevent="openContextMenu($event, slotProps.node)"
-                            @click.stop
-                            :class="{ 'folder-item': slotProps.node.data.type === 'folder' }"
-                        >
-                            <i :class="slotProps.node.data.type === 'folder' ? 'pi pi-folder' : 'pi pi-file'" />
-                            {{ slotProps.node.data.name }}
-                        </div>
-                    </template>
-                </Column>
-
-                <Column field="modified" header="Последнее изменение">
-                    <template #body="slotProps">
-                        <span v-if="slotProps.node.data.modified">{{ formatDate(slotProps.node.data.modified) }}</span>
-                    </template>
-                </Column>
-
-                <Column header="">
-                    <template #body="slotProps">
-                        <Button v-if="slotProps.node.data.type === 'survey'" @click="goToSurvey(slotProps.node.data)" icon="pi pi-chevron-right" class="back-btn" text severity="secondary" />
-                    </template>
-                </Column>
-            </TreeTable>
+                    <Column header="">
+                        <template #body="slotProps">
+                            <Button v-if="slotProps.node.data.type === 'survey'" @click="goToSurvey(slotProps.node.data)" icon="pi pi-chevron-right" class="back-btn" text severity="secondary" />
+                        </template>
+                    </Column>
+                </TreeTable>
+            </div>
         </div>
     </div>
 </template>

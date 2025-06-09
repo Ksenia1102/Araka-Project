@@ -60,11 +60,11 @@ export default {
 </template>
 
 <style scoped>
-.survey-layout {
+/* .survey-layout {
     display: flex;
     flex-direction: column;
     height: 80vh;
-}
+} */
 
 .content {
     display: flex;

@@ -1,7 +1,11 @@
 <script setup>
 import { useToast } from 'primevue/usetoast';
+import Select from 'primevue/select';
+import MultiSelect from 'primevue/multiselect';
+import OverlayPanel from 'primevue/overlaypanel';
 import { computed, ref } from 'vue';
 const toast = useToast();
+const filterPanel = ref();
 // Данные для графика
 const barData = ref(null);
 //const barOptions = ref(null);
@@ -71,6 +75,9 @@ const surveyResults = ref([
         ]
     }
 ]);
+const toggleFilter = (event) => {
+    filterPanel.value.toggle(event);
+};
 // Построение графика на основе выбранных фильтров
 function generateChart() {
     if (!dropdownValue.value) {
@@ -116,6 +123,8 @@ function generateChart() {
             }
         ]
     };
+    // Закрываем панель фильтров после применения
+    filterPanel.value.hide();
 }
 const barOptionsComputed = computed(() => {
     const documentStyle = getComputedStyle(document.documentElement);
@@ -127,6 +136,13 @@ const barOptionsComputed = computed(() => {
             legend: {
                 labels: {
                     color: textColor
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function (context) {
+                        return context.parsed.y + '%';
+                    }
                 }
             }
         },
@@ -143,8 +159,12 @@ const barOptionsComputed = computed(() => {
             y: {
                 ticks: {
                     color: textColorSecondary,
-                    beginAtZero: true // Начало оси Y с 0
+                    beginAtZero: true,
+                    callback: function (value) {
+                        return value + '%'; // Добавляем символ процента
+                    }
                 },
+                suggestedMax: 100, // Максимальное значение 100%
                 grid: {
                     color: surfaceBorder,
                     drawBorder: false
@@ -156,29 +176,43 @@ const barOptionsComputed = computed(() => {
 </script>
 
 <template>
-    <div class="flex flex-col md:flex-row">
-        <div className="card" style="min-width: 120vh; margin-right: 30px">
+    <div>
+        <div class="card">
             <!-- Заголовок -->
             <div class="flex" style="gap: 0.5rem; align-items: stretch">
                 <i class="pi pi-chart-line" style="font-size: 2.3rem"></i>
                 <h2 class="font-semibold text-4xl mb-6">Общая статистика</h2>
             </div>
+
+            <!-- Кнопка фильтра с выпадающей панелью -->
+            <div class="flex align-items-center gap-3 mb-4">
+                <Button icon="pi pi-filter" @click="toggleFilter" severity="secondary" outlined aria-haspopup="true" aria-controls="filter-panel" class="p-button-sm" />
+                <span class="font-semibold text-xl">Фильтрация</span>
+            </div>
+
+            <!-- Выпадающая панель фильтров -->
+            <OverlayPanel ref="filterPanel" id="filter-panel" :showCloseIcon="true" :dismissable="true" style="width: 450px">
+                <div class="flex flex-column items-end gap-3">
+                    <!-- Фильтр по тестам -->
+                    <div>
+                        <label class="font-semibold block mb-2">По тестам</label>
+                        <Select v-model="dropdownValue" :options="dropdownValues" optionLabel="name" placeholder="Выберите тест" class="w-full" />
+                    </div>
+
+                    <!-- Фильтр по классам -->
+                    <div>
+                        <label class="font-semibold block mb-2">По классам</label>
+                        <MultiSelect v-model="multiselectValue" :options="multiselectValues" optionLabel="name" placeholder="Выберите классы" :filter="true" class="w-full" />
+                    </div>
+
+                    <!-- Кнопка применения фильтров -->
+                    <Button label="Составить" @click="generateChart" severity="info" class="mt-2" />
+                </div>
+            </OverlayPanel>
+
+            <!-- График -->
             <div class="font-semibold text-xl mb-4">Статистика правильных ответов</div>
             <Chart type="bar" :data="barData" :options="barOptionsComputed"></Chart>
-        </div>
-        <div class="flex flex-col">
-            <!-- Фильтр тестов -->
-            <div class="card">
-                <div class="font-semibold text-xl">Фильтрация по тестам</div>
-                <Select v-model="dropdownValue" :options="dropdownValues" optionLabel="name" placeholder="Выберите тест"></Select>
-            </div>
-            <!-- Фильтр классов -->
-            <div class="card">
-                <div class="font-semibold text-xl">Фильтрация по классам</div>
-                <MultiSelect v-model="multiselectValue" :options="multiselectValues" optionLabel="name" placeholder="Выберите классы" :filter="true"></MultiSelect>
-            </div>
-            <!-- Кнопка генерации графика -->
-            <Button label="Составить график" @click="generateChart" class="mt-2" severity="info"></Button>
         </div>
     </div>
 </template>

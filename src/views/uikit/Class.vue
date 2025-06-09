@@ -27,11 +27,11 @@ const showStudentTable = ref(false);
 const quickAddInput = ref('');
 // Фейковые данные опросов
 const surveys = ref([
-    { id: 1, name: 'Опрос №1', link: '/uikit/chart-sur/1', completion: 85, month: 'Октябрь', isRecent: true },
-    { id: 2, name: 'Опрос №2', link: '/uikit/chart-sur/2', completion: 90, month: 'Октябрь', isRecent: true },
-    { id: 3, name: 'Опрос №3', link: '/uikit/chart-sur/3', completion: 70, month: 'Сентябрь', isRecent: false },
-    { id: 4, name: 'Опрос №4', link: '/uikit/chart-sur/4', completion: 50, month: 'Сентябрь', isRecent: false },
-    { id: 5, name: 'Опрос №5', link: '/uikit/chart-sur/5', completion: 95, month: 'Август', isRecent: false }
+    { id: 1, name: 'Тест №1', link: '/uikit/chart-sur/1', completion: 85, month: 'Октябрь', isRecent: true },
+    { id: 2, name: 'Тест №2', link: '/uikit/chart-sur/2', completion: 90, month: 'Октябрь', isRecent: true },
+    { id: 3, name: 'Тест №3', link: '/uikit/chart-sur/3', completion: 70, month: 'Сентябрь', isRecent: false },
+    { id: 4, name: 'Тест №4', link: '/uikit/chart-sur/4', completion: 50, month: 'Сентябрь', isRecent: false },
+    { id: 5, name: 'Тест №5', link: '/uikit/chart-sur/5', completion: 95, month: 'Август', isRecent: false }
 ]);
 
 // Фильтруем последние опросы
@@ -91,8 +91,6 @@ function addStudent() {
     studentInput.value = '';
     studentPreview.value = [];
 }
-
-
 
 function generatePreview() {
     const lines = studentInput.value.trim().split('\n');
@@ -369,18 +367,18 @@ async function deleteStudent(studentId) {
             students.value = students.value.filter((student) => student.id !== studentId);
             saveClassData(); // Сохраняем изменения
             toast.add({
-            severity: 'success',
-            summary: 'Успех!',
-            detail: 'Студент успешно удалён.',
-            life: 3000
-        });
+                severity: 'success',
+                summary: 'Успех!',
+                detail: 'Студент успешно удалён.',
+                life: 3000
+            });
         } else {
             toast.add({
-            severity: 'error',
-            summary: 'Ошибка',
-            detail: 'Не удалось удалить ученика. Сервер вернул ошибку.',
-            life: 3000
-        });
+                severity: 'error',
+                summary: 'Ошибка',
+                detail: 'Не удалось удалить ученика. Сервер вернул ошибку.',
+                life: 3000
+            });
         }
     } catch (error) {
         toast.add({
@@ -415,7 +413,7 @@ function proceedWithDeletion() {
 <template>
     <div class="card">
         <!-- блок с созданием учеников -->
-        <div v-if="!showStudentTable">
+        <div v-if="!showStudentTable" class="start">
             <div style="margin: 30px">
                 <h1 class="font-semibold text-4xl mb-6">
                     Вы почти закончили с классом <span style="color: #0ea5e9">{{ currentClassName }}</span>
@@ -465,17 +463,17 @@ function proceedWithDeletion() {
             <!-- последние проведенные тесты -->
             <div>
                 <div class="flex items-center justify-between" style="border-bottom: 1px solid var(--surface-border)">
-                    <div class="font-semibold text-xl">Последние проведенные опросы</div>
-                    <Button text severity="info" @click="goToSurveys(classId)">Смотреть все опросы</Button>
+                    <div class="font-semibold text-xl">Последние проведенные тесты</div>
+                    <Button text severity="info" @click="goToSurveys(classId)">Смотреть все тесты</Button>
                 </div>
                 <!-- если нет недавних опросов -->
-                <div v-if="recentSurveys.length === 0" class="font-semibold text-xl" style="margin: 20px; text-align: center">Недавние опросы отсутствуют</div>
+                <div v-if="recentSurveys.length === 0" class="font-semibold text-xl" style="margin: 20px; text-align: center">Недавние тесты отсутствуют</div>
                 <!-- Список последних опросов -->
                 <div v-else class="sections-list">
                     <div v-for="survey in recentSurveys" :key="survey.id" class="section-item" @click="goToSection(survey.id)">
                         <div class="survey-details">
                             <div class="survey-name">{{ survey.name }}</div>
-                            <div class="survey-completion">Завершено: {{ survey.completion }}%</div>
+                            <div class="survey-completion">Средняя оценка: {{ survey.completion }}%</div>
                         </div>
                         <i class="pi pi-fw pi-angle-right" />
                     </div>

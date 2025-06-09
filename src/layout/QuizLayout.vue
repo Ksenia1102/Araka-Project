@@ -127,7 +127,7 @@ const fetchSurveyData = async () => {
         currentQuestion.value = quizData.value.questions[0];
         console.log('Processed questions:', quizData.value.questions);
     } catch (error) {
-        console.error('Ошибка получения данных об опросе:', error);
+        console.error('Ошибка получения данных о тесте:', error);
     }
 };
 
@@ -249,16 +249,16 @@ onMounted(() => {
                 <div v-if="quizFinished" class="flex flex-col md:flex-row">
                     <div>
                         <div class="card" style="height: 80vh; width: 120vh; margin-right: 30px; text-align: center">
-                            <h2 class="font-bold mb-6 text-max" style="margin-bottom: 2em">Опрос закончен!</h2>
-                            <Button label="Сохранить ответы и перейти к результатам опроса" severity="info" class="p-button-success text-xl" @click="$emit('goBack')"></Button>
+                            <h2 class="font-bold mb-6 text-max" style="margin-bottom: 2em">Тест закончен!</h2>
+                            <Button label="Сохранить ответы и перейти к результатам теста" severity="info" class="p-button-success text-xl" @click="$emit('goBack')"></Button>
                         </div>
                     </div>
                     <!-- дублирование карточки??? как то это исправить-->
                 </div>
                 <div v-else>
-                    <div class="flex flex-col md:flex-row">
+                    <div>
                         <div>
-                            <div class="card" style="height: 80vh; width: 120vh; margin-right: 30px">
+                            <div class="card" style="min-height: 80vh">
                                 <div style="height: 100%; display: flex; flex-direction: column">
                                     <span class="font-semibold text-xl">Вопрос {{ currentQuestionIndex + 1 }} / {{ quizData.questions.length }}</span>
                                     <div class="centered-content">
@@ -296,13 +296,12 @@ onMounted(() => {
                                         <Button label="Назад" :disabled="currentQuestionIndex === 0" class="p-button-secondary" @click="prevQuestion" />
                                         <!-- Проверяем, если это последний вопрос, показываем кнопку "Завершить опрос", иначе "Вперед" -->
                                         <Button label="Вперед" v-if="currentQuestionIndex < quizData.questions.length - 1" :disabled="currentQuestionIndex === quizData.questions.length - 1" class="p-button-secondary" @click="nextQuestion" />
-                                        <Button label="Завершить опрос" severity="info" v-else class="p-button-success" @click="finishQuiz" />
+                                        <Button label="Завершить тест" severity="info" v-else class="p-button-success" @click="finishQuiz" />
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div>
-                        </div>
+                        <div></div>
                     </div>
                 </div>
             </div>
@@ -414,10 +413,6 @@ onMounted(() => {
     margin-top: 1rem;
     display: flex;
     justify-content: space-between;
-    width: 100%;
-}
-.card {
-    max-width: 120vh;
     width: 100%;
 }
 
