@@ -16,28 +16,28 @@ class ConductingService {
             attributes: ['id']
         });
 
-        // const userClassIds = (await Class.findAll({ where: { user_id: userId }, attributes: ['id'] })).map((c) => c.id);
+        const userClassIds = (await Class.findAll({ where: { user_id: userId }, attributes: ['id'] })).map((c) => c.id);
 
-        // const userSurveyIds = (await Survey.findAll({ where: { user_id: userId }, attributes: ['id'] })).map((s) => s.id);
+        const userSurveyIds = (await Survey.findAll({ where: { user_id: userId }, attributes: ['id'] })).map((s) => s.id);
 
-        // const hasAccessToClass = userClassIds.includes(parseInt(classId));
-        // const hasAccessToSurvey = userSurveyIds.includes(parseInt(surveyId));
+        const hasAccessToClass = userClassIds.includes(parseInt(classId));
+        const hasAccessToSurvey = userSurveyIds.includes(parseInt(surveyId));
 
-        // if (!hasAccessToClass && !hasAccessToSurvey) {
-        //     throw new Error('Пользователь не имеет доступа к указанному классу и опросу')
-        // }
-        // if (!hasAccessToClass) {
-        //     throw new Error('Пользователь не имеет доступа к указанному классу');
-        // }
-        // if (!hasAccessToSurvey) {
-        //     throw new Error('Пользователь не имеет доступа к указанному опросу');
-        // }
+        if (!hasAccessToClass && !hasAccessToSurvey) {
+            throw new Error('Пользователь не имеет доступа к указанному классу и опросу');
+        }
+        if (!hasAccessToClass) {
+            throw new Error('Пользователь не имеет доступа к указанному классу');
+        }
+        if (!hasAccessToSurvey) {
+            throw new Error('Пользователь не имеет доступа к указанному опросу');
+        }
 
         const classIds = userClasses.map((c) => c.id);
         // Проверка доступа
-        // if (!classIds.includes(parseInt(classId))) {
-        //     throw new Error('Пользователь не имеет доступа к указанному классу');
-        // }
+        if (!classIds.includes(parseInt(classId))) {
+            throw new Error('Пользователь не имеет доступа к указанному классу');
+        }
 
         // Деактивируем все активные тесты в этих классах
         await TakenSurvey.update(
@@ -313,32 +313,53 @@ class ConductingService {
         };
     }
     // НЕ Доработано!!!(((:(
-    async getSurveyResults(surveyId) {
-        console.log('werwerwerw');
-        const result = TakenQuestionAnswer.findAll({
+    async getSurveyResults(classId, surveyId) {
+        const results = await TakenQuestionAnswer.findAll({
             include: [
                 {
                     model: TakenQuestion,
                     as: 'takenQuestion',
-                    attributes: [],
+                    attributes: ['question_id'], // добавь сюда нужные поля
+                    required: true,
                     include: [
                         {
                             model: TakenSurvey,
                             as: 'takenSurvey',
-                            where: { survey_id: surveyId },
+                            where: {
+                                survey_id: surveyId,
+                                class_id: classId
+                            },
+                            required: true,
                             attributes: []
+                        },
+                        {
+                            model: Question,
+                            as: 'question',
+                            attributes: ['correct_option'] // если есть связь
                         }
                     ]
                 },
                 {
                     model: Student,
                     as: 'student',
-                    attributes: ['id', 'name']
+                    attributes: ['id', 'name'],
+                    required: true
                 }
             ]
         });
-        console.log('werwerwerw', (await result).length);
-        return result;
+
+        // Затем в JS:
+
+        const resultsWithIsCorrect = results.map((r) => {
+            const correctOption = r.takenQuestion?.question?.correct_option;
+            const isCorrect = r.answer === correctOption ? 1 : 0;
+            return {
+                ...r.get({ plain: true }),
+                isCorrect
+            };
+        });
+
+        return resultsWithIsCorrect;
     }
 
     async activateSurvey(takenSurveyId) {

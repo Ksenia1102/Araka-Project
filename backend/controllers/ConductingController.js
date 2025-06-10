@@ -29,7 +29,7 @@ class ConductingController {
                 where: { user_id: req.user.id },
                 attributes: ['id']
             });
-            const userClassIds = userClasses.map(c => c.id);
+            const userClassIds = userClasses.map((c) => c.id);
 
             if (!userClassIds.includes(parseInt(class_id))) {
                 return res.status(403).json({
@@ -70,7 +70,7 @@ class ConductingController {
                 where: { user_id: req.user.id },
                 attributes: ['id']
             });
-            const userSurveyIds = userSurveys.map(s => s.id);
+            const userSurveyIds = userSurveys.map((s) => s.id);
 
             if (!userSurveyIds.includes(parseInt(survey_id))) {
                 return res.status(403).json({
@@ -90,11 +90,13 @@ class ConductingController {
                     {
                         model: TakenQuestion,
                         attributes: ['id'],
-                        include: [{
-                            model: TakenSurvey,
-                            where: { survey_id },
-                            attributes: []
-                        }],
+                        include: [
+                            {
+                                model: TakenSurvey,
+                                where: { survey_id },
+                                attributes: []
+                            }
+                        ],
                         required: true
                     }
                 ],
@@ -102,7 +104,7 @@ class ConductingController {
                 order: [['createdAt', 'DESC']]
             });
 
-            const formattedAnswers = answers.map(answer => ({
+            const formattedAnswers = answers.map((answer) => ({
                 id: answer.id,
                 student_id: answer.student.id,
                 student_name: answer.student.name,
@@ -187,13 +189,13 @@ class ConductingController {
             this.handleError(res, error);
         }
     }
-    // результаты студентов (класс - тест) Не доработано!!!!!!!!!!!!!
+    // результаты студентов (класс - тест)
     async getSurveyResults(req, res) {
         console.log('start');
-        const { surveyId } = req.params;
+        const { classId, surveyId } = req.params;
 
         try {
-            const results = await ConductingService.getSurveyResults(surveyId);
+            const results = await ConductingService.getSurveyResults(classId, surveyId);
             res.json(results);
         } catch (error) {
             console.error('Ошибка в контроллере getSurveyResults:', error);

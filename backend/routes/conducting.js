@@ -8,6 +8,6 @@ router.get('/active', ConductingController.getActiveSurvey);
 router.get('/current', ConductingController.getCurrentQuestion);
 router.post('/stop', ConductingController.stopSession);
 router.get('/students', ConductingController.getClassStudents);
-router.get('/:surveyId/results', ConductingController.getSurveyResults); // не доработано!!!!!!!!!)
+router.get('/:classId/:surveyId/results', ConductingController.getSurveyResults);
 
 module.exports = router;

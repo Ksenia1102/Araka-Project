@@ -1,4 +1,4 @@
-const { Class, Student, TakenSurvey} = require('../models');
+const { Class, Student, TakenSurvey, Survey } = require('../models');
 
 class ClassService {
     static async createClass(user_id, title) {
@@ -44,7 +44,13 @@ class ClassService {
             where: { class_id: classId },
             order: [['date', 'DESC']],
             limit: limit,
-            raw: true
+            include: [
+                {
+                    model: Survey,
+                    as: 'survey',
+                    attributes: ['title'] // Подгружаем только название опроса
+                }
+            ]
         });
     }
 }

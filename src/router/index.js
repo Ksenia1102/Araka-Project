@@ -33,7 +33,7 @@ const router = createRouter({
                 },
                 {
                     // параметр
-                    path: '/uikit/chart-sur/:surveyId',
+                    path: '/uikit/chart-sur/:classId/:surveyId',
                     name: 'chart-sur',
                     component: () => import('@/views/uikit/ChartSur.vue'),
                     props: true

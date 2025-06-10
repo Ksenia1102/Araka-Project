@@ -37,10 +37,12 @@ const surveys = ref([
 // Фильтруем последние опросы
 const recentSurveys = computed(() => surveys.value.filter((survey) => survey.isRecent));
 function goToSection(surveyId) {
+    const classId1 = route.params.classId;
+    console.log('route.params.classId', classId1);
     router.push({
         name: 'chart-sur',
         params: {
-            classId: route.params.classId, // classId
+            classId: classId1, // classId
             surveyId: surveyId // surveyId
         },
         query: {
@@ -173,12 +175,12 @@ async function fetchRecentSurveys() {
                 Authorization: `Bearer ${token}`
             }
         });
-        
+        console.log('name', response.data[0]);
         // Преобразуем данные в нужный формат
-        surveys.value = response.data.map(survey => ({
+        surveys.value = response.data.map((survey) => ({
             id: survey.survey_id,
-            name: `Опрос №${survey.survey_id}`,
-            link: `/uikit/chart-sur/${survey.survey_id}`,
+            name: `${survey.survey.title}`,
+            link: `/uikit/chart-sur/${classId}/${survey.survey_id}`,
             completion: 0, // Можно добавить реальный процент завершения, если есть такие данные
             month: new Date(survey.date).toLocaleString('ru-RU', { month: 'long' }),
             isRecent: true
