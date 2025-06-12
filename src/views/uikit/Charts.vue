@@ -22,7 +22,7 @@ const dropdownValues = ref([
 // Выбранные значения фильтров
 const multiselectValue = ref([]);
 const dropdownValue = ref(null);
-// Фейковые данные с результатами опросов
+// Фейковые данные с результатами тестов
 const surveyResults = ref([
     // Тест 1
     {

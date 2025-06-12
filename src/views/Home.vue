@@ -67,7 +67,7 @@ function goToLogin() {
                         </li>
                         <li>
                             <a @click="downloadFile" class="px-0 py-4 text-surface-900 dark:text-surface-0 font-medium text-xl">
-                                <span>Получить карточки для опросов</span>
+                                <span>Получить карточки для тестов</span>
                             </a>
                         </li>
                     </ul>
@@ -80,9 +80,9 @@ function goToLogin() {
 
             <div id="hero" class="flex flex-row pt-6 px-6 lg:px-20 overflow-hidden" style="background: linear-gradient(134.789deg, #f6fcff 1%, #c2e7ff 49%, #83b2ff 100%); clip-path: ellipse(150% 87% at 93% 13%)">
                 <div class="mx-6 md:mx-20 mt-0 md:mt-6">
-                    <h1 class="text-6xl font-bold text-gray-900 leading-tight"><span class="font-light block">Проводите опросы</span></h1>
+                    <h1 class="text-6xl font-bold text-gray-900 leading-tight"><span class="font-light block">Проводите тесты</span></h1>
                     <h1 class="text-6xl font-bold text-gray-900 leading-tight"><span class="font-light block">быстро и просто </span>с EduVision</h1>
-                    <p class="font-normal text-2xl leading-normal md:mt-4 text-gray-700">Eduvision — удобный инструмент для учителей, позволяющий быстро создавать опросы</p>
+                    <p class="font-normal text-2xl leading-normal md:mt-4 text-gray-700">Eduvision — удобный инструмент для учителей, позволяющий быстро создавать тесты</p>
                     <Button label="Попробовать" :to="{ name: 'login' }" as="router-link" @click="goToLogin" rounded class="!text-xl mt-8 !px-4" severity="contrast"></Button>
                 </div>
                 <div class="flex justify-center md:justify-end" style="margin-top: 1.5rem; margin-bottom: 100px; margin-right: 100px; width: 30%">

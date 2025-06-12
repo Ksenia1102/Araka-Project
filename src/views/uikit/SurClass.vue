@@ -14,7 +14,7 @@ if (route.query.surveys) {
     try {
         surveys.value = JSON.parse(route.query.surveys);
     } catch (error) {
-        console.error('Ошибка при разборе данных опросов:', error);
+        console.error('Ошибка при разборе данных тестов:', error);
     }
 }
 

@@ -19,7 +19,7 @@ const surveyId = route.params.id;
 const surveyName = ref('');
 const lastModified = ref('');
 const formattedDate = ref('');
-// Пример ID опроса. Можно заменить на динамическое значение.
+// Пример ID теста. Можно заменить на динамическое значение.
 
 function getMediaType(url) {
     if (!url) return null;
@@ -64,7 +64,7 @@ const copySurvey = async () => {
             return;
         }
 
-        // Отправляем POST запрос на сервер для копирования опроса
+        // Отправляем POST запрос на сервер для копирования теста
         const response = await axios.post(
             `${apiUrl}/api/surveys/${surveyId}/copy`,
             {}, // Пустое тело запроса
@@ -109,10 +109,10 @@ const copySurvey = async () => {
 
 const deleteSurvey = async () => {
     try {
-        // Получаем ID опроса из параметров маршрута
+        // Получаем ID теста из параметров маршрута
         const surveyId = route.params.id;
 
-        // Отправляем DELETE запрос на сервер для удаления опроса
+        // Отправляем DELETE запрос на сервер для удаления теста
         const token = localStorage.getItem('authToken');
         await axios.delete(`${apiUrl}/api/surveys/${surveyId}`, {
             headers: {
@@ -120,8 +120,8 @@ const deleteSurvey = async () => {
             }
         });
 
-        // После успешного удаления, можно перенаправить на страницу с опросами
-        // Например, на главную страницу опросов или перечень всех опросов
+        // После успешного удаления, можно перенаправить на страницу с тестами
+        // Например, на главную страницу тестов или перечень всех тестов
 
         router
             .push({ name: 'dashboard' }) // Навигация по маршруту в ту же вкладку
@@ -135,7 +135,7 @@ const deleteSurvey = async () => {
         toast.add({
             severity: 'error',
             summary: 'Ошибка',
-            detail: 'Произошла ошибка при удалении опроса.',
+            detail: 'Произошла ошибка при удалении теста.',
             life: 3000
         });
     }
@@ -165,7 +165,7 @@ onMounted(async () => {
 
         // Проверяем структуру ответа
         if (!surveyData || !surveyData.title || !surveyData.questions) {
-            throw new Error('Неверный формат данных опроса');
+            throw new Error('Неверный формат данных теста');
         }
 
         // Сохраняем данные
@@ -181,7 +181,7 @@ onMounted(async () => {
         });
     } catch (error) {
         console.error('Ошибка загрузки данных:', error);
-        // errorMessage.value = 'Не удалось загрузить данные опроса';
+        // errorMessage.value = 'Не удалось загрузить данные теста';
     }
 });
 

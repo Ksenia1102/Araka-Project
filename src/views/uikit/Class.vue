@@ -26,7 +26,7 @@ const students = ref([]);
 const showStudentTable = ref(false);
 const quickAddInput = ref('');
 const sortAlphabetically = ref(true);
-// Фейковые данные опросов
+// Фейковые данные тестов
 const surveys = ref([
     { id: 1, name: 'Тест №1', link: '/uikit/chart-sur/1', completion: 85, month: 'Октябрь', isRecent: true },
     { id: 2, name: 'Тест №2', link: '/uikit/chart-sur/2', completion: 90, month: 'Октябрь', isRecent: true },
@@ -35,7 +35,7 @@ const surveys = ref([
     { id: 5, name: 'Тест №5', link: '/uikit/chart-sur/5', completion: 95, month: 'Август', isRecent: false }
 ]);
 
-// Фильтруем последние опросы
+// Фильтруем последние тесты
 const recentSurveys = computed(() => surveys.value.filter((survey) => survey.isRecent));
 function goToSection(surveyId) {
     const classId1 = route.params.classId;
@@ -54,16 +54,16 @@ function goToSection(surveyId) {
     });
 }
 
-// Переход к списку опросов
+// Переход к списку тестов
 function goToSurveys(classId) {
     router.push({
-        name: 'sur-class', // маршрут для просмотра опросов
+        name: 'sur-class', // маршрут для просмотра тестов
         params: {
             classId: classId // передаем id класса
         },
         query: {
             className: currentClassName.value, // className
-            surveys: JSON.stringify(surveys.value) // передаем список опросов как query-параметр
+            surveys: JSON.stringify(surveys.value) // передаем список тестов как query-параметр
         }
     });
 }
@@ -176,7 +176,7 @@ async function addStudentsToTable() {
     }
 }
 
-// Получение последних опросов с сервера
+// Получение последних тестов с сервера
 async function fetchRecentSurveys() {
     const classId = route.params.classId;
     try {
@@ -197,11 +197,11 @@ async function fetchRecentSurveys() {
             isRecent: true
         }));
     } catch (error) {
-        console.error('Ошибка загрузки последних опросов:', error);
+        console.error('Ошибка загрузки последних тестов:', error);
         toast.add({
             severity: 'error',
             summary: 'Ошибка',
-            detail: 'Не удалось загрузить последние опросы',
+            detail: 'Не удалось загрузить последние тесты',
             life: 3000
         });
     }
@@ -423,9 +423,7 @@ function proceedWithDeletion() {
     closeConfirmation();
 }
 
-
 const sortedStudents = computed(() => {
-
     if (!sortAlphabetically.value) {
         return [...studentPreview.value]; // Возвращаем без сортировки
     }
@@ -436,9 +434,44 @@ const sortedStudents = computed(() => {
 // Сбрасываем в true при каждом открытии модалки
 watch(display, (isOpen) => {
     if (isOpen) {
-        sortAlphabetically.value = true
+        sortAlphabetically.value = true;
     }
-})
+});
+
+const displayDownloadDialog = ref(false);
+const selectedStudentId = ref(null);
+const selectedStudentName = ref(null);
+
+const gradingSystem = ref(['percent']); // Массив выбранных систем оценивания
+const gradingSystemError = ref('');
+
+const openDownloadDialog = (studentId, studentLastName, studentFirstName) => {
+    selectedStudentId.value = studentId;
+    selectedStudentName.value = studentLastName + ' ' + studentFirstName;
+    displayDownloadDialog.value = true;
+};
+
+const closeDownloadDialog = () => {
+    displayDownloadDialog.value = false;
+};
+
+const validateBeforeDownload = (format) => {
+    if (gradingSystem.value.length === 0) {
+        gradingSystemError.value = 'Выберите хотя бы одну систему оценивания';
+        return;
+    }
+    gradingSystemError.value = '';
+    downloadReport(format, gradingSystem.value);
+};
+
+const downloadReport = (format, systems) => {
+    console.log(`Скачивание отчета в формате ${format} для ученика ${selectedStudentId.value}`);
+    console.log('Выбранные системы оценивания:', systems);
+
+    // Логика генерации отчета
+
+    displayDownloadDialog.value = false;
+};
 </script>
 
 <template>
@@ -462,9 +495,9 @@ watch(display, (isOpen) => {
 
                     <!-- Вторая колонка - предпросмотр -->
                     <div class="form-column">
-                        <div class="sort-controls" style="margin-bottom: 1rem;">
-                            <Checkbox v-model="sortAlphabetically" :binary="true" inputId="sortCheckbox"/>
-                            <label for="sortCheckbox" style="margin-left: 0.5rem;">Сортировать по алфавиту</label>
+                        <div class="sort-controls" style="margin-bottom: 1rem">
+                            <Checkbox v-model="sortAlphabetically" :binary="true" inputId="sortCheckbox" />
+                            <label for="sortCheckbox" style="margin-left: 0.5rem">Сортировать по алфавиту</label>
                         </div>
                         <p class="font-semibold text-xl mb-4" style="margin-left: auto; margin-right: auto; width: 10em; margin-top: 10em" v-if="!studentPreview.length">Предпросмотр пуст</p>
                         <table v-else class="preview-table">
@@ -498,12 +531,12 @@ watch(display, (isOpen) => {
             <!-- последние проведенные тесты -->
             <div>
                 <div class="flex items-center justify-between" style="border-bottom: 1px solid var(--surface-border)">
-                    <div class="font-semibold text-xl">Последние проведенные опросы</div>
-                    <Button text severity="info" @click="goToSurveys(classId)">Смотреть все опросы</Button>
+                    <div class="font-semibold text-xl">Последние проведенные тесты</div>
+                    <Button text severity="info" @click="goToSurveys(classId)">Смотреть все тесты</Button>
                 </div>
-                <!-- если нет недавних опросов -->
-                <div v-if="recentSurveys.length === 0" class="font-semibold text-xl" style="margin: 20px; text-align: center">Недавние опросы отсутствуют</div>
-                <!-- Список последних опросов -->
+                <!-- если нет недавних тестов -->
+                <div v-if="recentSurveys.length === 0" class="font-semibold text-xl" style="margin: 20px; text-align: center">Недавние тесты отсутствуют</div>
+                <!-- Список последних тестов -->
                 <div v-else class="sections-list">
                     <div v-for="survey in recentSurveys" :key="survey.id" class="section-item" @click="goToSection(survey.id)">
                         <div class="survey-details">
@@ -528,7 +561,7 @@ watch(display, (isOpen) => {
             </div>
 
             <!-- Таблица учеников -->
-            <DataTable :style="{ maxWidth: '500px'}" ref="dataTableRef" :value="students" :paginator="true" :rows="30" dataKey="id" :rowHover="true" :filters="filters" :globalFilterFields="['lastName', 'firstName']" showGridlines>
+            <DataTable :style="{ maxWidth: '500px' }" ref="dataTableRef" :value="students" :paginator="true" :rows="30" dataKey="id" :rowHover="true" :filters="filters" :globalFilterFields="['lastName', 'firstName']" showGridlines>
                 <template #header>
                     <div class="flex justify-between items-center">
                         <!-- Поле для поиска -->
@@ -543,30 +576,115 @@ watch(display, (isOpen) => {
                 <Column field="id" header="Номер карточки" style="width: 10%; text-align: center" />
                 <Column field="lastName" header="Фамилия" />
                 <Column field="firstName" header="Имя" />
-                <!-- Последняя колонка с кнопкой -->
+
+                <!-- Колонка для скачивания отчетов -->
+                <Column style="width: 30%; text-align: center" header="Скачать отчёт">
+                    <template #body="slotProps">
+                        <Button icon="pi pi-download" @click="openDownloadDialog(slotProps.data.id, slotProps.data.lastName, slotProps.data.firstName)" class="p-button-outlined p-button-success" />
+                    </template>
+                </Column>
+
+                <!-- Колонка для удаления -->
                 <Column style="width: 5%">
-                    <!-- <template #body="slotProps">
-                        <Button icon="pi pi-trash" @click="deletetudent(slotProps.data.id)" -->
                     <template #body="slotProps">
                         <Button icon="pi pi-trash" @click="confirmDeletion(slotProps.data.id)" class="p-button-outlined p-button-info" />
-                        <Dialog header="Предупреждение" v-model:visible="displayConfirmation" :style="{ width: '350px' }" :modal="true">
-                            <div class="flex items-center justify-center">
-                                <i class="pi pi-exclamation-triangle mr-4" style="font-size: 2rem" />
-                                <span>Вы действительно хотите удалить данные об этом ученике?</span>
-                            </div>
-                            <template #footer>
-                                <Button label="Нет" icon="pi pi-times" @click="closeConfirmation" text severity="secondary" />
-                                <Button label="Да" icon="pi pi-check" @click="proceedWithDeletion" severity="danger" outlined autofocus />
-                            </template>
-                        </Dialog>
                     </template>
                 </Column>
             </DataTable>
+            <!-- Диалог скачивания отчета -->
+            <Dialog v-model:visible="displayDownloadDialog" :style="{ width: '500px' }" :modal="true">
+                <template #header>
+                    <h1 style="font-size: 17px; font-weight: 600">
+                        Скачать отчёт для ученика <b>{{ selectedStudentName }}</b>
+                    </h1>
+                </template>
+                <!-- Поле выбора системы оценивания -->
+                <div class="flex flex-col gap-2 mb-8">
+                    <label class="font-medium">Выберите систему оценивания:</label>
+                    <div class="flex flex-col gap-3">
+                        <div class="flex align-items-center">
+                            <Checkbox inputId="percent" v-model="gradingSystem" value="percent" :binary="false" />
+                            <label for="percent" class="ml-2">В процентах, %</label>
+                        </div>
+                        <div class="flex align-items-center">
+                            <Checkbox inputId="five-point" v-model="gradingSystem" value="five-point" :binary="false" />
+                            <label for="five-point" class="ml-2">5-ти бальная</label>
+                        </div>
+                    </div>
+                    <small v-if="gradingSystemError" class="p-error text-red-500">{{ gradingSystemError }}</small>
+                </div>
+                <div class="flex flex-col items-center justify-center gap-4">
+                    <label class="font-medium">Выберите формат отчёта</label>
+                    <div class="flex gap-3 mt-1">
+                        <Button label="PDF на печать" icon="pi pi-file-pdf" @click="validateBeforeDownload('pdf')" severity="info" class="custom-pdf-button" />
+                        <Button label="Excel" icon="pi pi-file-excel" @click="validateBeforeDownload('excel')" severity="info" class="custom-excel-button" />
+                    </div>
+                </div>
+                <template #footer>
+                    <Button label="Отмена" icon="pi pi-times" @click="closeDownloadDialog" text severity="secondary" />
+                </template>
+            </Dialog>
+            <Dialog header="Предупреждение" v-model:visible="displayConfirmation" :style="{ width: '350px' }" :modal="true">
+                <div class="flex items-center justify-center">
+                    <i class="pi pi-exclamation-triangle mr-4" style="font-size: 2rem" />
+                    <span>Вы действительно хотите удалить данные об этом ученике?</span>
+                </div>
+                <template #footer>
+                    <Button label="Нет" icon="pi pi-times" @click="closeConfirmation" text severity="secondary" />
+                    <Button label="Да" icon="pi pi-check" @click="proceedWithDeletion" severity="danger" outlined autofocus />
+                </template>
+            </Dialog>
         </div>
     </div>
 </template>
 
+<style>
+:root {
+    /* Цвет фона при нажатии/выборе */
+    --p-checkbox-checked-background: #0ea5e9;
+    --p-checkbox-checked-hover-background: #0284c7;
+
+    /* Цвет галочки (иконки) */
+    --p-checkbox-icon-checked-color: white; /* белая галочка */
+    --p-checkbox-icon-checked-hover-color: white;
+
+    /* Цвет рамки */
+    --p-checkbox-checked-border-color: #0ea5e9;
+}
+</style>
 <style scoped>
+.custom-pdf-button {
+    background: #b30b00 !important;
+    border-color: #b30b00 !important;
+    color: white !important;
+}
+
+.custom-pdf-button:hover {
+    background: #8a0900 !important;
+    border-color: #8a0900 !important;
+}
+
+.custom-pdf-button:active {
+    background: #600600 !important;
+    border-color: #600600 !important;
+}
+
+.custom-excel-button {
+    background: #217346 !important;
+    border-color: #217346 !important;
+    color: white !important;
+}
+
+.custom-excel-button:hover {
+    background: #1a5c38 !important;
+    border-color: #1a5c38 !important;
+}
+
+.custom-excel-button:active {
+    background: #13452a !important;
+    border-color: #13452a !important;
+}
+
 .sections-list {
     display: grid;
     grid-template-columns: 1fr 1fr; /* Две колонки */

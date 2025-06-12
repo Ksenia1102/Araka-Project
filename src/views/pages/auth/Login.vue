@@ -138,7 +138,7 @@ async function requestPasswordReset() {
 
     isSendingCode.value = true; // Начинаем отправку кода
 
-    // Перенаправляем на страницу с опросом
+    // Перенаправляем на страницу с тестом
     try {
         loading.show('Отправка кода подтверждения...');
         await axios.post(`${apiUrl}/auth/login/request-password-reset`, {

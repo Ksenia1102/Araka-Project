@@ -11,7 +11,7 @@ const chartData = ref(null);
 const chartOptions = ref(null);
 const treeValue = ref(null);
 const treeTableValue = ref(null);
-const surveys = ref([]); // Это будет хранить список опросов
+const surveys = ref([]); // Это будет хранить список тестов
 const searchQuery = ref(''); // Введённый текст для поиска
 // function getUserIdFromToken() {
 //     const token = localStorage.getItem('authToken'); // Или другой способ получения токена
@@ -48,7 +48,7 @@ onMounted(async () => {
         })); // Сохраняем полученные данные в переменную
         console.log(surveys.value);
     } catch (error) {
-        console.error('Ошибка при загрузке опросов:', error);
+        console.error('Ошибка при загрузке тестов:', error);
     }
 });
 
@@ -179,9 +179,9 @@ export default {
     data() {
         return {
             surveys: [
-                { id: 1, name: 'Опрос 1', modified: '2023-10-16' },
+                { id: 1, name: 'Тест 1', modified: '2023-10-16' },
                 { id: 2, name: 'Untitled Set', modified: new Date() }
-                // Добавьте другие опросы, если нужно
+                // Добавьте другие тесты, если нужно
             ],
             selectedSurvey: null
         };
@@ -192,7 +192,7 @@ export default {
         //     this.$router.push(`/uikit/working/${surveyId}`);
         // },
         goToSurvey(surveyId) {
-            // Логика перехода к выбранному опросу
+            // Логика перехода к выбранному тесту
             this.$router.push({ path: `/uikit/sur-data/${surveyId}` });
         },
         formatDate(date) {
@@ -206,10 +206,10 @@ export default {
 
 <template>
     <div class="card">
-        <!-- если не было опросов -->
+        <!-- если не было тестов -->
         <div style="margin: 30px" hidden>
-            <h1 class="font-semibold text-4xl mb-6">Вы еще не создавали опросы</h1>
-            <p class="font-semibold text-xl mb-4">Проведите свой первый опрос и вы увидите их здесь!</p>
+            <h1 class="font-semibold text-4xl mb-6">Вы еще не создавали тесты</h1>
+            <p class="font-semibold text-xl mb-4">Проведите свой первый тест и вы увидите их здесь!</p>
         </div>
         <div class="flex" style="gap: 0.5rem; align-items: stretch">
             <i class="pi pi-book" style="font-size: 2.3rem"></i>
@@ -225,16 +225,16 @@ export default {
                             <i class="pi pi-search" />
                         </InputIcon>
                         <!-- Привязываем v-model -->
-                        <InputText v-model="searchQuery" placeholder="Поиск по опросам" style="width: 100%" />
+                        <InputText v-model="searchQuery" placeholder="Поиск по тестам" style="width: 100%" />
                     </IconField>
                 </template>
             </Toolbar>
         </div>
 
-        <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Опросы</div>
+        <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Тесты</div>
         <!-- Таблица с данными -->
         <DataTable :value="filteredSurveys" class="p-datatable-sm">
-            <!-- Столбец для имени опроса (title) -->
+            <!-- Столбец для имени теста (title) -->
             <Column field="title" header="Имя" />
 
             <!-- Столбец для даты создания (created_at) -->
@@ -248,7 +248,7 @@ export default {
             <!-- Столбец для кнопки перехода -->
             <Column style="padding: 1.5rem" header="">
                 <template #body="slotProps">
-                    <!-- Стрелочка для перехода на детальную страницу опроса -->
+                    <!-- Стрелочка для перехода на детальную страницу теста -->
                     <!-- <button @click="goToSurvey(slotProps.data.id)" class="arrow-button">➔</button> -->
                     <Button @click="goToSurvey(slotProps.data.id)" icon="pi pi-chevron-right" class="back-btn" text severity="secondary"></Button>
                 </template>

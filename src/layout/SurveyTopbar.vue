@@ -21,7 +21,7 @@ export default {
         },
         saveSurvey() {
             // Отправляем событие сохранения с текущим localTitle
-            this.$emit('saveSurvey', this.localTitle); // Передаем название опроса
+            this.$emit('saveSurvey', this.localTitle); // Передаем название теста
         },
         goBack() {
             // Используем Vue Router для перехода на предыдущую страницу

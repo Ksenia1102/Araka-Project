@@ -42,7 +42,7 @@ let currentQuestion = ref(quizData.value.questions[0]);
 // const timeRemaining = ref(10);
 const answersReceived = ref(0); // Количество ответов
 const correctAnswers = ref(0); // Количество правильных ответов
-const quizFinished = ref(false); // Флаг завершения опроса
+const quizFinished = ref(false); // Флаг завершения теста
 // Таймер
 // const QUESTION_DURATION = 10; // 30 секунд
 // Получаем переданные props
@@ -62,7 +62,7 @@ const props = defineProps({
 const classId = ref(props.classId);
 const surveyId = ref(props.surveyId);
 
-// Данные о классе и опросе
+// Данные о классе и тесте
 const classData = ref(null);
 const surveyData = ref(null);
 
@@ -99,7 +99,7 @@ const fetchClassData = async () => {
     }
 };
 
-// Получаем данные об опросе
+// Получаем данные об тесте
 const fetchSurveyData = async () => {
     try {
         const token = localStorage.getItem('authToken');
@@ -136,7 +136,7 @@ onMounted(() => {
     fetchClassData();
     fetchSurveyData();
 });
-// Фейковые данные для опроса
+// Фейковые данные для теста
 
 // Данные для учеников
 const studentModel = computed(() => {
@@ -164,7 +164,7 @@ const nextQuestion = () => {
         resetStats();
         simulateAnswers();
     } else {
-        // Завершаем опрос
+        // Завершаем тест
         quizFinished.value = true;
         resetStats();
     }
@@ -294,7 +294,7 @@ onMounted(() => {
                                     </div>
                                     <div class="action-buttons" style="margin-top: auto">
                                         <Button label="Назад" :disabled="currentQuestionIndex === 0" class="p-button-secondary" @click="prevQuestion" />
-                                        <!-- Проверяем, если это последний вопрос, показываем кнопку "Завершить опрос", иначе "Вперед" -->
+                                        <!-- Проверяем, если это последний вопрос, показываем кнопку "Завершить тест", иначе "Вперед" -->
                                         <Button label="Вперед" v-if="currentQuestionIndex < quizData.questions.length - 1" :disabled="currentQuestionIndex === quizData.questions.length - 1" class="p-button-secondary" @click="nextQuestion" />
                                         <Button label="Завершить тест" severity="info" v-else class="p-button-success" @click="finishQuiz" />
                                     </div>

@@ -12,25 +12,25 @@ const hasSurveys = ref(false);
 // const surveyTree = ref([
 //     {
 //         key: '0',
-//         data: { name: 'Рабочие опросы', type: 'folder', modified: null },
+//         data: { name: 'Рабочие тесты', type: 'folder', modified: null },
 //         children: [
 //             {
 //                 key: '0-0',
-//                 data: { name: 'Опрос HR', type: 'survey', modified: '2024-04-24' }
+//                 data: { name: 'тест HR', type: 'survey', modified: '2024-04-24' }
 //             },
 //             {
 //                 key: '0-1',
-//                 data: { name: 'Опрос tt', type: 'survey', modified: '2024-04-24' }
+//                 data: { name: 'тест tt', type: 'survey', modified: '2024-04-24' }
 //             }
 //         ]
 //     },
 //     {
 //         key: '1',
-//         data: { name: 'Опрос вне папки', type: 'survey', modified: '2024-04-20' }
+//         data: { name: 'тест вне папки', type: 'survey', modified: '2024-04-20' }
 //     },
 //     {
 //         key: '2',
-//         data: { name: 'Опрос вне папки', type: 'survey', modified: '2024-04-20' }
+//         data: { name: 'тест вне папки', type: 'survey', modified: '2024-04-20' }
 //     },
 //     {
 //         key: '3',
@@ -39,7 +39,7 @@ const hasSurveys = ref(false);
 // ]);
 const surveyTree = ref([]); // Теперь это будет заполняться из API
 
-// Загрузка опросов без папок
+// Загрузка тестов без папок
 async function loadUnfolderedSurveys() {
     try {
         const token = localStorage.getItem('authToken');
@@ -85,7 +85,7 @@ async function loadSurveyTree() {
         const token = localStorage.getItem('authToken');
         console.log('TOKEEN', token);
 
-        // Загружаем параллельно папки и опросы без папок
+        // Загружаем параллельно папки и тесты без папок
         const [foldersRes, unfolderedSurveys] = await Promise.all([
             axios.get(`${apiUrl}/api/folders`, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -96,13 +96,13 @@ async function loadSurveyTree() {
         // Преобразуем папки
         const folders = transformApiData(foldersRes.data);
 
-        // Объединяем: папки + опросы без папок (после папок)
+        // Объединяем: папки + тесты без папок (после папок)
         surveyTree.value = [...folders, ...unfolderedSurveys];
 
-        // Проверяем, есть ли хотя бы одна папка или один опрос
+        // Проверяем, есть ли хотя бы одна папка или один тест
         hasSurveys.value = surveyTree.value.length > 0;
 
-        // Сортировка: папки сверху, опросы снизу (на всякий случай)
+        // Сортировка: папки сверху, тесты снизу (на всякий случай)
         sortSurveyTree(surveyTree.value);
     } catch (error) {
         console.error('Ошибка загрузки данных:', error);
@@ -148,13 +148,13 @@ const contextMenu = ref();
 const contextMenuFolder = ref(null);
 const display = ref(false); // видимость модалки
 const newFolderName = ref('');
-const freeSurveys = ref([]); // опросы без папок
-const selectedSurveys = ref([]); // выбранные опросы в модалке
+const freeSurveys = ref([]); // тесты без папок
+const selectedSurveys = ref([]); // выбранные тесты в модалке
 // const router = useRouter();
 
 // открытие модалки
 function openCreateFolderDialog() {
-    updateFreeSurveys(); // при открытии обновим список свободных опросов
+    updateFreeSurveys(); // при открытии обновим список свободных тестов
     display.value = true;
 }
 // закрытие модалки
@@ -163,8 +163,8 @@ function closeCreateFolderDialog() {
     newFolderName.value = '';
     selectedSurveys.value = [];
 }
-// Функция обновления списка свободных опросов
-// (берем только те опросы, что лежат в корне, без папок)
+// Функция обновления списка свободных тестов
+// (берем только те тесты, что лежат в корне, без папок)
 function updateFreeSurveys() {
     freeSurveys.value = surveyTree.value.filter((node) => node.data.type === 'survey');
 }
@@ -215,7 +215,7 @@ async function saveNewFolder() {
         });
     }
 }
-// сортировка папок перед опросами
+// сортировка папок перед тестами
 function sortSurveyTree(nodes) {
     nodes.sort((a, b) => {
         if (a.data.type === b.data.type) return 0;
@@ -229,7 +229,7 @@ function sortSurveyTree(nodes) {
     });
 }
 
-// Когда начали перетаскивать опрос или папку
+// Когда начали перетаскивать тест или папку
 // function onDragStart(node) {
 //     draggedNode.value = node;
 // }
@@ -261,7 +261,7 @@ function onDropOnFolder(targetFolderNode) {
 // }
 
 // Переместить узел в папку
-// Перемещение опроса в папку
+// Перемещение теста в папку
 async function moveNodeIntoFolder(dragged, targetFolder) {
     try {
         const token = localStorage.getItem('authToken');
@@ -317,7 +317,7 @@ function handleDragLeave(event) {
     isDragOverRoot.value = false;
 }
 
-// Перемещение опроса в корень
+// Перемещение теста в корень
 async function moveNodeToRoot(node) {
     try {
         const token = localStorage.getItem('authToken');
@@ -424,7 +424,7 @@ function formatDate(date) {
     return new Date(date).toLocaleDateString('ru-RU', options);
 }
 
-// Переход на страницу опроса
+// Переход на страницу теста
 function goToSurvey(surveyData) {
     router.push(`/uikit/sur-data/${surveyData.id}`);
 }
@@ -437,7 +437,7 @@ function onDropOnFolderWrapper(event, targetFolderNode) {
 
 <template>
     <div class="card start">
-        <!-- если не было опросов -->
+        <!-- если не было тестов -->
         <div v-if="!hasSurveys" class="start">
             <div style="margin: 30px">
                 <h1 class="font-semibold text-4xl mb-6">У вас еще нет тестов в библиотеке</h1>
@@ -446,7 +446,7 @@ function onDropOnFolderWrapper(event, targetFolderNode) {
             </div>
         </div>
 
-        <!-- если опросы есть -->
+        <!-- если тесты есть -->
         <div v-else>
             <div class="flex" style="gap: 0.5rem; align-items: stretch">
                 <i class="pi pi-book" style="font-size: 2.3rem"></i>
@@ -495,7 +495,7 @@ function onDropOnFolderWrapper(event, targetFolderNode) {
                 </Toolbar>
             </div>
 
-            <!-- Папки и опросы -->
+            <!-- Папки и тесты -->
             <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Папки и тесты</div>
 
             <ContextMenu

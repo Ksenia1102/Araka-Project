@@ -11,13 +11,13 @@ const surveyId = route.params.surveyId;
 console.log(surveyId);
 const questionIds = ref([]);
 
-// Данные опросов из query
+// Данные тестов из query
 const surveys = ref([]);
 if (route.query.surveys) {
     try {
         surveys.value = JSON.parse(route.query.surveys);
     } catch (error) {
-        console.error('Ошибка при разборе данных опросов:', error);
+        console.error('Ошибка при разборе данных тестов:', error);
     }
 }
 
@@ -79,9 +79,42 @@ onMounted(async () => {
             };
         });
     } catch (err) {
-        console.error('Ошибка загрузки результатов опроса:', err);
+        console.error('Ошибка загрузки результатов теста:', err);
     }
 });
+
+const displayDownloadDialog = ref(false);
+const selectedTestName = ref(null);
+
+const gradingSystem = ref(['percent']); // Массив выбранных систем оценивания
+const gradingSystemError = ref('');
+
+const openDownloadDialog = (testName) => {
+    selectedTestName.value = testName;
+    displayDownloadDialog.value = true;
+};
+
+const closeDownloadDialog = () => {
+    displayDownloadDialog.value = false;
+};
+
+const validateBeforeDownload = (format) => {
+    if (gradingSystem.value.length === 0) {
+        gradingSystemError.value = 'Выберите хотя бы одну систему оценивания';
+        return;
+    }
+    gradingSystemError.value = '';
+    downloadReport(format, gradingSystem.value);
+};
+
+const downloadReport = (format, systems) => {
+    console.log(`Скачивание отчета в формате ${format} по тесту ${selectedTestName.value}`);
+    console.log('Выбранные системы оценивания:', systems);
+
+    // Логика генерации отчета
+
+    displayDownloadDialog.value = false;
+};
 </script>
 <template>
     <div class="card">
@@ -91,7 +124,40 @@ onMounted(async () => {
         </div>
 
         <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Результаты: {{ currentSurvey.name }} - {{ currentSurvey.completion }}%</div>
-
+        <Button label="Скачать отчёт" icon="pi pi-download" severity="info" @click="openDownloadDialog(currentSurvey.name)" class="p-button-outlined mb-4"/>
+        <!-- Диалог скачивания отчета -->
+        <Dialog v-model:visible="displayDownloadDialog" :style="{ width: '500px' }" :modal="true">
+            <template #header>
+                <h1 style="font-size: 17px; font-weight: 600">
+                    Скачать отчёт по тесту <b>«{{ currentSurvey.name }}»</b>
+                </h1>
+            </template>
+            <!-- Поле выбора системы оценивания -->
+            <div class="flex flex-col gap-2 mb-8">
+                <label class="font-medium">Выберите систему оценивания:</label>
+                <div class="flex flex-col gap-3">
+                    <div class="flex align-items-center">
+                        <Checkbox inputId="percent" v-model="gradingSystem" value="percent" :binary="false" />
+                        <label for="percent" class="ml-2">В процентах, %</label>
+                    </div>
+                    <div class="flex align-items-center">
+                        <Checkbox inputId="five-point" v-model="gradingSystem" value="five-point" :binary="false" />
+                        <label for="five-point" class="ml-2">5-ти бальная</label>
+                    </div>
+                </div>
+                <small v-if="gradingSystemError" class="p-error text-red-500">{{ gradingSystemError }}</small>
+            </div>
+            <div class="flex flex-col items-center justify-center gap-4">
+                <label class="font-medium">Выберите формат отчёта</label>
+                <div class="flex gap-3 mt-1">
+                    <Button label="PDF на печать" icon="pi pi-file-pdf" @click="validateBeforeDownload('pdf')" severity="info" class="custom-pdf-button" />
+                    <Button label="Excel" icon="pi pi-file-excel" @click="validateBeforeDownload('excel')" severity="info" class="custom-excel-button" />
+                </div>
+            </div>
+            <template #footer>
+                <Button label="Отмена" icon="pi pi-times" @click="closeDownloadDialog" text severity="secondary" />
+            </template>
+        </Dialog>
         <DataTable :value="surveyResults" :paginator="true" :rows="10" showGridlines>
             <template #header>
                 <div class="flex justify-between items-center">
@@ -131,4 +197,36 @@ onMounted(async () => {
     </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.custom-pdf-button {
+    background: #b30b00 !important;
+    border-color: #b30b00 !important;
+    color: white !important;
+}
+
+.custom-pdf-button:hover {
+    background: #8a0900 !important;
+    border-color: #8a0900 !important;
+}
+
+.custom-pdf-button:active {
+    background: #600600 !important;
+    border-color: #600600 !important;
+}
+
+.custom-excel-button {
+    background: #217346 !important;
+    border-color: #217346 !important;
+    color: white !important;
+}
+
+.custom-excel-button:hover {
+    background: #1a5c38 !important;
+    border-color: #1a5c38 !important;
+}
+
+.custom-excel-button:active {
+    background: #13452a !important;
+    border-color: #13452a !important;
+}
+</style>

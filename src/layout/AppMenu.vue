@@ -34,7 +34,7 @@ const model1 = ref([
         items: [
             {
                 label: 'Классы',
-                icon: 'pi pi-fw pi-bookmark',
+                icon: 'pi pi-fw pi-users',
                 items: [] // Сюда будут добавляться новые классы
             }
         ]
@@ -117,7 +117,6 @@ async function createClasses() {
                     // Добавляем класс в меню с использованием classId
                     classMenu.items.push({
                         label: title,
-                        icon: 'pi pi-fw pi-bookmark',
                         to: `/uikit/class/${classId.id}/${title}` // Путь с динамическим ID
                     });
                 }
@@ -161,7 +160,6 @@ async function fetchClasses() {
 
         classMenu.items = response.data.map((classItem) => ({
             label: classItem.title,
-            icon: 'pi pi-fw pi-bookmark',
             to: `/uikit/class/${classItem.id}/${classItem.title}`,
             state: {
                 classTitle: classItem.title

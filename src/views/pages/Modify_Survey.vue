@@ -142,7 +142,7 @@ async function handleSaveSurvey(data) {
 
 async function submitSurvey() {
     if (!surveyTitle.value.trim()) {
-        responseMessage.value = 'Название опроса не может быть пустым.';
+        responseMessage.value = 'Название теста не может быть пустым.';
         responseClass.value = 'error';
         return;
     }
@@ -214,11 +214,11 @@ async function submitSurvey() {
             }
         });
 
-        responseMessage.value = surveyId ? 'Опрос обновлён.' : 'Опрос сохранён.';
+        responseMessage.value = surveyId ? 'Тест обновлён.' : 'Тест сохранён.';
         responseClass.value = 'success';
         router.push({ name: 'dashboard' });
     } catch (error) {
-        console.error('Ошибка сохранения опроса:', error);
+        console.error('Ошибка сохранения теста:', error);
         responseMessage.value = 'Ошибка при сохранении.';
         responseClass.value = 'error';
     }
@@ -256,10 +256,10 @@ async function loadSurvey(surveyId) {
         }
 
         selectQuestion(0);
-        responseMessage.value = 'Опрос успешно загружен.';
+        responseMessage.value = 'Тест успешно загружен.';
         responseClass.value = 'success';
     } catch (error) {
-        console.error('Ошибка загрузки опроса:', error);
+        console.error('Ошибка загрузки теста:', error);
         responseMessage.value = 'Ошибка загрузки.';
         responseClass.value = 'error';
     }

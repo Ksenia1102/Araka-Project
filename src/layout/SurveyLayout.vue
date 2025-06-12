@@ -10,16 +10,16 @@ export default {
     props: {
         // Убедитесь, что передаем эти пропсы
         questions: Array,
-        surveyTitle: String // Заголовок опроса
+        surveyTitle: String // Заголовок теста
     },
     data() {
         return {
-            localSurveyTitle: this.surveyTitle // Локальная копия заголовка опроса
+            localSurveyTitle: this.surveyTitle // Локальная копия заголовка теста
         };
     },
     methods: {
         updateSurveyTitle(newTitle) {
-            this.localSurveyTitle = newTitle; // Обновляем локальное название опроса
+            this.localSurveyTitle = newTitle; // Обновляем локальное название теста
         },
         saveSurvey() {
             // Отправляем событие saveSurvey с заголовком и вопросами в родительский компонент
