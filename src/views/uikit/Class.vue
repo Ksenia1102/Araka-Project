@@ -25,6 +25,7 @@ const studentPreview = ref([]);
 const students = ref([]);
 const showStudentTable = ref(false);
 const quickAddInput = ref('');
+const sortAlphabetically = ref(true);
 // Фейковые данные опросов
 const surveys = ref([
     { id: 1, name: 'Тест №1', link: '/uikit/chart-sur/1', completion: 85, month: 'Октябрь', isRecent: true },
@@ -98,18 +99,32 @@ function generatePreview() {
     const lines = studentInput.value.trim().split('\n');
     studentPreview.value = lines
         .map((line, index) => {
-            const [firstName, ...lastNameParts] = line.trim().split(' ');
-            if (!firstName || lastNameParts.length === 0) return null;
-            return { id: students.value.length + index + 1, firstName, lastName: lastNameParts.join(' ') };
+            const [lastName, ...firstNameParts] = line.trim().split(' ');
+            if (!lastName || firstNameParts.length === 0) return null;
+            return { id: students.value.length + index + 1, lastName, firstName: firstNameParts.join(' ') };
         })
         .filter((student) => student);
 }
 
 async function addStudentsToTable() {
     const classId = route.params.classId;
-    console.log('classId:', route.params); // Логируем значение classId
-    const studentsToAdd = studentPreview.value.map((student) => ({
-        name: `${student.firstName} ${student.lastName}`
+    console.log('classId:', route.params);
+    console.log(studentPreview.value);
+    // Сортируем студентов по фамилии перед отправкой
+    const sortedStudents = computed(() => {
+        if (!sortAlphabetically.value) return studentPreview.value;
+
+        return [...studentPreview.value].sort((a, b) => {
+            // Добавляем защиту от возможных null/undefined
+            const aName = a?.lastName || '';
+            const bName = b?.lastName || '';
+            return aName.localeCompare(bName);
+        });
+    });
+    console.log(sortAlphabetically.value);
+    console.log(sortedStudents.value);
+    const studentsToAdd = (sortAlphabetically.value ? sortedStudents.value : studentPreview.value).map((student) => ({
+        name: `${student.lastName} ${student.firstName}`
     }));
 
     if (!studentsToAdd.length) {
@@ -132,27 +147,23 @@ async function addStudentsToTable() {
             },
             {
                 headers: {
-                    Authorization: `Bearer ${token}` // Стандартный формат
+                    Authorization: `Bearer ${token}`
                 }
             }
         );
 
-        // Обновляем список студентов после добавления
         await fetchStudents();
 
-        // Очищаем предпросмотр и закрываем модальное окно
         studentPreview.value = [];
         studentInput.value = '';
         display.value = false;
-
-        // Делаем таблицу видимой
         showStudentTable.value = true;
         saveClassData();
-        // Уведомление об успехе
+
         toast.add({
             severity: 'success',
             summary: 'Успех!',
-            detail: 'Студенты успешно добавлен!',
+            detail: 'Студенты успешно добавлены!',
             life: 3000
         });
     } catch (error) {
@@ -209,8 +220,8 @@ async function quickAddStudent() {
         });
     }
 
-    const [firstName, ...lastNameParts] = quickInput.split(' ');
-    const lastName = lastNameParts.join(' ');
+    const [lastName, ...firstNameParts] = quickInput.split(' ');
+    const firstName = firstNameParts.join(' ');
 
     if (!firstName || !lastName) {
         toast.add({
@@ -222,7 +233,7 @@ async function quickAddStudent() {
         return;
     }
 
-    const studentToAdd = { name: `${firstName} ${lastName}` };
+    const studentToAdd = { name: `${lastName} ${firstName}` };
 
     try {
         const token = localStorage.getItem('authToken');
@@ -287,12 +298,13 @@ async function fetchStudents() {
 
         // Обновляем данные, включая aruco_num
         students.value = response.data.map((student) => {
-            const [firstName, ...lastNameParts] = student.name.split(' ');
+            const [lastName, ...firstNameParts] = student.name.split(' ');
+            console.log(student.name);
             return {
                 id: student.aruco_num, // Используем aruco_num как ID
                 aruco_num: student.aruco_num, // Сохраняем оригинальный номер
-                firstName: firstName || '',
-                lastName: lastNameParts.join(' ') || '',
+                lastName: lastName || '',
+                firstName: firstNameParts.join(' ') || '',
                 fullName: student.name // Сохраняем оригинальное имя
             };
         });
@@ -410,12 +422,29 @@ function proceedWithDeletion() {
     }
     closeConfirmation();
 }
+
+
+const sortedStudents = computed(() => {
+
+    if (!sortAlphabetically.value) {
+        return [...studentPreview.value]; // Возвращаем без сортировки
+    }
+    console.log([...studentPreview.value].sort((a, b) => a.lastName.localeCompare(b.lastName)));
+    return [...studentPreview.value].sort((a, b) => a.lastName.localeCompare(b.lastName));
+});
+
+// Сбрасываем в true при каждом открытии модалки
+watch(display, (isOpen) => {
+    if (isOpen) {
+        sortAlphabetically.value = true
+    }
+})
 </script>
 
 <template>
     <div class="card">
         <!-- блок с созданием учеников -->
-        <div v-if="!showStudentTable" class="start">
+        <div v-if="!showStudentTable">
             <div style="margin: 30px">
                 <h1 class="font-semibold text-4xl mb-6">
                     Вы почти закончили с классом <span style="color: #0ea5e9">{{ currentClassName }}</span>
@@ -433,20 +462,24 @@ function proceedWithDeletion() {
 
                     <!-- Вторая колонка - предпросмотр -->
                     <div class="form-column">
+                        <div class="sort-controls" style="margin-bottom: 1rem;">
+                            <Checkbox v-model="sortAlphabetically" :binary="true" inputId="sortCheckbox"/>
+                            <label for="sortCheckbox" style="margin-left: 0.5rem;">Сортировать по алфавиту</label>
+                        </div>
                         <p class="font-semibold text-xl mb-4" style="margin-left: auto; margin-right: auto; width: 10em; margin-top: 10em" v-if="!studentPreview.length">Предпросмотр пуст</p>
                         <table v-else class="preview-table">
                             <thead>
                                 <tr>
                                     <th>№</th>
-                                    <th>Имя</th>
                                     <th>Фамилия</th>
+                                    <th>Имя</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="(student, index) in studentPreview" :key="student.id">
+                                <tr v-for="(student, index) in sortedStudents" :key="student.id">
                                     <td>{{ index + 1 }}</td>
-                                    <td>{{ student.firstName }}</td>
                                     <td>{{ student.lastName }}</td>
+                                    <td>{{ student.firstName }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -465,17 +498,17 @@ function proceedWithDeletion() {
             <!-- последние проведенные тесты -->
             <div>
                 <div class="flex items-center justify-between" style="border-bottom: 1px solid var(--surface-border)">
-                    <div class="font-semibold text-xl">Последние проведенные тесты</div>
-                    <Button text severity="info" @click="goToSurveys(classId)">Смотреть все тесты</Button>
+                    <div class="font-semibold text-xl">Последние проведенные опросы</div>
+                    <Button text severity="info" @click="goToSurveys(classId)">Смотреть все опросы</Button>
                 </div>
                 <!-- если нет недавних опросов -->
-                <div v-if="recentSurveys.length === 0" class="font-semibold text-xl" style="margin: 20px; text-align: center">Недавние тесты отсутствуют</div>
+                <div v-if="recentSurveys.length === 0" class="font-semibold text-xl" style="margin: 20px; text-align: center">Недавние опросы отсутствуют</div>
                 <!-- Список последних опросов -->
                 <div v-else class="sections-list">
                     <div v-for="survey in recentSurveys" :key="survey.id" class="section-item" @click="goToSection(survey.id)">
                         <div class="survey-details">
                             <div class="survey-name">{{ survey.name }}</div>
-                            <div class="survey-completion">Средняя оценка: {{ survey.completion }}%</div>
+                            <div class="survey-completion">Завершено: {{ survey.completion }}%</div>
                         </div>
                         <i class="pi pi-fw pi-angle-right" />
                     </div>
@@ -495,7 +528,7 @@ function proceedWithDeletion() {
             </div>
 
             <!-- Таблица учеников -->
-            <DataTable ref="dataTableRef" :value="students" :paginator="true" :rows="10" dataKey="id" :rowHover="true" :filters="filters" :globalFilterFields="['firstName', 'lastName']" showGridlines>
+            <DataTable :style="{ maxWidth: '500px'}" ref="dataTableRef" :value="students" :paginator="true" :rows="30" dataKey="id" :rowHover="true" :filters="filters" :globalFilterFields="['lastName', 'firstName']" showGridlines>
                 <template #header>
                     <div class="flex justify-between items-center">
                         <!-- Поле для поиска -->
@@ -508,8 +541,8 @@ function proceedWithDeletion() {
 
                 <template #empty>Список учеников пуст</template>
                 <Column field="id" header="Номер карточки" style="width: 10%; text-align: center" />
-                <Column field="firstName" header="Имя" />
                 <Column field="lastName" header="Фамилия" />
+                <Column field="firstName" header="Имя" />
                 <!-- Последняя колонка с кнопкой -->
                 <Column style="width: 5%">
                     <!-- <template #body="slotProps">
