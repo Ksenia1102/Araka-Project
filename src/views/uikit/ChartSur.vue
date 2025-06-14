@@ -94,6 +94,17 @@ const openDownloadDialog = (testName) => {
     displayDownloadDialog.value = true;
 };
 
+const fileDownload = (blobData, fileName) => {
+    const url = window.URL.createObjectURL(blobData);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+};
+
 const closeDownloadDialog = () => {
     displayDownloadDialog.value = false;
 };
@@ -107,13 +118,34 @@ const validateBeforeDownload = (format) => {
     downloadReport(format, gradingSystem.value);
 };
 
-const downloadReport = (format, systems) => {
+const downloadReport = async (format, systems) => {
     console.log(`Скачивание отчета в формате ${format} по тесту ${selectedTestName.value}`);
     console.log('Выбранные системы оценивания:', systems);
 
-    // Логика генерации отчета
+    try {
+        const token = localStorage.getItem('authToken');
+        const systemsParam = systems.join(',');
 
-    displayDownloadDialog.value = false;
+        const response = await axios.get(`${apiUrl}/api/conducting/${classId}/${surveyId}/report`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+            params: {
+                format: format, // pdf или excel
+                gradingSystems: systemsParam
+            },
+            responseType: 'blob' // Важно для получения файла
+        });
+
+        // Скачиваем файл
+        const fileExtension = format === 'pdf' ? 'pdf' : 'xlsx';
+        const fileName = `report_${selectedTestName.value || surveyId}.${fileExtension}`;
+        fileDownload(response.data, fileName);
+
+        displayDownloadDialog.value = false;
+    } catch (error) {
+        console.error('Ошибка при скачивании отчёта:', error);
+    }
 };
 </script>
 <template>
@@ -124,7 +156,7 @@ const downloadReport = (format, systems) => {
         </div>
 
         <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Результаты: {{ currentSurvey.name }} - {{ currentSurvey.completion }}%</div>
-        <Button label="Скачать отчёт" icon="pi pi-download" severity="info" @click="openDownloadDialog(currentSurvey.name)" class="p-button-outlined mb-4"/>
+        <Button label="Скачать отчёт" icon="pi pi-download" severity="info" @click="openDownloadDialog(currentSurvey.name)" class="p-button-outlined mb-4" />
         <!-- Диалог скачивания отчета -->
         <Dialog v-model:visible="displayDownloadDialog" :style="{ width: '500px' }" :modal="true">
             <template #header>

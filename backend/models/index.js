@@ -15,7 +15,7 @@ User.hasMany(Class, { foreignKey: 'user_id' });
 Class.belongsTo(User, { foreignKey: 'user_id' });
 
 Class.hasMany(Student, { foreignKey: 'class_id' });
-Student.belongsTo(Class, { foreignKey: 'class_id' });
+Student.belongsTo(Class, { foreignKey: 'class_id', as: 'class' });
 
 // Связи для опросов и папок
 User.hasMany(Survey, { foreignKey: 'user_id' });

@@ -312,14 +312,13 @@ class ConductingService {
             taken_survey_id: takenSurveyId
         };
     }
-    // НЕ Доработано!!!(((:(
     async getSurveyResults(classId, surveyId) {
         const results = await TakenQuestionAnswer.findAll({
             include: [
                 {
                     model: TakenQuestion,
                     as: 'takenQuestion',
-                    attributes: ['question_id'], // добавь сюда нужные поля
+                    attributes: ['question_id'],
                     required: true,
                     include: [
                         {
@@ -335,7 +334,7 @@ class ConductingService {
                         {
                             model: Question,
                             as: 'question',
-                            attributes: ['correct_option'] // если есть связь
+                            attributes: ['correct_option']
                         }
                     ]
                 },
@@ -347,8 +346,6 @@ class ConductingService {
                 }
             ]
         });
-
-        // Затем в JS:
 
         const resultsWithIsCorrect = results.map((r) => {
             const correctOption = r.takenQuestion?.question?.correct_option;

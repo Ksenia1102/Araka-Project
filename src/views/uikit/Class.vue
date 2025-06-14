@@ -445,10 +445,34 @@ const selectedStudentName = ref(null);
 const gradingSystem = ref(['percent']); // Массив выбранных систем оценивания
 const gradingSystemError = ref('');
 
-const openDownloadDialog = (studentId, studentLastName, studentFirstName) => {
+const openDownloadDialog = async (classId, studentId, studentLastName, studentFirstName) => {
+    const token = localStorage.getItem('authToken');
     selectedStudentId.value = studentId;
     selectedStudentName.value = studentLastName + ' ' + studentFirstName;
-    displayDownloadDialog.value = true;
+    try {
+        const response = await axios.get(`http://localhost:59523/api/api/conducting/student/${classId}/${studentId}/report`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+            responseType: 'blob' // важный момент для загрузки файла
+        });
+
+        // Создаем ссылку для скачивания
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+
+        // Формируем имя файла, например: "Отчет_Иванов_Иван.pdf"
+        link.setAttribute('download', `Отчет_${studentLastName}_${studentFirstName}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        displayDownloadDialog.value = false; // если нужно, закрыть диалог после скачивания
+    } catch (error) {
+        console.error('Ошибка при скачивании отчёта:', error);
+        alert('Не удалось скачать отчёт. Попробуйте позже.');
+    }
 };
 
 const closeDownloadDialog = () => {
@@ -580,7 +604,7 @@ const downloadReport = (format, systems) => {
                 <!-- Колонка для скачивания отчетов -->
                 <Column style="width: 30%; text-align: center" header="Скачать отчёт">
                     <template #body="slotProps">
-                        <Button icon="pi pi-download" @click="openDownloadDialog(slotProps.data.id, slotProps.data.lastName, slotProps.data.firstName)" class="p-button-outlined p-button-success" />
+                        <Button icon="pi pi-download" @click="openDownloadDialog(route.params.classId, slotProps.data.id, slotProps.data.lastName, slotProps.data.firstName)" class="p-button-outlined p-button-success" />
                     </template>
                 </Column>
 
