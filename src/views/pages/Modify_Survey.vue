@@ -15,7 +15,7 @@ const route = useRoute();
 const surveyTitle = ref('');
 const questions = ref([]);
 const currentQuestionIndex = ref(null);
-const currentQuestionText = ref('');
+// const currentQuestionText = ref('');
 const responseMessage = ref('');
 const responseClass = ref('');
 const userId = ref(null);
@@ -40,7 +40,7 @@ function goBack() {
 
 function selectQuestion(index) {
     currentQuestionIndex.value = index;
-    currentQuestionText.value = questions.value[index].text;
+    // currentQuestionText.value = questions.value[index].text;
 }
 
 function addQuestion() {
@@ -127,15 +127,15 @@ function removeMedia() {
     fileInput.value.value = '';
 }
 
-function updateQuestionText() {
-    if (currentQuestionIndex.value !== null) {
-        questions.value[currentQuestionIndex.value].text = currentQuestionText.value;
-    }
-}
+// function updateQuestionText() {
+//     if (currentQuestionIndex.value !== null) {
+//         questions.value[currentQuestionIndex.value].text = currentQuestionText.value;
+//     }
+// }
 
 async function handleSaveSurvey(data) {
-    if (!surveyTitle.value.trim()) {
-        surveyTitle.value = data.title;
+    if (data?.title?.trim()) {
+        surveyTitle.value = data.title.trim();
     }
     await submitSurvey();
 }
@@ -306,7 +306,7 @@ onMounted(() => {
             <div class="flex items-center">
                 <span class="question-number">{{ currentQuestionIndex !== null ? currentQuestionIndex + 1 : '' }}</span>
                 <!-- <input v-model="currentQuestionText" placeholder="Введите текст вопроса" class="question-input" @input="updateQuestionText" /> -->
-                <input v-maxlength="200" v-model="questions[currentQuestionIndex].text" placeholder="Введите текст вопроса" class="question-input" @input="updateQuestionText" />
+                <input v-maxlength="200" v-model="questions[currentQuestionIndex].text" placeholder="Введите текст вопроса" class="question-input" />
             </div>
             <!-- Событие для обновления текста вопроса -->
 
