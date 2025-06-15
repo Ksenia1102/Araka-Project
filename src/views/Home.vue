@@ -78,7 +78,7 @@ function goToLogin() {
                 </div>
             </div>
 
-            <div id="hero" class="flex flex-row pt-6 px-6 lg:px-20 overflow-hidden" style="background: linear-gradient(134.789deg, #f6fcff 1%, #c2e7ff 49%, #83b2ff 100%); clip-path: ellipse(150% 87% at 93% 13%)">
+            <div id="hero" class="flex flex-row pt-6 px-6 lg:px-20 overflow-hidden" style="background: linear-gradient(134.789deg, #f6fcff 1%, #c2e7ff 49%, #83b2ff 100%); clip-path: ellipse(150% 87% at 93% 13%); justify-content: space-around">
                 <div class="mx-6 md:mx-20 mt-0 md:mt-6">
                     <h1 class="text-6xl font-bold text-gray-900 leading-tight"><span class="font-light block">Проводите опросы</span></h1>
                     <h1 class="text-6xl font-bold text-gray-900 leading-tight"><span class="font-light block">быстро и просто </span>с EduVision</h1>
