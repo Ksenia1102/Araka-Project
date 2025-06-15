@@ -1,0 +1,118 @@
+.student-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.student-name {
+    flex: 1;
+    min-width: 0; /* важно для работы text-overflow */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.aruco-num {
+    flex-shrink: 0;
+    color: #0c94e3;
+}
+
+.survey-title {
+    font-size: 2rem;
+    margin: 0.5rem 0;
+    align-items: center;
+    text-align: center;
+}
+
+.big-container {
+    padding: 1.5rem;
+    border-radius: 1.2rem;
+}
+
+.students-container {
+    background: var(--surface-card);
+    padding: 1.5rem;
+    border-radius: 1.2rem;
+}
+.students {
+    font-size: 1.2rem;
+}
+/* .image-preview,
+.question-img {
+    width: 100%;
+    min-height: 6rem;
+} */
+
+.aruco {
+    font-size: 1rem;
+}
+
+.question-img {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    padding: 1.5rem;
+    text-align: center;
+    font-weight: bold;
+    text-transform: capitalize;
+}
+
+/* .demo-container {
+    max-width: 800px;
+    margin: 0 auto;
+} */
+
+.survey-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.question-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: var(--surface-card);
+    padding: 1.5rem;
+    border-radius: 1.2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    min-height: 8rem;
+}
+
+.question-text {
+    font-size: 1.5rem;
+    margin: 0.5rem 0;
+    align-items: center;
+    text-align: center;
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    font-size: 1.5rem;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.option-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--surface-ground);
+    border-radius: 8px;
+}
+
+.option-key {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.text-sm {
+    font-size: 0.875rem;
+    color: var(--text-color-secondary);
+}
+
+/* img {
+    min-height: 45rem;
+} */

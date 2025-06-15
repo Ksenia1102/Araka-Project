@@ -1,11 +1,12 @@
 <script setup>
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, inject, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 const toast = useToast();
 // Локальное состояние поиска
 const searchQuery = ref('');
+const loading = inject('loading');
 const filters = ref({ global: { value: null, matchMode: 'contains' } });
 const apiUrl = import.meta.env.VITE_API_URL;
 // Слежение за изменением `searchQuery`
@@ -289,6 +290,7 @@ async function fetchStudents() {
     const classId = route.params.classId;
 
     try {
+        loading.show('Загрузка данных...'); // Показываем индикатор
         const token = localStorage.getItem('authToken');
         const response = await axios.get(`${apiUrl}/api/students/${classId}`, {
             headers: {
@@ -330,6 +332,8 @@ async function fetchStudents() {
         // if (error.response?.status === 401) {
         //     router.push('/login');
         // }
+    } finally {
+        loading.hide(); // Скрываем индикатор
     }
 }
 
@@ -423,9 +427,7 @@ function proceedWithDeletion() {
     closeConfirmation();
 }
 
-
 const sortedStudents = computed(() => {
-
     if (!sortAlphabetically.value) {
         return [...studentPreview.value]; // Возвращаем без сортировки
     }
@@ -436,9 +438,9 @@ const sortedStudents = computed(() => {
 // Сбрасываем в true при каждом открытии модалки
 watch(display, (isOpen) => {
     if (isOpen) {
-        sortAlphabetically.value = true
+        sortAlphabetically.value = true;
     }
-})
+});
 </script>
 
 <template>
@@ -462,9 +464,9 @@ watch(display, (isOpen) => {
 
                     <!-- Вторая колонка - предпросмотр -->
                     <div class="form-column">
-                        <div class="sort-controls" style="margin-bottom: 1rem;">
-                            <Checkbox v-model="sortAlphabetically" :binary="true" inputId="sortCheckbox"/>
-                            <label for="sortCheckbox" style="margin-left: 0.5rem;">Сортировать по алфавиту</label>
+                        <div class="sort-controls" style="margin-bottom: 1rem">
+                            <Checkbox v-model="sortAlphabetically" :binary="true" inputId="sortCheckbox" />
+                            <label for="sortCheckbox" style="margin-left: 0.5rem">Сортировать по алфавиту</label>
                         </div>
                         <p class="font-semibold text-xl mb-4" style="margin-left: auto; margin-right: auto; width: 10em; margin-top: 10em" v-if="!studentPreview.length">Предпросмотр пуст</p>
                         <table v-else class="preview-table">
@@ -528,7 +530,7 @@ watch(display, (isOpen) => {
             </div>
 
             <!-- Таблица учеников -->
-            <DataTable :style="{ maxWidth: '500px'}" ref="dataTableRef" :value="students" :paginator="true" :rows="30" dataKey="id" :rowHover="true" :filters="filters" :globalFilterFields="['lastName', 'firstName']" showGridlines>
+            <DataTable :style="{ maxWidth: '500px' }" ref="dataTableRef" :value="students" :paginator="true" :rows="30" dataKey="id" :rowHover="true" :filters="filters" :globalFilterFields="['lastName', 'firstName']" showGridlines>
                 <template #header>
                     <div class="flex justify-between items-center">
                         <!-- Поле для поиска -->
