@@ -162,6 +162,7 @@ onMounted(async () => {
         }
 
         const surveyData = response.data;
+        console.log('surveyData', surveyData);
 
         // Проверяем структуру ответа
         if (!surveyData || !surveyData.title || !surveyData.questions) {
@@ -172,6 +173,13 @@ onMounted(async () => {
         surveyName.value = surveyData.title;
         lastModified.value = surveyData.createdAt;
         questions.value = surveyData.questions;
+        questions.value.forEach((q, i) => {
+            console.log(
+                `Вопрос #${i + 1} опции в порядке:`,
+                q.options.map((o) => o.text)
+            );
+        });
+
         console.log(surveyData.questions);
         // Форматируем дату
         formattedDate.value = new Date(surveyData.createdAt).toLocaleDateString('ru-RU', {
@@ -347,7 +355,7 @@ function openNewTab() {
                                     <div class="flex flex-col md:items-end gap-8">
                                         <div class="flex flex-row-reverse md:flex-row gap-2">
                                             <!-- Для каждого варианта ответа выводим кнопку -->
-                                            <Button v-for="(option, optionIndex) in item.options" :key="option.option_id" :outlined="true" :severity="optionIndex === item.correct_option_id ? 'success' : 'secondary'">
+                                            <Button v-for="(option, optionIndex) in [...item.options].reverse()" :key="option.id" :outlined="true" :severity="item.options.length - 1 - optionIndex === item.correct_option_id ? 'success' : 'secondary'">
                                                 {{ option.text }}
                                             </Button>
                                         </div>

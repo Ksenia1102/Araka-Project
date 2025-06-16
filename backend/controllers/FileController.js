@@ -59,6 +59,9 @@ exports.deleteFile = async (req, res) => {
 
 exports.uploadImageFromForm = async (req, res) => {
     try {
+        console.log('⚠️ ЗАПРОС НА ЗАГРУЗКУ:');
+        console.log('mediaType (body):', req.body.mediaType);
+        console.log('Файл (req.file):', req.file);
         const file = req.file;
         const { mediaType } = req.body; // <-- Берём только mediaType
 

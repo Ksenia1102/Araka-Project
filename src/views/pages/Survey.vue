@@ -170,7 +170,8 @@ async function submitSurvey() {
                 formData.append('mediaType', q.mediaType);
 
                 loading.show('Отправка данных...'); // Показываем индикатор
-
+                console.log('mediaType для отправки:', q.mediaType);
+                console.log('mediaFile type:', q.mediaFile?.type);
                 const res = await axios.post(`${apiUrl}/api/upload-image`, formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',

@@ -9,9 +9,28 @@ const path = require('path');
 const VALIDATION_CONFIG = {
     MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB
     ALLOWED_TYPES: {
-        image: ['image/jpeg', 'image/png', 'image/gif'],
-        audio: ['audio/mpeg', 'audio/wav'],
-        video: ['video/mp4', 'video/quicktime']
+        image: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/svg+xml'],
+        audio: [
+            'audio/mpeg', // .mp3
+            'audio/mp3',
+            'audio/wav', // .wav
+            'audio/x-wav',
+            'audio/ogg', // .ogg
+            'audio/webm', // .webm audio
+            'audio/aac', // .aac
+            'audio/flac', // .flac
+            'audio/x-m4a', // .m4a (Apple)
+            'audio/m4a'
+        ],
+        video: [
+            'video/mp4', // .mp4
+            'video/quicktime', // .mov
+            'video/x-msvideo', // .avi
+            'video/x-matroska', // .mkv
+            'video/webm', // .webm
+            'video/3gpp', // .3gp
+            'video/ogg' // .ogv
+        ]
     }
 };
 
