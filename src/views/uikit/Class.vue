@@ -187,13 +187,13 @@ async function fetchRecentSurveys() {
                 Authorization: `Bearer ${token}`
             }
         });
-        console.log('name', response.data[0]);
+        console.log('name', response.data);
         // Преобразуем данные в нужный формат
         surveys.value = response.data.map((survey) => ({
             id: survey.survey_id,
-            name: `${survey.survey.title}`,
+            name: `${survey.title}`,
             link: `/uikit/chart-sur/${classId}/${survey.survey_id}`,
-            completion: 0, // Можно добавить реальный процент завершения, если есть такие данные
+            completion: survey.average_score || 0, // Можно добавить реальный процент завершения, если есть такие данные
             month: new Date(survey.date).toLocaleString('ru-RU', { month: 'long' }),
             isRecent: true
         }));

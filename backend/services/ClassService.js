@@ -1,4 +1,4 @@
-const { Class, Student, TakenSurvey, Survey } = require('../models');
+const { Class, Student, TakenSurvey, Survey, TakenQuestion, TakenQuestionAnswer, Question } = require('../models');
 
 class ClassService {
     static async createClass(user_id, title) {
@@ -40,18 +40,68 @@ class ClassService {
     }
 
     static async getRecentSurveys(classId, limit = 5) {
-        return await TakenSurvey.findAll({
-            where: { class_id: classId },
-            order: [['date', 'DESC']],
-            limit: limit,
-            include: [
-                {
-                    model: Survey,
-                    as: 'survey',
-                    attributes: ['title'] // Подгружаем только название опроса
-                }
-            ]
-        });
+        try {
+            const recent = await TakenSurvey.findAll({
+                where: { class_id: classId },
+                order: [['date', 'DESC']],
+                limit,
+                include: [
+                    {
+                        model: Survey,
+                        as: 'survey',
+                        attributes: ['title']
+                    },
+                    {
+                        model: TakenQuestion,
+                        as: 'takenQuestions',
+                        include: [
+                            {
+                                model: TakenQuestionAnswer,
+                                as: 'answers'
+                            },
+                            {
+                                model: Question,
+                                as: 'question',
+                                attributes: ['correct_option']
+                            }
+                        ]
+                    }
+                ]
+            });
+
+            const result = recent.map((survey) => {
+                let totalAnswers = 0;
+                let correctAnswers = 0;
+
+                (survey.takenQuestions || []).forEach((tq) => {
+                    const correctOption = tq.question?.correct_option;
+                    if (correctOption === undefined) {
+                        console.warn(`⚠️ correct_option is missing for question_id=${tq.question_id}`);
+                    }
+
+                    (tq.answers || []).forEach((answer) => {
+                        totalAnswers++;
+                        if (answer.answer === correctOption) {
+                            correctAnswers++;
+                        }
+                    });
+                });
+
+                const averageScore = totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 10000) / 100 : 0;
+
+                return {
+                    survey_id: survey.survey_id,
+                    title: survey.survey.title,
+                    date: survey.date,
+                    average_score: averageScore
+                };
+            });
+
+            return result;
+        } catch (err) {
+            console.error('❌ Ошибка при получении недавних тестов с оценками:', err);
+            throw err; // или верни []
+        }
     }
 }
 
