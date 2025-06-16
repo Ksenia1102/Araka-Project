@@ -1,13 +1,15 @@
 <script setup>
-import { useToast } from 'primevue/usetoast';
-import Select from 'primevue/select';
+import axios from 'axios';
 import MultiSelect from 'primevue/multiselect';
 import OverlayPanel from 'primevue/overlaypanel';
-import { computed, ref } from 'vue';
+import Select from 'primevue/select';
+import { useToast } from 'primevue/usetoast';
+import { computed, onMounted, ref } from 'vue';
 const toast = useToast();
 const filterPanel = ref();
 // Данные для графика
 const barData = ref(null);
+const apiUrl = import.meta.env.VITE_API_URL;
 //const barOptions = ref(null);
 // Значения для фильтров
 const multiselectValues = ref([
@@ -22,110 +24,101 @@ const dropdownValues = ref([
 // Выбранные значения фильтров
 const multiselectValue = ref([]);
 const dropdownValue = ref(null);
-// Фейковые данные с результатами тестов
-const surveyResults = ref([
-    // Тест 1
-    {
-        class_id: 1,
-        survey_id: 1,
-        results: [
-            { question_id: 1, correctAnswers: 5, totalAnswers: 10 },
-            { question_id: 2, correctAnswers: 6, totalAnswers: 10 }
-        ]
-    },
-    {
-        class_id: 2,
-        survey_id: 1,
-        results: [
-            { question_id: 1, correctAnswers: 8, totalAnswers: 12 },
-            { question_id: 2, correctAnswers: 7, totalAnswers: 12 }
-        ]
-    },
-    {
-        class_id: 3,
-        survey_id: 1,
-        results: [
-            { question_id: 1, correctAnswers: 4, totalAnswers: 8 },
-            { question_id: 2, correctAnswers: 6, totalAnswers: 8 }
-        ]
-    },
-    // Тест 2
-    {
-        class_id: 1,
-        survey_id: 2,
-        results: [
-            { question_id: 1, correctAnswers: 7, totalAnswers: 14 },
-            { question_id: 2, correctAnswers: 8, totalAnswers: 14 }
-        ]
-    },
-    {
-        class_id: 2,
-        survey_id: 2,
-        results: [
-            { question_id: 1, correctAnswers: 10, totalAnswers: 15 },
-            { question_id: 2, correctAnswers: 12, totalAnswers: 15 }
-        ]
-    },
-    {
-        class_id: 3,
-        survey_id: 2,
-        results: [
-            { question_id: 1, correctAnswers: 5, totalAnswers: 10 },
-            { question_id: 2, correctAnswers: 7, totalAnswers: 10 }
-        ]
-    }
-]);
+onMounted(() => {
+    loadFilters();
+});
 const toggleFilter = (event) => {
     filterPanel.value.toggle(event);
 };
+
+async function loadFilters() {
+    try {
+        const token = localStorage.getItem('authToken');
+        const { data } = await axios.get(`${apiUrl}/charts/filters`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
+        console.log('Полученные фильтры:', data); // <--- вот это
+
+        multiselectValues.value = data.classes;
+        dropdownValues.value = data.tests;
+    } catch (error) {
+        console.error('Ошибка загрузки фильтров:', error);
+        toast.add({
+            severity: 'error',
+            summary: 'Ошибка',
+            detail: 'Не удалось загрузить фильтры',
+            life: 3000
+        });
+    }
+}
+
 // Построение графика на основе выбранных фильтров
-function generateChart() {
-    if (!dropdownValue.value) {
+async function generateChart() {
+    const token = localStorage.getItem('authToken');
+    if (!dropdownValue.value || !multiselectValue.value.length) {
         toast.add({
             severity: 'warn',
             summary: 'Внимание',
-            detail: 'Выберите тест',
+            detail: 'Выберите тест и хотя бы один класс',
             life: 3000
         });
         return;
     }
-    if (!multiselectValue.value.length) {
-        toast.add({
-            severity: 'warn',
-            summary: 'Внимание',
-            detail: 'Выберите хотя бы один класс',
-            life: 3000
-        });
-        return;
-    }
-    // Фильтруем данные по выбранному тесту и классам
-    const filteredData = surveyResults.value.filter((data) => data.survey_id === dropdownValue.value.id && multiselectValue.value.some((classItem) => classItem.id === data.class_id));
-    // Формируем данные для графика
-    const labels = filteredData.map((data) => {
-        const classInfo = multiselectValues.value.find((c) => c.id === data.class_id);
-        return classInfo ? classInfo.name : `Класс ${data.class_id}`;
-    });
-    const data = filteredData.map((data) => {
-        const totalCorrectAnswers = data.results.reduce((sum, r) => sum + r.correctAnswers, 0);
-        const totalAnswers = data.results.reduce((sum, r) => sum + r.totalAnswers, 0);
-        return Math.round((totalCorrectAnswers / totalAnswers) * 100); // Процент правильных ответов
-    });
-    const documentStyle = getComputedStyle(document.documentElement);
-    const primaryColor = documentStyle.getPropertyValue('--p-primary-500');
-    barData.value = {
-        labels,
-        datasets: [
+    
+    try {
+        const classIds = multiselectValue.value.map(c => c.id);
+        const { data } = await axios.post(
+            `${apiUrl}/charts/stats`,
             {
+                surveyId: dropdownValue.value.id,
+                classIds
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+
+
+        const labels = classIds.map(id => {
+            const cls = multiselectValues.value.find(c => c.id === id);
+            return cls?.name || `Класс ${id}`;
+        });
+
+        const datasetData = classIds.map(id => {
+            const entry = data.find(d => d.class_id === id);
+            if (!entry || entry.totalAnswers === 0) return 0;
+            return Math.round((entry.correctAnswers / entry.totalAnswers) * 100);
+        });
+
+        const documentStyle = getComputedStyle(document.documentElement);
+        const primaryColor = documentStyle.getPropertyValue('--p-primary-500');
+
+        barData.value = {
+            labels,
+            datasets: [{
                 label: 'Процент правильных ответов',
                 backgroundColor: primaryColor,
-                borderColor: primaryColor,
-                data
-            }
-        ]
-    };
-    // Закрываем панель фильтров после применения
-    filterPanel.value.hide();
+                data: datasetData
+            }]
+        };
+
+        filterPanel.value.hide();
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Ошибка',
+            detail: 'Не удалось загрузить статистику',
+            life: 3000
+        });
+    }
 }
+
 const barOptionsComputed = computed(() => {
     const documentStyle = getComputedStyle(document.documentElement);
     const textColor = documentStyle.getPropertyValue('--text-color');
@@ -161,10 +154,10 @@ const barOptionsComputed = computed(() => {
                     color: textColorSecondary,
                     beginAtZero: true,
                     callback: function (value) {
-                        return value + '%'; // Добавляем символ процента
+                        return value + '%'; 
                     }
                 },
-                suggestedMax: 100, // Максимальное значение 100%
+                suggestedMax: 100, 
                 grid: {
                     color: surfaceBorder,
                     drawBorder: false
