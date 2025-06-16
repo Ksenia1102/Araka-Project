@@ -85,12 +85,13 @@ const fetchClassData = async () => {
                 // 'Accept': 'application/json'
             }
         });
+        console.log('response', response);
         // Нормализация данных
         classData.value = {
             id: response.data.id,
             title: response.data.title,
             user_id: response.data.user_id,
-            students: response.data.students || [],
+            students: response.data.Students || [],
             createdAt: response.data.createdAt,
             updatedAt: response.data.updatedAt
         };
@@ -229,7 +230,7 @@ onMounted(() => {
             <div class="sidebar">
                 <ul class="layout-menu" style="background-color: var(--surface-overlay); border-radius: var(--content-border-radius); padding: 0.5rem; margin: 1rem 0">
                     <template v-for="(item, i) in studentModel" :key="i">
-                        <li v-if="item.label" class="layout-menu-category font-semibold text-xl mb-4">{{ item.label }}</li>
+                        <li v-if="item.label" class="layout-menu-category font-semibold text-xl mb-4 text-center">{{ item.label }}</li>
                         <template v-for="(student, j) in item.items" :key="j">
                             <li class="layout-menuitem">
                                 <div class="layout-menuitem-link">
@@ -248,7 +249,7 @@ onMounted(() => {
                 <!-- width: 120vh; -->
                 <div v-if="quizFinished" class="flex flex-col md:flex-row">
                     <div>
-                        <div class="card" style="min-height: 80vh; text-align: center">
+                        <div class="card" style="height: 80vh; width: 120vh; margin-right: 30px; text-align: center">
                             <h2 class="font-bold mb-6 text-max" style="margin-bottom: 2em">Тест закончен!</h2>
                             <Button label="Сохранить ответы и перейти к результатам теста" severity="info" class="p-button-success text-xl" @click="$emit('goBack')"></Button>
                         </div>
@@ -296,7 +297,7 @@ onMounted(() => {
                                         <Button label="Назад" :disabled="currentQuestionIndex === 0" class="p-button-secondary" @click="prevQuestion" />
                                         <!-- Проверяем, если это последний вопрос, показываем кнопку "Завершить тест", иначе "Вперед" -->
                                         <Button label="Вперед" v-if="currentQuestionIndex < quizData.questions.length - 1" :disabled="currentQuestionIndex === quizData.questions.length - 1" class="p-button-secondary" @click="nextQuestion" />
-                                        <Button label="Завершить тест" severity="info" v-else class="p-button-success" @click="finishQuiz" />
+                                        <Button label="Завершить Демо тест" severity="info" v-else class="p-button-success" @click="finishQuiz" />
                                     </div>
                                 </div>
                             </div>

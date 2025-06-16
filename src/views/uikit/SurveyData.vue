@@ -268,7 +268,7 @@ function openNewTab() {
         <div class="card flex flex-col gap-4 w-full" style="padding: initial">
             <Toolbar>
                 <template #start>
-                    <Button label="Запустить" severity="info" icon="pi pi-caret-right" text @click="openSurvey" />
+                    <Button label="Демо тест" severity="info" icon="pi pi-caret-right" text @click="openSurvey" />
                     <Button label="Редактировать" @click="openNewTab" icon="pi pi-file-edit" severity="secondary" text />
                     <Button label="Копировать тест" icon="pi pi-clone" severity="secondary" text @click="copySurvey" />
                     <Dialog header="Выберите класс, в котором будет запущен тест" v-model:visible="displaySur" :style="{ width: '500px' }" :modal="true">
@@ -355,7 +355,7 @@ function openNewTab() {
                                     <div class="flex flex-col md:items-end gap-8">
                                         <div class="flex flex-row-reverse md:flex-row gap-2">
                                             <!-- Для каждого варианта ответа выводим кнопку -->
-                                            <Button v-for="(option, optionIndex) in [...item.options].reverse()" :key="option.id" :outlined="true" :severity="item.options.length - 1 - optionIndex === item.correct_option_id ? 'success' : 'secondary'">
+                                            <Button v-for="(option, optionIndex) in [...item.options]" :key="option.id" :outlined="true" :severity="optionIndex === item.correct_option_id ? 'success' : 'secondary'">
                                                 {{ option.text }}
                                             </Button>
                                         </div>
