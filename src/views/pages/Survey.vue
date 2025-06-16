@@ -3,12 +3,13 @@ import SurveyLayout from '@/layout/SurveyLayout.vue';
 import axios from 'axios';
 import jwtDecode from 'jwt-decode';
 import { useToast } from 'primevue/usetoast';
-import { computed, onMounted, ref } from 'vue';
+import { computed, inject, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const apiUrl = import.meta.env.VITE_API_URL;
 const toast = useToast();
 const router = useRouter();
+const loading = inject('loading');
 
 const surveyTitle = ref('');
 const questions = ref([]);
@@ -168,6 +169,8 @@ async function submitSurvey() {
                 formData.append('file', q.mediaFile);
                 formData.append('mediaType', q.mediaType);
 
+                loading.show('Отправка данных...'); // Показываем индикатор
+
                 const res = await axios.post(`${apiUrl}/api/upload-image`, formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
@@ -217,6 +220,8 @@ async function submitSurvey() {
         console.error('Ошибка при сохранении теста:', error.response?.data || error.message);
         responseMessage.value = 'Ошибка при сохранении теста.';
         responseClass.value = 'error';
+    } finally {
+        loading.hide(); // Скрываем индикатор
     }
 }
 

@@ -1,13 +1,14 @@
 <script setup>
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
-import { onMounted, ref } from 'vue';
+import { inject, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const apiUrl = import.meta.env.VITE_API_URL;
 const toast = useToast();
 const router = useRouter();
 const hasSurveys = ref(false);
+const loading = inject('loading');
 
 // const surveyTree = ref([
 //     {
@@ -44,6 +45,7 @@ async function loadUnfolderedSurveys() {
     try {
         const token = localStorage.getItem('authToken');
         console.log(token);
+        loading.show('Загрузка данных...');
         const response = await axios.get(`${apiUrl}/api/folders/unfoldered/surveys`, {
             headers: {
                 Authorization: `Bearer ${token}`
@@ -76,6 +78,8 @@ async function loadUnfolderedSurveys() {
             life: 3000
         });
         return [];
+    } finally {
+        loading.hide(); // Скрываем индикатор
     }
 }
 

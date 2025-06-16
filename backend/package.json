@@ -6,7 +6,7 @@
     "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\"",
     "build": "npm run build --prefix frontend",
     "server": "npm start --prefix backend",
-    "start": "nodemon server.js"
+    "start": "npm install && nodemon server.js"
   },
   "keywords": [],
   "author": "",
@@ -30,6 +30,7 @@
     "nodemailer": "^6.10.0",
     "nodemon": "^3.1.7",
     "openssl": "^2.0.0",
+    "pdfkit": "^0.17.1",
     "sequelize": "^6.37.6",
     "sequelize-cli": "^6.6.2",
     "ws": "^8.18.2"

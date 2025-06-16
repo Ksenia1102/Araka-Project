@@ -162,23 +162,16 @@ onMounted(() => {
 });
 </script>
 <template>
-    <div class="card" style="max-width: 500px; width: 50vw; margin: 4rem auto; text-align: center; padding: 2rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border-radius: 12px; background-color: white">
+    <div class="card" style="text-align: center">
         <h2 class="text-2xl font-semibold mb-6">Скачать android-приложение</h2>
 
         <!-- Место для фото -->
-        <div style="margin-bottom: 20px">
-            <img src="/code.svg" alt="Фото приложения" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1)" />
+        <div class="qr-block">
+            <img src="/code.svg" alt="Фото приложения" class="qr-img" />
         </div>
 
         <!-- Ссылка на скачивание -->
-        <a
-            href="https://drive.google.com/drive/folders/1a09gKrW9MjrzQg1iGu0-9KTZiJLbpAGW?usp=drive_link"
-            target="_blank"
-            rel="noopener noreferrer"
-            style="display: inline-block; padding: 10px 20px; background-color: #3b82f6; color: white; border-radius: 5px; text-decoration: none; font-weight: 600"
-        >
-            Скачать приложение
-        </a>
+        <a href="https://drive.google.com/drive/folders/1a09gKrW9MjrzQg1iGu0-9KTZiJLbpAGW?usp=drive_link" target="_blank" rel="noopener noreferrer" class="link-dow"> Скачать приложение </a>
     </div>
 </template>
 <style scoped></style>

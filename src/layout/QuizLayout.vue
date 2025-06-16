@@ -248,7 +248,7 @@ onMounted(() => {
                 <!-- width: 120vh; -->
                 <div v-if="quizFinished" class="flex flex-col md:flex-row">
                     <div>
-                        <div class="card" style="height: 80vh; width: 120vh; margin-right: 30px; text-align: center">
+                        <div class="card" style="min-height: 80vh; text-align: center">
                             <h2 class="font-bold mb-6 text-max" style="margin-bottom: 2em">Тест закончен!</h2>
                             <Button label="Сохранить ответы и перейти к результатам теста" severity="info" class="p-button-success text-xl" @click="$emit('goBack')"></Button>
                         </div>

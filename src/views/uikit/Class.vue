@@ -1,11 +1,12 @@
 <script setup>
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, inject, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 const toast = useToast();
 // Локальное состояние поиска
 const searchQuery = ref('');
+const loading = inject('loading');
 const filters = ref({ global: { value: null, matchMode: 'contains' } });
 const apiUrl = import.meta.env.VITE_API_URL;
 // Слежение за изменением `searchQuery`
@@ -289,6 +290,7 @@ async function fetchStudents() {
     const classId = route.params.classId;
 
     try {
+        loading.show('Загрузка данных...');
         const token = localStorage.getItem('authToken');
         const response = await axios.get(`${apiUrl}/api/students/${classId}`, {
             headers: {
@@ -330,6 +332,8 @@ async function fetchStudents() {
         // if (error.response?.status === 401) {
         //     router.push('/login');
         // }
+    } finally {
+        loading.hide(); // Скрываем индикатор
     }
 }
 
@@ -565,7 +569,7 @@ const downloadReport = (format, systems) => {
                     <div v-for="survey in recentSurveys" :key="survey.id" class="section-item" @click="goToSection(survey.id)">
                         <div class="survey-details">
                             <div class="survey-name">{{ survey.name }}</div>
-                            <div class="survey-completion">Завершено: {{ survey.completion }}%</div>
+                            <div class="survey-completion">Средняя оценка: {{ survey.completion }}%</div>
                         </div>
                         <i class="pi pi-fw pi-angle-right" />
                     </div>

@@ -64,7 +64,7 @@ function goToSection(className, survey) {
                         <div v-for="survey in surveyList" :key="survey.id" class="sec-item" @click="goToSection(currentClassName, survey)">
                             <div class="survey-details">
                                 <div class="survey-name">{{ survey.name }}</div>
-                                <div class="survey-completion">Пройден на: {{ survey.completion }}%</div>
+                                <div class="survey-completion">Средняя оценка: {{ survey.completion }}%</div>
                             </div>
                             <i class="pi pi-fw pi-angle-right" />
                         </div>

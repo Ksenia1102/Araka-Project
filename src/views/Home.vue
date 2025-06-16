@@ -43,7 +43,7 @@ function goToLogin() {
 
 <template>
     <div class="bg-surface-0 dark:bg-surface-900">
-        <div id="home" class="landing-wrapper overflow-hidden">
+        <div id="home" class="landing-wrapper overflow-hidden" style="height: 100vh">
             <div class="py-6 px-6 mx-0 md:mx-12 lg:mx-20 lg:px-20 flex items-center justify-between relative lg:static">
                 <a class="flex items-center" href="#">
                     <img src="/logo.svg" alt="" />
@@ -78,7 +78,7 @@ function goToLogin() {
                 </div>
             </div>
 
-            <div id="hero" class="flex flex-row pt-6 px-6 lg:px-20 overflow-hidden" style="background: linear-gradient(134.789deg, #f6fcff 1%, #c2e7ff 49%, #83b2ff 100%); clip-path: ellipse(150% 87% at 93% 13%)">
+            <div id="hero" class="flex flex-row pt-6 px-6 lg:px-20 overflow-hidden" style="background: linear-gradient(134.789deg, #f6fcff 1%, #c2e7ff 49%, #83b2ff 100%); clip-path: ellipse(150% 87% at 93% 13%); justify-content: space-around">
                 <div class="mx-6 md:mx-20 mt-0 md:mt-6">
                     <h1 class="text-6xl font-bold text-gray-900 leading-tight"><span class="font-light block">Проводите тесты</span></h1>
                     <h1 class="text-6xl font-bold text-gray-900 leading-tight"><span class="font-light block">быстро и просто </span>с EduVision</h1>
