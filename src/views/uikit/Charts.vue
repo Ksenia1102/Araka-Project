@@ -38,7 +38,7 @@ async function loadFilters() {
             headers: {
                 Authorization: `Bearer ${token}`
             }
-        })
+        });
         console.log('Полученные фильтры:', data); // <--- вот это
 
         multiselectValues.value = data.classes;
@@ -66,9 +66,9 @@ async function generateChart() {
         });
         return;
     }
-    
+
     try {
-        const classIds = multiselectValue.value.map(c => c.id);
+        const classIds = multiselectValue.value.map((c) => c.id);
         const { data } = await axios.post(
             `${apiUrl}/charts/stats`,
             {
@@ -77,21 +77,19 @@ async function generateChart() {
             },
             {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
+                    Authorization: `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             }
         );
 
-
-
-        const labels = classIds.map(id => {
-            const cls = multiselectValues.value.find(c => c.id === id);
+        const labels = classIds.map((id) => {
+            const cls = multiselectValues.value.find((c) => c.id === id);
             return cls?.name || `Класс ${id}`;
         });
 
-        const datasetData = classIds.map(id => {
-            const entry = data.find(d => d.class_id === id);
+        const datasetData = classIds.map((id) => {
+            const entry = data.find((d) => d.class_id === id);
             if (!entry || entry.totalAnswers === 0) return 0;
             return Math.round((entry.correctAnswers / entry.totalAnswers) * 100);
         });
@@ -101,11 +99,13 @@ async function generateChart() {
 
         barData.value = {
             labels,
-            datasets: [{
-                label: 'Процент правильных ответов',
-                backgroundColor: primaryColor,
-                data: datasetData
-            }]
+            datasets: [
+                {
+                    label: 'Процент правильных ответов',
+                    backgroundColor: primaryColor,
+                    data: datasetData
+                }
+            ]
         };
 
         filterPanel.value.hide();
@@ -154,10 +154,10 @@ const barOptionsComputed = computed(() => {
                     color: textColorSecondary,
                     beginAtZero: true,
                     callback: function (value) {
-                        return value + '%'; 
+                        return value + '%';
                     }
                 },
-                suggestedMax: 100, 
+                suggestedMax: 100,
                 grid: {
                     color: surfaceBorder,
                     drawBorder: false
@@ -166,6 +166,20 @@ const barOptionsComputed = computed(() => {
         }
     };
 });
+
+// Функция для обрезки выбранных значений
+const truncateSelected = (values) => {
+    const maxVisible = 2; // Сколько элементов показывать до многоточия
+    if (values.length <= maxVisible) {
+        return values.map((v) => v.name).join(', ');
+    }
+    return (
+        values
+            .slice(0, maxVisible)
+            .map((v) => v.name)
+            .join(', ') + `... (+${values.length - maxVisible})`
+    );
+};
 </script>
 
 <template>
@@ -184,7 +198,7 @@ const barOptionsComputed = computed(() => {
             </div>
 
             <!-- Выпадающая панель фильтров -->
-            <OverlayPanel ref="filterPanel" id="filter-panel" :showCloseIcon="true" :dismissable="true" style="width: 450px">
+            <OverlayPanel ref="filterPanel" id="filter-panel" :showCloseIcon="true" :dismissable="true">
                 <div class="flex flex-column items-end gap-3">
                     <!-- Фильтр по тестам -->
                     <div>
@@ -193,9 +207,19 @@ const barOptionsComputed = computed(() => {
                     </div>
 
                     <!-- Фильтр по классам -->
-                    <div>
+                    <div class="multiselect-with-ellipsis">
                         <label class="font-semibold block mb-2">По классам</label>
-                        <MultiSelect v-model="multiselectValue" :options="multiselectValues" optionLabel="name" placeholder="Выберите классы" :filter="true" class="w-full" />
+                        <MultiSelect v-model="multiselectValue" :options="multiselectValues" optionLabel="name" placeholder="Выберите классы" :filter="true" class="w-full">
+                            <!-- счетчик для выбранных значений -->
+                            <template #value="slotProps">
+                                <div v-if="slotProps.value && slotProps.value.length" class="truncated-values">
+                                    {{ truncateSelected(slotProps.value) }}
+                                </div>
+                                <span v-else>
+                                    {{ slotProps.placeholder }}
+                                </span>
+                            </template>
+                        </MultiSelect>
                     </div>
 
                     <!-- Кнопка применения фильтров -->
@@ -209,5 +233,12 @@ const barOptionsComputed = computed(() => {
         </div>
     </div>
 </template>
-
-<style scoped></style>
+<style scoped>
+.truncated-values {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: inline-block;
+}
+</style>
