@@ -219,12 +219,14 @@ async function quickAddStudent() {
             detail: 'Введите имя и фамилию ученика.',
             life: 3000
         });
+        return;
     }
 
     const [lastName, ...firstNameParts] = quickInput.split(' ');
     const firstName = firstNameParts.join(' ');
 
     if (!firstName || !lastName) {
+        console.log('firstName', 'lastName');
         toast.add({
             severity: 'warn',
             summary: 'Внимание',

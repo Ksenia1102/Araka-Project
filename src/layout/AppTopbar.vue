@@ -19,10 +19,12 @@ function goToApp() {
 
 async function downloadFile() {
     try {
+        const token = localStorage.getItem('authToken');
         const response = await fetch(`${apiUrl}/cards/download`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
             }
         });
 

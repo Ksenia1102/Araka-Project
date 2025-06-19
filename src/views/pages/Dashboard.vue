@@ -1,7 +1,7 @@
 <script setup>
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
-import { inject, onMounted, ref } from 'vue';
+import { computed, inject, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const apiUrl = import.meta.env.VITE_API_URL;
@@ -39,6 +39,7 @@ const loading = inject('loading');
 //     }
 // ]);
 const surveyTree = ref([]); // Теперь это будет заполняться из API
+const searchQuery = ref('');
 
 // Загрузка тестов без папок
 async function loadUnfolderedSurveys() {
@@ -82,6 +83,26 @@ async function loadUnfolderedSurveys() {
         loading.hide(); // Скрываем индикатор
     }
 }
+
+const filteredTree = computed(() => {
+    if (!searchQuery.value) return surveyTree.value;
+
+    const filterNode = (node) => {
+        const matches = node.data.name.toLowerCase().includes(searchQuery.value.toLowerCase());
+
+        const filteredChildren = node.children ? node.children.map(filterNode).filter(Boolean) : [];
+
+        if (matches || filteredChildren.length) {
+            return {
+                ...node,
+                children: filteredChildren
+            };
+        }
+        return null;
+    };
+
+    return surveyTree.value.map(filterNode).filter(Boolean);
+});
 
 // Загрузка данных с сервера
 async function loadSurveyTree() {
@@ -186,6 +207,7 @@ async function saveNewFolder() {
 
     try {
         const token = localStorage.getItem('authToken');
+        loading.show('Создание папки...');
         const response = await axios.post(
             `${apiUrl}/api/folders`,
             {
@@ -488,7 +510,7 @@ function onDropOnFolderWrapper(event, targetFolderNode) {
                             <InputIcon>
                                 <i class="pi pi-search" />
                             </InputIcon>
-                            <InputText placeholder="Поиск по тестам" style="width: 100%" />
+                            <InputText v-model="searchQuery" placeholder="Поиск по тестам" style="width: 100%" />
                         </IconField>
                     </template>
 
@@ -512,7 +534,7 @@ function onDropOnFolderWrapper(event, targetFolderNode) {
 
             <!-- Обёртка вокруг TreeTable для drop в "корень" -->
             <div class="tree-container" @drop="handleRootDrop" @dragover.prevent @dragenter="handleDragEnter" @dragleave="handleDragLeave" :class="{ 'drag-over': isDragOverRoot }" style="min-height: 200px; padding-bottom: 30px">
-                <TreeTable :value="surveyTree" selectionMode="single" v-model:selectionKeys="selectedNode">
+                <TreeTable :value="filteredTree" selectionMode="single" v-model:selectionKeys="selectedNode">
                     <Column field="name" header="Имя" :expander="true">
                         <template #body="slotProps">
                             <div

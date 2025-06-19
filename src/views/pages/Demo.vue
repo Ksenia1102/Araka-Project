@@ -151,7 +151,6 @@ onUnmounted(() => {
 
 <template>
     <div class="card p-4" style="display: contents">
-        Add commentMore actions
         <div v-if="isLoading" class="flex justify-content-center">
             <ProgressSpinner />
         </div>
@@ -180,35 +179,30 @@ onUnmounted(() => {
                         </li>
                     </div>
                 </ul>
-                Add commentMore actions
             </div>
 
-            <!-- Основная колонка: Вопрос -->Add commentMore actions
+            <!-- Основная колонка: Вопрос -->
             <div class="w-4/5 p-6 overflow-y-auto bg-gray-50 big-container">
                 <div class="survey-header text-center mb-6">
                     <h2 class="font-bold survey-title">{{ surveyInfo.title }}</h2>
                 </div>
                 <div class="question-container" style="min-height: 80vh">
-                    Add commentMore actions
                     <h3 class="font-semibold text-xl mb-2">Текущий вопрос:</h3>
                     <div class="question-img">
                         <h2 class="question-text mb-4" style="font-size: 2.2em">{{ currentQuestion.question_text }}</h2>
 
                         <div v-if="surveyInfo.mediaUrl" class="image-preview">
-                            Add commentMore actions
                             <img v-if="surveyInfo.mediaType === 'image'" :src="surveyInfo.mediaUrl" class="uploaded-image" />
                             <video v-else-if="surveyInfo.mediaType === 'video'" :src="surveyInfo.mediaUrl" controls class="uploaded-image" />
                         </div>
                     </div>
                     <div class="options-grid">
-                        Add commentMore actions
                         <div v-for="(option, key) in currentQuestion.options" :key="key" class="option-item">
                             <span class="option-key">{{ key }}:</span>
                             <span class="option-text">{{ option }}</span>
                         </div>
                     </div>
                 </div>
-                Add commentMore actions
             </div>
         </div>
     </div>

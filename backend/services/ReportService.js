@@ -1,11 +1,9 @@
-const { TakenQuestionAnswer, TakenQuestion, TakenSurvey, Question, Student, Class, Survey } = require('../models');
+const { TakenQuestionAnswer, TakenQuestion, TakenSurvey, Question, Student, Class, Survey, Option } = require('../models');
 
 exports.getDataForReport = async (classId, surveyId, gradingSystems) => {
-    // Получаем название класса
     const classData = await Class.findByPk(classId);
     if (!classData) throw new Error(`Класс с id=${classId} не найден`);
 
-    // Получаем название теста
     const surveyData = await Survey.findByPk(surveyId);
     if (!surveyData) throw new Error(`Тест с id=${surveyId} не найден`);
 
@@ -39,10 +37,22 @@ exports.getDataForReport = async (classId, surveyId, gradingSystems) => {
     });
 
     const studentsMap = new Map();
+    const correctAnswersByIndex = [];
+
+    // Временное хранилище правильных ответов по порядку вопросов
+    const questionOrderMap = new Map();
+    let questionIndex = 0;
 
     for (const entry of answers) {
         const studentId = entry.student.id;
-        const isCorrect = entry.answer === entry.takenQuestion.question.correct_option;
+        const questionId = entry.takenQuestion.question_id;
+        const correctAnswer = entry.takenQuestion.question.correct_option;
+        const isCorrect = entry.answer === correctAnswer;
+
+        if (!questionOrderMap.has(questionId)) {
+            questionOrderMap.set(questionId, questionIndex++);
+            correctAnswersByIndex.push(correctAnswer);
+        }
 
         if (!studentsMap.has(studentId)) {
             studentsMap.set(studentId, {
@@ -54,10 +64,122 @@ exports.getDataForReport = async (classId, surveyId, gradingSystems) => {
 
         studentsMap.get(studentId).answers.push(isCorrect);
     }
+
     return {
-        class_name: classData.title, // <- настоящее название класса
+        class_name: classData.title,
         date: new Date().toLocaleDateString('ru-RU'),
-        test_name: surveyData.title, // <- настоящее название теста
+        test_name: surveyData.title,
+        grading_system: gradingSystems,
+        students_data: [...studentsMap.values()],
+        correct_answers: correctAnswersByIndex
+    };
+};
+
+exports.getDataForExcelReport = async (classId, surveyId, gradingSystems) => {
+    const classData = await Class.findByPk(classId, { attributes: ['title'] });
+    if (!classData) throw new Error(`Класс с id=${classId} не найден`);
+
+    const surveyData = await Survey.findByPk(surveyId, { attributes: ['title'] });
+    if (!surveyData) throw new Error(`Тест с id=${surveyId} не найден`);
+
+    // Получаем список вопросов вместе с вариантами ответов (Options)
+    const questions = await Question.findAll({
+        where: { survey_id: surveyId },
+        order: [['id', 'ASC']],
+        include: [
+            {
+                model: Option, // Предполагаю, что у тебя есть модель Option
+                as: 'options', // Связь: Question.hasMany(Option, {as:'options'})
+                attributes: ['text'],
+                order: [['id', 'ASC']]
+            }
+        ]
+    });
+
+    const questionMap = new Map();
+    const correctAnswers = [];
+    const questionTexts = [];
+
+    questions.forEach((q, idx) => {
+        // Собираем массив текстов вариантов
+        const optionTexts = q.options.map((opt) => opt.text);
+        questionMap.set(q.id, {
+            correct_option: q.correct_option,
+            index: idx,
+            options: optionTexts
+        });
+        correctAnswers.push(optionTexts[q.correct_option] || '');
+        questionTexts.push(q.text || `Вопрос ${idx + 1}`);
+    });
+
+    // Получаем ответы студентов
+    const answers = await TakenQuestionAnswer.findAll({
+        include: [
+            {
+                model: TakenQuestion,
+                as: 'takenQuestion',
+                required: true,
+                include: [
+                    {
+                        model: TakenSurvey,
+                        as: 'takenSurvey',
+                        where: { survey_id: surveyId, class_id: classId },
+                        attributes: []
+                    },
+                    {
+                        model: Question,
+                        as: 'question',
+                        attributes: ['id']
+                    }
+                ]
+            },
+            {
+                model: Student,
+                as: 'student',
+                required: true,
+                attributes: ['id', 'name', 'class_id', 'aruco_num']
+            }
+        ]
+    });
+
+    const studentsMap = new Map();
+
+    for (const entry of answers) {
+        const student = entry.student;
+        const takenQuestion = entry.takenQuestion;
+        const question = takenQuestion?.question;
+
+        if (!student || !takenQuestion || !question) continue;
+
+        const questionId = question.id;
+        const questionMeta = questionMap.get(questionId);
+        if (!questionMeta) continue;
+
+        const studentId = student.id;
+
+        // Здесь answer - индекс выбранного варианта, надо получить текст
+        const selectedIndex = parseInt(entry.answer);
+        const answerText = questionMeta.options[selectedIndex] || '—';
+
+        if (!studentsMap.has(studentId)) {
+            studentsMap.set(studentId, {
+                name: student.name,
+                class: classData.title,
+                aruco_num: student.aruco_num?.toString() || studentId.toString(),
+                date: new Date().toLocaleDateString('ru-RU'),
+                answers: Array(questions.length).fill('')
+            });
+        }
+
+        studentsMap.get(studentId).answers[questionMeta.index] = answerText;
+    }
+
+    return {
+        class_name: classData.title,
+        date: new Date().toLocaleDateString('ru-RU'),
+        test_name: surveyData.title,
+        questions: questionTexts,
+        correct_answers: correctAnswers,
         grading_system: gradingSystems,
         students_data: [...studentsMap.values()]
     };
