@@ -477,7 +477,12 @@ const openDownloadDialog = async (classId, studentId, studentLastName, studentFi
         displayDownloadDialog.value = false; // если нужно, закрыть диалог после скачивания
     } catch (error) {
         console.error('Ошибка при скачивании отчёта:', error);
-        alert('Не удалось скачать отчёт. Попробуйте позже.');
+        toast.add({
+            severity: 'warn',
+            summary: 'Внимание',
+            detail: 'Не удалось скачать отчет.',
+            life: 3000
+        });
     }
 };
 
