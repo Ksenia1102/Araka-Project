@@ -56,7 +56,7 @@ class ConductingService {
                 order: [['id', 'ASC']]
             });
 
-            const activeSurvey = await this.getActiveSurvey();
+            const activeSurvey = await this.getActiveSurvey(userId);
             if (!activeSurvey) {
                 console.log('Активный тест не найден');
                 return null;
@@ -144,7 +144,7 @@ class ConductingService {
         return formatReturnData(takenSurvey, lastTakenQuestion, question);
     }
 
-    async saveAnswers(takenSurveyId, takenQuestionId, answers) {
+    async saveAnswers(userId, takenSurveyId, takenQuestionId, answers) {
         // Проверяем существование takenQuestion
         const takenQuestion = await TakenQuestion.findByPk(takenQuestionId, {
             include: [
@@ -201,7 +201,7 @@ class ConductingService {
             })
         );
 
-        const activeSurvey = await this.getActiveSurvey();
+        const activeSurvey = await this.getActiveSurvey(userId);
         if (!activeSurvey) {
             console.log('Активный тест не найден');
             return null;
@@ -368,10 +368,25 @@ class ConductingService {
         await TakenSurvey.update({ is_active: true }, { where: { id: takenSurveyId } });
     }
 
-    async getActiveSurvey() {
+    async getActiveSurvey(userId) {
+        // Получаем ID классов, к которым у пользователя есть доступ
+        const userClassIds = (
+            await Class.findAll({
+                where: { user_id: userId },
+                attributes: ['id']
+            })
+        ).map((c) => c.id);
+
+        if (userClassIds.length === 0) {
+            return null; // У пользователя нет классов
+        }
+
+        // Ищем активный TakenSurvey только в классах пользователя
         return await TakenSurvey.findOne({
-            where: { is_active: true },
-            attributes: ['id', 'survey_id', 'class_id'], // Уже есть class_id
+            where: {
+                is_active: true,
+                class_id: userClassIds // Только классы пользователя
+            },
             include: [
                 {
                     model: Survey,
@@ -386,7 +401,6 @@ class ConductingService {
             ]
         });
     }
-
     async getClassStudents(classId) {
         return await Student.findAll({
             where: { class_id: classId },

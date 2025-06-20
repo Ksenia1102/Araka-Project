@@ -11,6 +11,16 @@ const surveyId = route.params.surveyId;
 console.log(surveyId);
 const questionIds = ref([]);
 
+const convertAnswerToLetter = (answer) => {
+    const letterMap = {
+        0: 'А',
+        1: 'Б',
+        2: 'В',
+        3: 'Г'
+    };
+    return letterMap[answer] || answer; // Если ответ не 0-3, вернём как есть
+};
+
 // Данные тестов из query
 const surveys = ref([]);
 if (route.query.surveys) {
@@ -219,7 +229,7 @@ const downloadReport = async (format, systems) => {
                             backgroundColor: slotProps.data.answers[questionId].isCorrect ? 'var(--p-primary-color)' : '#F44336'
                         }"
                     >
-                        {{ slotProps.data.answers[questionId].studentAnswer }}
+                        {{ convertAnswerToLetter(slotProps.data.answers[questionId].studentAnswer) }}
                     </span>
                 </template>
             </Column>

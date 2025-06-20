@@ -41,6 +41,10 @@ const loading = inject('loading');
 const surveyTree = ref([]); // Теперь это будет заполняться из API
 const searchQuery = ref('');
 
+function openNewTab() {
+    router.push(`/pages/survey`);
+}
+
 // Загрузка тестов без папок
 async function loadUnfolderedSurveys() {
     try {
@@ -468,7 +472,7 @@ function onDropOnFolderWrapper(event, targetFolderNode) {
             <div style="margin: 30px">
                 <h1 class="font-semibold text-4xl mb-6">У вас еще нет тестов в библиотеке</h1>
                 <p class="font-semibold text-xl mb-4">Создайте свой первый тест</p>
-                <Button label="Создать тест" severity="info" icon="pi pi-plus" />
+                <Button label="Создать тест" @click="openNewTab" severity="info" icon="pi pi-plus" />
             </div>
         </div>
 

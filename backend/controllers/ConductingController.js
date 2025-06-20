@@ -173,7 +173,7 @@ class ConductingController {
             this.validate(req);
 
             const { taken_survey_id, taken_question_id, answers } = req.body;
-            const result = await ConductingService.saveAnswers(taken_survey_id, taken_question_id, answers);
+            const result = await ConductingService.saveAnswers(req.user.id, taken_survey_id, taken_question_id, answers);
 
             if (result.status === 'survey_completed') {
                 this.sendWsAndDeleteSession(req.app, req.user.id, result.frontendData);

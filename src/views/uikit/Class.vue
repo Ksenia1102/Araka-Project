@@ -446,61 +446,73 @@ watch(display, (isOpen) => {
 
 const displayDownloadDialog = ref(false);
 const selectedStudentId = ref(null);
+const selectedClassId = ref(null);
 const selectedStudentName = ref(null);
 
 const gradingSystem = ref(['percent']); // Массив выбранных систем оценивания
 const gradingSystemError = ref('');
 
-const openDownloadDialog = async (classId, studentId, studentLastName, studentFirstName) => {
-    const token = localStorage.getItem('authToken');
+const openDownloadDialog = (classId, studentId, studentLastName, studentFirstName) => {
+    selectedClassId.value = classId;
     selectedStudentId.value = studentId;
-    selectedStudentName.value = studentLastName + ' ' + studentFirstName;
-    try {
-        const response = await axios.get(`http://localhost:59523/api/api/conducting/student/${classId}/${studentId}/report`, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            },
-            responseType: 'blob' // важный момент для загрузки файла
-        });
-
-        // Создаем ссылку для скачивания
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-
-        // Формируем имя файла, например: "Отчет_Иванов_Иван.pdf"
-        link.setAttribute('download', `Отчет_${studentLastName}_${studentFirstName}.pdf`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        displayDownloadDialog.value = false; // если нужно, закрыть диалог после скачивания
-    } catch (error) {
-        console.error('Ошибка при скачивании отчёта:', error);
-        alert('Не удалось скачать отчёт. Попробуйте позже.');
-    }
+    selectedStudentName.value = `${studentLastName} ${studentFirstName}`;
+    displayDownloadDialog.value = true; // Показываем диалог
 };
 
 const closeDownloadDialog = () => {
     displayDownloadDialog.value = false;
 };
 
-const validateBeforeDownload = (format) => {
+const validateBeforeDownload = (format, classId, studentId, studentLastName, studentFirstName) => {
     if (gradingSystem.value.length === 0) {
         gradingSystemError.value = 'Выберите хотя бы одну систему оценивания';
         return;
     }
     gradingSystemError.value = '';
-    downloadReport(format, gradingSystem.value);
+    downloadReport(format, gradingSystem.value, classId, studentId, studentLastName, studentFirstName);
 };
 
-const downloadReport = (format, systems) => {
+const downloadReport = async (format, systems) => {
     console.log(`Скачивание отчета в формате ${format} для ученика ${selectedStudentId.value}`);
     console.log('Выбранные системы оценивания:', systems);
+    if (!gradingSystem.value.length) {
+        gradingSystemError.value = 'Выберите систему оценивания!';
+        return;
+    }
 
-    // Логика генерации отчета
+    const token = localStorage.getItem('authToken');
+    // selectedStudentId.value = studentId;
+    // selectedStudentName.value = studentLastName + ' ' + studentFirstName;
+    try {
+        const response = await axios.get(`${apiUrl}/api/conducting/student/${selectedClassId.value}/${selectedStudentId.value}/report?format=${format}`, {
+            headers: { Authorization: `Bearer ${token}` },
+            params: {
+                format: format, // pdf или excel
+                gradingSystems: systems.join(',')
+            },
+            responseType: 'blob'
+        });
 
-    displayDownloadDialog.value = false;
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        const fileExtension = format === 'pdf' ? 'pdf' : 'xlsx';
+        const fileName = `report_${selectedStudentName.value || selectedStudentId.value}.${fileExtension}`;
+        link.setAttribute('download', fileName);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        displayDownloadDialog.value = false; // Закрываем диалог после скачивания
+    } catch (error) {
+        console.error('Ошибка при скачивании:', error);
+        toast.add({
+            severity: 'error',
+            summary: 'Ошибка',
+            detail: 'Не удалось скачать отчёт',
+            life: 3000
+        });
+    }
 };
 </script>
 
@@ -625,7 +637,8 @@ const downloadReport = (format, systems) => {
             <Dialog v-model:visible="displayDownloadDialog" :style="{ width: '500px' }" :modal="true">
                 <template #header>
                     <h1 style="font-size: 17px; font-weight: 600">
-                        Скачать отчёт для ученика <b>{{ selectedStudentName }}</b>
+                        Скачать отчёт для ученика<br />
+                        <b>{{ selectedStudentName }}</b>
                     </h1>
                 </template>
                 <!-- Поле выбора системы оценивания -->

@@ -1,142 +1,112 @@
 const ExcelJS = require('exceljs');
 
-async function createStudentReport() {
-  const workbook = new ExcelJS.Workbook();
-  const sheet = workbook.addWorksheet('Отчёт по ученику');
+async function generateStudentExcelReport({ student_name, class_name, date, students_data, grading_system }) {
+    console.log('grading_system');
+    console.log('grading_system', grading_system);
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Отчёт по ученику');
 
-  const headers = [
-    "Название теста", "Класс", "Дата",
-    "Вопрос 1", "Вопрос 2", "Вопрос 3", "Вопрос 4",
-    "Итог %", "Оценка"
-  ];
+    // Определяем максимальное количество вопросов среди всех тестов
+    const maxQuestions = Math.max(...students_data.map((test) => test.answers.length));
 
-  const headerRow = sheet.addRow(headers);
-  headerRow.eachCell(cell => {
-    cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
-    cell.alignment = { vertical: 'middle', horizontal: 'center' };
-    cell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FF0EA5E9' }
+    // Формируем заголовки
+    const headers = ['Название теста', 'Класс', 'Дата'];
+    for (let i = 1; i <= maxQuestions; i++) {
+        headers.push(`Вопрос ${i}`);
+    }
+    if (grading_system.includes('percent')) headers.push('Итог %');
+    if (grading_system.includes('five-point')) headers.push('Оценка');
+
+    // Стили для заголовков
+    const headerRow = sheet.addRow(headers);
+    headerRow.eachCell((cell) => {
+        cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0EA5E9' } };
+    });
+
+    // Функции для расчета
+    const calculateGrade = (percent) => {
+        if (percent >= 90) return 5;
+        if (percent >= 70) return 4;
+        if (percent >= 50) return 3;
+        return 2;
     };
-  });
 
-  // Правильные ответы по каждому тесту
-  const correctAnswersByTest = {
-    "Тест по физике": ["Париж", "4", "синий", "Зеленый"],
-    "Тест по географии": ["Париж", "4", "голубой", "Зеленый"],
-    "Тест по математике": ["4", "4", "3", "2"]
-  };
+    // Заполняем данные по тестам
+    students_data.forEach((test) => {
+        // Считаем правильные ответы
+        const correctAnswers = test.answers.filter((answer, index) => {
+            return answer?.toString().toLowerCase() === test.correct_answers?.[index]?.toString().toLowerCase();
+        }).length;
 
-  // Данные студентов
-  const students = [
-    {
-      testName: "Тест по физике",
-      class: "7А",
-      date: "2025-06-17",
-      answers: ["Париж", "4", "синий", "Зеленый"]
-    },
-    {
-      testName: "Тест по географии",
-      class: "7А",
-      date: "2025-06-17",
-      answers: ["Лондон", "5", "голубой", "Красный"]
-    },
-    {
-      testName: "Тест по математике",
-      class: "7А",
-      date: "2025-06-17",
-      answers: ["5", "4", "3", "2"]
-    },
-  ];
+        const totalQuestions = test.answers.length;
+        const percent = Math.round((correctAnswers / totalQuestions) * 100);
+        const grade = calculateGrade(percent);
 
-  // Для статистики
-  const stats = {};
+        // Формируем строку с данными
+        const rowData = [test.name, class_name, test.date];
 
-  function getColorByPercent(percent) {
-    if (percent >= 86) return 'FF008000';
+        // Добавляем ответы с цветовой маркировкой
+        test.answers.forEach((answer, i) => {
+            const correctAnswer = test.correct_answers?.[i];
+            const isCorrect = answer?.toString().toLowerCase() === correctAnswer?.toString().toLowerCase();
+            rowData.push(answer ?? 'Нет ответа');
+        });
+
+        // Заполняем оставшиеся вопросы пустыми значениями
+        for (let i = test.answers.length; i < maxQuestions; i++) {
+            rowData.push('');
+        }
+
+        // Добавляем итоговые колонки
+        if (grading_system.includes('percent')) rowData.push(`${percent}%`);
+        if (grading_system.includes('five-point')) rowData.push(grade);
+
+        const row = sheet.addRow(rowData);
+
+        // Раскрашиваем ячейки с ответами
+        test.answers.forEach((answer, i) => {
+            const cell = row.getCell(4 + i); // 4 потому что первые 3 колонки - тест, класс, дата
+            const correctAnswer = test.correct_answers?.[i];
+            const isCorrect = answer?.toString().toLowerCase() === correctAnswer?.toString().toLowerCase();
+
+            cell.font = {
+                color: { argb: isCorrect ? 'FF51C388' : 'FFBD4141' },
+                bold: true
+            };
+        });
+
+        // Раскрашиваем итоговые колонки
+        const resultColumnIndex = 3 + maxQuestions;
+        if (grading_system.includes('percent')) {
+            row.getCell(resultColumnIndex + 1).font = {
+                color: { argb: getColorByPercent(percent) },
+                bold: true
+            };
+        }
+        if (grading_system.includes('five-point')) {
+            row.getCell(resultColumnIndex + 2).font = {
+                color: { argb: getColorByPercent(percent) },
+                bold: true
+            };
+        }
+    });
+
+    // Настройка ширины столбцов
+    sheet.columns.forEach((column, index) => {
+        column.width = index < 3 ? 20 : index < 3 + maxQuestions ? 25 : 15;
+    });
+
+    return await workbook.xlsx.writeBuffer();
+}
+
+// Добавляем функцию для цвета по проценту
+function getColorByPercent(percent) {
+    if (percent >= 90) return 'FF008000';
     if (percent >= 70) return 'FF4CAF50';
     if (percent >= 50) return 'FFFFA500';
     return 'FFFF0000';
-  }
-
-  for (const student of students) {
-    const correctAnswers = correctAnswersByTest[student.testName];
-    if (!correctAnswers) continue;
-
-    let correctCount = 0;
-    const rowData = [
-      student.testName,
-      student.class,
-      student.date,
-      ...student.answers,
-    ];
-
-    student.answers.forEach((ans, i) => {
-      if (ans.toLowerCase() === correctAnswers[i].toLowerCase()) {
-        correctCount++;
-      }
-    });
-
-    const percent = Math.round((correctCount / correctAnswers.length) * 100);
-    const grade = percent >= 90 ? 5 : percent >= 70 ? 4 : percent >= 50 ? 3 : 2;
-
-    rowData.push(`${percent}%`);
-    rowData.push(grade);
-
-    const row = sheet.addRow(rowData);
-
-    // Покраска ответов
-    student.answers.forEach((ans, i) => {
-      const cell = row.getCell(4 + i); // Вопросы начинаются с 4-й ячейки
-      if (ans.toLowerCase() === correctAnswers[i].toLowerCase()) {
-        cell.font = { color: { argb: 'FF51C388' }, bold: true };
-      } else {
-        cell.font = { color: { argb: 'FFBD4141' }, bold: true };
-      }
-    });
-
-    // Покраска процента и оценки
-    row.getCell(headers.length - 1).font = { color: { argb: getColorByPercent(percent) }, bold: true };
-    row.getCell(headers.length).font = { color: { argb: getColorByPercent(percent) }, bold: true };
-
-    // Сбор статистики
-    if (!stats[student.testName]) {
-      stats[student.testName] = { count: 0, totalPercent: 0, totalGrade: 0 };
-    }
-
-    stats[student.testName].count++;
-    stats[student.testName].totalPercent += percent;
-    stats[student.testName].totalGrade += grade;
-  }
-
-  // Добавляем лист статистики
-  const statsSheet = workbook.addWorksheet('Статистика');
-
-  const statsHeaders = ["Название теста", "Средний % правильных ответов", "Средняя оценка"];
-  const statsHeaderRow = statsSheet.addRow(statsHeaders);
-  statsHeaderRow.eachCell(cell => {
-    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    cell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FF0EA5E9' }
-    };
-    cell.alignment = { vertical: 'middle', horizontal: 'center' };
-  });
-
-  // Добавление строк статистики с правильной окраской
-  for (const [testName, data] of Object.entries(stats)) {
-    const avgPercent = Math.round(data.totalPercent / data.count);
-    const avgGrade = Math.round(data.totalGrade / data.count);
-
-    const row = statsSheet.addRow([testName, `${avgPercent}%`, avgGrade]);
-
-    const color = getColorByPercent(avgPercent); // Раскраска по среднему проценту
-    row.getCell(2).font = { color: { argb: color }, bold: true }; // средний %
-    row.getCell(3).font = { color: { argb: color }, bold: true }; // средняя оценка
-  }
-  await workbook.xlsx.writeFile('Отчет_по_студенту_excel.xlsx');
 }
 
-createStudentReport();
+module.exports = { generateStudentExcelReport };

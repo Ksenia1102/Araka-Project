@@ -185,7 +185,7 @@ exports.getDataForExcelReport = async (classId, surveyId, gradingSystems) => {
     };
 };
 
-exports.getDataForStudentReport = async (classId, studentId) => {
+exports.getDataForStudentPdfReport = async (classId, studentId, gradingSystems) => {
     const student = await Student.findOne({
         where: {
             aruco_num: studentId,
@@ -247,17 +247,124 @@ exports.getDataForStudentReport = async (classId, studentId) => {
 
         testsMap.get(testId).answers.push(isCorrect);
     }
-    console.log({
+
+    return {
         student_name: student.name,
         class_name: student.class.title,
         date: new Date().toLocaleDateString('ru-RU'),
-        students_data: [...testsMap.values()]
+        students_data: [...testsMap.values()],
+        grading_system: gradingSystems
+    };
+};
+
+exports.getDataForStudentExcelReport = async (classId, studentId, gradingSystems) => {
+    const student = await Student.findOne({
+        where: {
+            aruco_num: studentId,
+            class_id: classId
+        },
+        include: [{ model: Class, as: 'class', attributes: ['title'] }]
+    });
+
+    if (!student) throw new Error('Студент не найден');
+
+    const answers = await TakenQuestionAnswer.findAll({
+        where: { student_id: student.id },
+        include: [
+            {
+                model: TakenQuestion,
+                as: 'takenQuestion',
+                include: [
+                    {
+                        model: Question,
+                        as: 'question',
+                        attributes: ['id', 'correct_option'],
+                        include: [
+                            {
+                                model: Option,
+                                as: 'options',
+                                attributes: ['text']
+                            }
+                        ]
+                    },
+                    {
+                        model: TakenSurvey,
+                        as: 'takenSurvey',
+                        include: [
+                            {
+                                model: Survey,
+                                as: 'survey',
+                                attributes: ['title']
+                            }
+                        ],
+                        attributes: ['date', 'survey_id']
+                    }
+                ]
+            }
+        ],
+        order: [[{ model: TakenQuestion, as: 'takenQuestion' }, { model: TakenSurvey, as: 'takenSurvey' }, 'date', 'DESC']]
+    });
+
+    if (!answers.length) {
+        throw new Error('У студента нет пройденных тестов');
+    }
+
+    // Группируем ответы по тестам
+    const testsMap = new Map();
+
+    answers.forEach((entry) => {
+        const testId = entry.takenQuestion.takenSurvey.survey_id;
+        const question = entry.takenQuestion.question;
+
+        // Получаем текст выбранного ответа
+        const selectedOptionIndex = parseInt(entry.answer);
+        const selectedAnswer = question.options[selectedOptionIndex]?.text || 'Нет ответа';
+
+        // Получаем текст правильного ответа
+        const correctAnswer = question.options[question.correct_option]?.text || '';
+
+        if (!testsMap.has(testId)) {
+            testsMap.set(testId, {
+                name: entry.takenQuestion.takenSurvey.survey.title,
+                date: new Date(entry.takenQuestion.takenSurvey.date).toLocaleDateString('ru-RU'),
+                answers: [],
+                correct_answers: [] // Добавляем массив правильных ответов
+            });
+        }
+
+        testsMap.get(testId).answers.push(selectedAnswer);
+        testsMap.get(testId).correct_answers.push(correctAnswer);
+    });
+
+    // Преобразуем в массив и добавляем расчеты
+    const testsData = Array.from(testsMap.values()).map((test) => {
+        const correctCount = test.answers.reduce((count, answer, index) => {
+            return answer === test.correct_answers[index] ? count + 1 : count;
+        }, 0);
+
+        const totalQuestions = test.answers.length;
+        const percent = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+
+        return {
+            ...test,
+            correctCount,
+            totalQuestions,
+            percent,
+            grade: convertToFivePoint(percent)
+        };
     });
 
     return {
         student_name: student.name,
         class_name: student.class.title,
         date: new Date().toLocaleDateString('ru-RU'),
-        students_data: [...testsMap.values()]
+        students_data: testsData,
+        grading_system: gradingSystems
     };
 };
+function convertToFivePoint(percent) {
+    if (percent >= 90) return 5;
+    if (percent >= 70) return 4;
+    if (percent >= 50) return 3;
+    return 2;
+}
