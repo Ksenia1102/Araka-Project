@@ -219,7 +219,6 @@ class SurveyService {
 
             // 3. Обрабатываем каждый вопрос
             const incomingQuestionIds = [];
-            console.log('question', questions);
             for (const question of questions) {
                 const { id: questionId, text, correct_option, options, file_url, file_folder, file_name, file_type } = question;
 
@@ -235,6 +234,39 @@ class SurveyService {
                     uploadedFileName = files[questionId].fileName;
                     uploadedFileType = files[questionId].fileType;
                 }
+
+                const updateData = {
+                    text: question.text,
+                    correct_option: question.correct_option
+                };
+                console.log('question.file_url', question.file_url);
+                // Если file_url === null → удаляем файл
+                if (question.file_url === null) {
+                    updateData.file_url = null;
+                    updateData.file_folder = null;
+                    updateData.file_name = null;
+                    updateData.file_type = null;
+                }
+                // Если file_url === undefined → не трогаем файл
+                else if (question.file_url === undefined) {
+                    updateData.file_url = question.file_url;
+                    updateData.file_folder = question.file_folder;
+                    updateData.file_name = question.file_name;
+                    updateData.file_type = question.file_type;
+                } else {
+                    if (questionId) {
+                        const existingQuestion = await Question.findOne({
+                            where: { id: questionId },
+                            transaction: t
+                        });
+
+                        if (!existingQuestion) throw new Error(`Question ${questionId} not found`);
+                        updateData.file_url = file_url;
+                        updateData.file_folder = file_folder;
+                        updateData.file_name = file_name;
+                        updateData.file_type = file_type;
+                    }
+                }
                 console.log('questionId', questionId);
                 if (questionId) {
                     // UPDATE EXISTING QUESTION
@@ -246,21 +278,13 @@ class SurveyService {
 
                     if (!existingQuestion) throw new Error(`Question ${questionId} not found`);
 
-                    const [affected] = await Question.update(
-                        {
-                            text,
-                            correct_option,
-                            file_url: uploadedFileUrl ?? existingQuestion.file_url,
-                            file_folder: uploadedFileFolder ?? existingQuestion.file_folder,
-                            file_name: uploadedFileName ?? existingQuestion.file_name,
-                            file_type: uploadedFileType ?? existingQuestion.file_type
-                        },
-                        {
-                            where: { id: questionId },
-                            transaction: t
-                        }
-                    );
-                    console.log('affected:', affected);
+                    // Удаляем старый файл, если file_url явно указан как null
+                    // if (file_url === null && existingQuestion.file_url) {
+                    //     await s3Service.deleteFile(existingQuestion.file_folder, existingQuestion.file_name);
+                    // }
+                    console.log('updateData', updateData);
+
+                    await Question.update(updateData, { where: { id: question.id } });
                     // if (affected === 0) throw new Error(`Question ${questionId} not found`);
 
                     incomingQuestionIds.push(questionId);
@@ -327,8 +351,6 @@ class SurveyService {
             order: [['id', 'ASC']],
             transaction
         });
-
-        console.log('existingOptions', existingOptions);
 
         // Обновляем существующие опции
         const updatePromises = existingOptions.slice(0, newOptions.length).map((opt, i) =>

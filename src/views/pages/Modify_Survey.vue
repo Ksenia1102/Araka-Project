@@ -109,6 +109,11 @@ function handleFileUpload(event) {
                 question.mediaSize = (file.size / 1024).toFixed(2);
                 question.mediaType = file.type.split('/')[0];
                 question.mediaFile = file;
+                // Очищаем старые ссылки на файл
+                question.file_folder = null;
+                question.file_name = null;
+                question.file_type = null;
+                question.file_url = null;
             }
             fileInput.value.value = '';
         };
@@ -123,6 +128,12 @@ function removeMedia() {
         question.mediaType = null;
         question.mediaName = null;
         question.mediaSize = null;
+        question.mediaFile = null;
+        // Очищаем также поля, которые используются при сохранении
+        question.file_folder = null;
+        question.file_name = null;
+        question.file_type = null;
+        question.file_url = null;
     }
     fileInput.value.value = '';
 }
@@ -190,10 +201,10 @@ async function submitSurvey() {
                 text: q.text.trim() || `Вопрос ${index + 1}`,
                 correct_option: q.selectedOption,
                 options: q.options.map((opt) => opt.trim()).filter((opt) => opt !== ''),
-                file_folder: q.file_folder || null,
-                file_name: q.file_name || null,
-                file_type: q.file_type || null,
-                file_url: q.file_url || null
+                file_folder: q.mediaUrl ? q.file_folder : null, // Если нет mediaUrl, то очищаем
+                file_name: q.mediaUrl ? q.file_name : null,
+                file_type: q.mediaUrl ? q.file_type : null,
+                file_url: q.mediaUrl ? q.file_url : null
             }))
         };
 
@@ -203,7 +214,7 @@ async function submitSurvey() {
             responseClass.value = 'error';
             return;
         }
-
+        console.log('surveyData', surveyData);
         const surveyId = route.query.id;
         const method = surveyId ? 'put' : 'post';
         const url = surveyId ? `${apiUrl}/api/surveys/${surveyId}` : `${apiUrl}/api/surveys`;
