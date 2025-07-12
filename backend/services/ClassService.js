@@ -1,5 +1,6 @@
 const { Class, Student, TakenSurvey, Survey, TakenQuestion, TakenQuestionAnswer, Question } = require('../models');
-
+const { sequelize } = require('../config/database');
+const { Op } = require('sequelize');
 class ClassService {
     static async createClass(user_id, title) {
         return await Class.create({ user_id, title });
@@ -20,7 +21,55 @@ class ClassService {
             raw: true
         });
     }
+    static async deleteClass(classId) {
+        const transaction = await sequelize.transaction();
+        
+        try {
+            // 1. Удаляем все ответы на вопросы, связанные с классом
+            await TakenQuestionAnswer.destroy({
+            where: {
+                student_id: {
+                [Op.in]: sequelize.literal(`(SELECT id FROM student WHERE class_id = ${classId})`)
+                }
+            },
+            transaction
+            });
 
+            // 2. Удаляем вопросы проведенных опросов
+            await TakenQuestion.destroy({
+            where: {
+                taken_survey_id: {
+                [Op.in]: sequelize.literal(`(SELECT id FROM taken_surveys WHERE class_id = ${classId})`)
+                }
+            },
+            transaction
+            });
+
+            // 3. Удаляем проведенные опросы
+            await TakenSurvey.destroy({
+            where: { class_id: classId },
+            transaction
+            });
+
+            // 4. Удаляем студентов класса
+            await Student.destroy({
+            where: { class_id: classId },
+            transaction
+            });
+
+            // 5. Удаляем сам класс
+            const deletedCount = await Class.destroy({
+            where: { id: classId },
+            transaction
+            });
+
+            await transaction.commit();
+            return deletedCount;
+        } catch (error) {
+            await transaction.rollback();
+            throw error;
+        }
+    }
     static async getClassDetails(classId) {
         return await Class.findByPk(classId, {
             include: [

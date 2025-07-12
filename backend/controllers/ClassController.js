@@ -12,7 +12,17 @@ class ClassController {
             res.status(500).json({ error: error.message });
         }
     }
-
+    static async delete(req, res) {
+        try {
+            const deletedCount = await ClassService.deleteClass(req.params.classId);
+            if (deletedCount === 0) {
+            return res.status(404).json({ error: 'Class not found' });
+            }
+            res.json({ success: true });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
     static async getByUser(req, res) {
         try {
             const classes = await ClassService.getClassesByUser(req.user.id);

@@ -27,6 +27,7 @@ const students = ref([]);
 const showStudentTable = ref(false);
 const quickAddInput = ref('');
 const sortAlphabetically = ref(true);
+const displayDeleteClassDialog = ref(false);
 // Фейковые данные тестов
 const surveys = ref([
     { id: 1, name: 'Тест №1', link: '/uikit/chart-sur/1', completion: 85, month: 'Октябрь', isRecent: true },
@@ -38,6 +39,41 @@ const surveys = ref([
 
 // Фильтруем последние тесты
 const recentSurveys = computed(() => surveys.value.filter((survey) => survey.isRecent));
+function confirmClassDeletion() {
+  displayDeleteClassDialog.value = true;
+}
+
+async function deleteClass() {
+  try {
+    const token = localStorage.getItem('authToken');
+    console.log('Class ID from route:', route.params.classId);
+    const url = `${apiUrl}/api/classes/${route.params.classId}`;
+    console.log('Full DELETE URL:', url);
+    await axios.delete(`${apiUrl}/api/classes/${route.params.classId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    toast.add({
+      severity: 'success',
+      summary: 'Успех!',
+      detail: 'Класс успешно удалён.',
+      life: 3000
+    });
+
+    router.push('/uikit/classes'); // Перенаправляем на страницу классов
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Ошибка',
+      detail: error.response?.data?.error || 'Не удалось удалить класс',
+      life: 3000
+    });
+  } finally {
+    displayDeleteClassDialog.value = false;
+  }
+}
 function goToSection(surveyId) {
     const classId1 = route.params.classId;
     console.log('route.params.classId', classId1);
@@ -569,6 +605,39 @@ const downloadReport = async (format, systems) => {
             <div class="flex" style="gap: 0.5rem; align-items: stretch">
                 <i class="pi pi-users" style="font-size: 2.3rem"></i>
                 <h2 class="font-semibold text-4xl mb-6">Класс {{ currentClassName }}</h2>
+                <Button 
+                    label="Удалить класс" 
+                    severity="danger" 
+                    icon="pi pi-trash" 
+                    @click="confirmClassDeletion" 
+                    class="p-button-outlined"
+                />
+                <Dialog 
+                    header="Подтверждение удаления" 
+                    v-model:visible="displayDeleteClassDialog" 
+                    :style="{ width: '350px' }" 
+                    :modal="true"
+                    >
+                    <div class="flex items-center justify-center">
+                        <i class="pi pi-exclamation-triangle mr-4" style="font-size: 2rem; color: #e11d48" />
+                        <span>Вы действительно хотите удалить класс {{ currentClassName }}? Все связанные данные будут удалены безвозвратно.</span>
+                    </div>
+                    <template #footer>
+                        <Button 
+                        label="Отмена" 
+                        icon="pi pi-times" 
+                        @click="displayDeleteClassDialog = false" 
+                        text 
+                        />
+                        <Button 
+                        label="Удалить" 
+                        icon="pi pi-check" 
+                        @click="deleteClass" 
+                        severity="danger" 
+                        autofocus 
+                        />
+                    </template>
+                </Dialog>
             </div>
             <!-- последние проведенные тесты -->
             <div>
@@ -682,6 +751,23 @@ const downloadReport = async (format, systems) => {
 </template>
 
 <style>
+
+.p-button-outlined.p-button-danger {
+  color: #e11d48;
+  border-color: #e11d48;
+}
+
+.p-button-outlined.p-button-danger:hover {
+  background: rgba(225, 29, 72, 0.04);
+  color: #e11d48;
+  border-color: #e11d48;
+}
+
+.p-button-outlined.p-button-danger:active {
+  background: rgba(225, 29, 72, 0.16);
+  color: #e11d48;
+  border-color: #e11d48;
+}
 :root {
     /* Цвет фона при нажатии/выборе */
     --p-checkbox-checked-background: #0ea5e9;
