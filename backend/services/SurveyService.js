@@ -394,6 +394,40 @@ class SurveyService {
             });
         }
     }
+
+    static async addQuestion(surveyId, { text, correct_option, options, file_url, file_folder, file_name, file_type }) {
+        return await sequelize.transaction(async (t) => {
+            const survey = await Survey.findByPk(surveyId, { transaction: t });
+            if (!survey) {
+                throw new Error('Survey not found');
+            }
+
+            // Create the question
+            const createdQuestion = await Question.create(
+                {
+                    survey_id: survey.id,
+                    text,
+                    correct_option,
+                    file_url: file_url || null,
+                    file_folder: file_folder || null,
+                    file_name: file_name || null,
+                    file_type: file_type || null
+                },
+                { transaction: t }
+            );
+
+            // Create the options for the question
+            const optionsToCreate = options.map((optionText, index) => ({
+                question_id: createdQuestion.id,
+                text: optionText,
+                option_order: index // Ensure order is maintained
+            }));
+
+            await Option.bulkCreate(optionsToCreate, { transaction: t });
+
+            return createdQuestion;
+        });
+    }
 }
 
 module.exports = SurveyService;

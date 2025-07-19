@@ -165,6 +165,45 @@ class SurveyController {
             });
         }
     }
+
+    static async addQuestionToSurvey(req, res) {
+        try {
+            const surveyId = parseInt(req.params.survey_id);
+            if (isNaN(surveyId)) {
+                return res.status(400).json({ error: 'Invalid survey ID' });
+            }
+
+            const { text, correct_option, options, file_url, file_folder, file_name, file_type } = req.body;
+
+            // Basic validation for the new question
+            if (!text || !Array.isArray(options) || options.length === 0 || correct_option === undefined) {
+                return res.status(400).json({ error: 'Invalid question data. Requires text, correct_option, and options (array).' });
+            }
+
+            const newQuestion = await SurveyService.addQuestion(surveyId, {
+                text,
+                correct_option,
+                options,
+                file_url,
+                file_folder,
+                file_name,
+                file_type
+            });
+
+            res.status(201).json({
+                message: 'Question added successfully',
+                questionId: newQuestion.id
+            });
+
+        } catch (error) {
+            console.error('Error adding question to survey:', error);
+            const statusCode = error.message.includes('Survey not found') ? 404 : 500;
+            res.status(statusCode).json({
+                error: error.message.includes('Survey not found') ? error.message : 'Internal server error',
+                details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            });
+        }
+    }
 }
 
 module.exports = SurveyController;

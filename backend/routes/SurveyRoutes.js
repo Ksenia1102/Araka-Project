@@ -12,5 +12,6 @@ router.post('/', SurveyController.createSurvey);
 router.put('/:id', SurveyController.updateSurvey);
 router.post('/:survey_id/copy', SurveyController.copySurvey);
 router.delete('/:survey_id', SurveyController.deleteSurvey);
+router.post('/:survey_id/question', SurveyController.addQuestionToSurvey);
 
 module.exports = router;
