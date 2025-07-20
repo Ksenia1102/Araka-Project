@@ -14,7 +14,6 @@ const loading = inject('loading');
 const surveyTitle = ref('');
 const questions = ref([]);
 const currentQuestionIndex = ref(null);
-const currentQuestionText = ref('');
 const responseMessage = ref('');
 const responseClass = ref('');
 const userId = ref(null);
@@ -37,12 +36,11 @@ function goBack() {
 
 function selectQuestion(index) {
     currentQuestionIndex.value = index;
-    currentQuestionText.value = questions.value[index].text;
 }
 
 function addQuestion() {
     const newQuestion = {
-        text: `Вопрос ${questions.value.length + 1}`,
+        text: ``,
         options: ['', '', '', ''],
         selectedOption: null,
         mediaUrl: null,
@@ -140,12 +138,6 @@ function removeMedia() {
     fileInput.value.value = '';
 }
 
-function updateQuestionText() {
-    if (currentQuestionIndex.value !== null) {
-        questions.value[currentQuestionIndex.value].text = currentQuestionText.value;
-    }
-}
-
 function handleSaveSurvey(data) {
     surveyTitle.value = data.title;
     submitSurvey();
@@ -158,8 +150,6 @@ async function submitSurvey() {
         return;
     }
 
-    updateQuestionText();
-
     const token = localStorage.getItem('authToken');
 
     try {
@@ -169,9 +159,7 @@ async function submitSurvey() {
                 formData.append('file', q.mediaFile);
                 formData.append('mediaType', q.mediaType);
 
-                loading.show('Отправка данных...'); // Показываем индикатор
-                console.log('mediaType для отправки:', q.mediaType);
-                console.log('mediaFile type:', q.mediaFile?.type);
+                loading.show('Отправка данных...');
                 const res = await axios.post(`${apiUrl}/api/upload-image`, formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
@@ -222,7 +210,7 @@ async function submitSurvey() {
         responseMessage.value = 'Ошибка при сохранении теста.';
         responseClass.value = 'error';
     } finally {
-        loading.hide(); // Скрываем индикатор
+        loading.hide();
     }
 }
 
@@ -254,41 +242,29 @@ onMounted(() => {
 
 <template>
     <SurveyLayout v-model:surveyTitle="surveyTitle" :questions="questions" @selectQuestion="selectQuestion" @saveSurvey="handleSaveSurvey" @addQuestion="addQuestion" @copyQuestion="copyQuestion" @deleteQuestion="deleteQuestion" @goBack="goBack">
-        <!-- max-width: 120vh -->
         <div v-if="currentQuestion" class="card" style="min-height: 80vh">
-            <!-- Текст вопроса -->
-            <!-- <input v-model="currentQuestionText" placeholder="Введите текст вопроса" class="question-input" @input="updateQuestionText" /> -->
             <div class="flex items-center">
                 <span class="question-number">{{ currentQuestionIndex + 1 }}</span>
-                <!-- <input v-maxlength="300" v-model="currentQuestionText" placeholder="Введите текст вопроса" class="question-input" @input="updateQuestionText" /> -->
                 <input v-maxlength="200" v-model="questions[currentQuestionIndex].text" placeholder="Введите текст вопроса" class="question-input" />
             </div>
-            <!-- Медиа  -->
             <div class="image-container" v-if="!currentQuestion.mediaUrl">
                 <Button @click="triggerFileInput" icon="pi pi-upload" severity="info" class="btn-add-image" outlined />
                 <input ref="fileInput" type="file" @change="handleFileUpload" accept="image/*,video/*,audio/*" style="display: none" />
             </div>
-
-            <!-- Предпросмотр фото -->
             <div v-if="currentQuestion.mediaUrl" class="image-container">
                 <div class="image-preview">
                     <Button class="delete-btn" @click="removeMedia" icon="pi pi-times" severity="danger" rounded />
-
                     <template v-if="currentQuestion.mediaType === 'image'">
                         <img :src="currentQuestion.mediaUrl" alt="Загруженное изображение" class="uploaded-image" />
                     </template>
-
                     <template v-else-if="currentQuestion.mediaType === 'video'">
                         <video :src="currentQuestion.mediaUrl" controls class="uploaded-image"></video>
                     </template>
-
                     <template v-else-if="currentQuestion.mediaType === 'audio'">
                         <audio :src="currentQuestion.mediaUrl" controls class="uploaded-image"></audio>
                     </template>
                 </div>
             </div>
-
-            <!-- Варианты ответов -->
             <ul>
                 <li v-for="(option, index) in currentQuestion.options" :key="index" :class="{ selected: currentQuestion.selectedOption === index }" @click="selectOption(index)" class="option">
                     <span class="option-label">{{ ['А', 'Б', 'В', 'Г'][index] }}.</span>

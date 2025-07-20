@@ -3,12 +3,15 @@ import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
 import { computed, inject, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import FolderDialogs from './FolderDialogs.vue'
 
 const apiUrl = import.meta.env.VITE_API_URL;
 const toast = useToast();
 const router = useRouter();
 const hasSurveys = ref(false);
 const loading = inject('loading');
+// Ссылка на компонент диалогов
+const folderDialogsRef = ref(null);
 
 // const surveyTree = ref([
 //     {
@@ -394,59 +397,74 @@ function openContextMenu(event, node) {
     contextMenu.value.show(event);
 }
 
-// Переименование папки
-async function renameFolder() {
-    const newName = prompt('Введите новое имя папки:', contextMenuFolder.value.data.name);
-    if (!newName) return;
-
-    try {
-        const token = localStorage.getItem('authToken');
-        await axios.put(
-            `${apiUrl}/api/folders/${contextMenuFolder.value.data.id}`,
-            { name: newName },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            }
-        );
-
-        await loadSurveyTree();
-    } catch (error) {
-        console.error('Ошибка переименования папки:', error);
-        toast.add({
-            severity: 'error',
-            summary: 'Ошибка',
-            detail: 'Не удалось переименовать папку',
-            life: 3000
-        });
+// Функции для контекстного меню, они вызывают методы дочернего компонента
+function callRenameDialog() {
+    if (folderDialogsRef.value && contextMenuFolder.value) {
+        folderDialogsRef.value.openRenameDialog(contextMenuFolder.value);
     }
 }
 
-// Удаление папки
-async function deleteFolder() {
-    const confirmed = confirm('Удалить папку и все вложенные тесты?');
-    if (!confirmed) return;
-
-    try {
-        const token = localStorage.getItem('authToken');
-        await axios.delete(`${apiUrl}/api/folders/${contextMenuFolder.value.data.id}`, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
-
-        await loadSurveyTree();
-    } catch (error) {
-        console.error('Ошибка удаления папки:', error);
-        toast.add({
-            severity: 'error',
-            summary: 'Ошибка',
-            detail: 'Не удалось удалить папку',
-            life: 3000
-        });
+function callDeleteConfirmation() {
+    if (folderDialogsRef.value && contextMenuFolder.value) {
+        folderDialogsRef.value.openDeleteConfirmation(contextMenuFolder.value);
     }
 }
+
+
+
+// // Переименование папки
+// async function renameFolder() {
+//     const newName = prompt('Введите новое имя папки:', contextMenuFolder.value.data.name);
+//     if (!newName) return;
+
+//     try {
+//         const token = localStorage.getItem('authToken');
+//         await axios.put(
+//             `${apiUrl}/api/folders/${contextMenuFolder.value.data.id}`,
+//             { name: newName },
+//             {
+//                 headers: {
+//                     Authorization: `Bearer ${token}`
+//                 }
+//             }
+//         );
+
+//         await loadSurveyTree();
+//     } catch (error) {
+//         console.error('Ошибка переименования папки:', error);
+//         toast.add({
+//             severity: 'error',
+//             summary: 'Ошибка',
+//             detail: 'Не удалось переименовать папку',
+//             life: 3000
+//         });
+//     }
+// }
+
+// // Удаление папки
+// async function deleteFolder() {
+//     const confirmed = confirm('Удалить папку и все вложенные тесты?');
+//     if (!confirmed) return;
+
+//     try {
+//         const token = localStorage.getItem('authToken');
+//         await axios.delete(`${apiUrl}/api/folders/${contextMenuFolder.value.data.id}`, {
+//             headers: {
+//                 Authorization: `Bearer ${token}`
+//             }
+//         });
+
+//         await loadSurveyTree();
+//     } catch (error) {
+//         console.error('Ошибка удаления папки:', error);
+//         toast.add({
+//             severity: 'error',
+//             summary: 'Ошибка',
+//             detail: 'Не удалось удалить папку',
+//             life: 3000
+//         });
+//     }
+// }
 
 // Форматировать дату
 function formatDate(date) {
@@ -463,11 +481,11 @@ function onDropOnFolderWrapper(event, targetFolderNode) {
     event.stopPropagation(); // <-- Вот это ключевое!
     onDropOnFolder(targetFolderNode);
 }
+
 </script>
 
 <template>
     <div class="card start">
-        <!-- если не было тестов -->
         <div v-if="!hasSurveys" class="start">
             <div style="margin: 30px">
                 <h1 class="font-semibold text-4xl mb-6">У вас еще нет тестов в библиотеке</h1>
@@ -476,7 +494,6 @@ function onDropOnFolderWrapper(event, targetFolderNode) {
             </div>
         </div>
 
-        <!-- если тесты есть -->
         <div v-else>
             <div class="flex" style="gap: 0.5rem; align-items: stretch">
                 <i class="pi pi-book" style="font-size: 2.3rem"></i>
@@ -520,56 +537,104 @@ function onDropOnFolderWrapper(event, targetFolderNode) {
 
                     <template #end>
                         <Button type="button" icon="pi pi-plus" @click="openCreateFolderDialog" label="Создать папку" class="mr-2" severity="secondary" text />
-                        <!-- <Button v-tooltip="'Click to proceed'" :model="items" type="button" icon="pi pi-ellipsis-v" severity="secondary" text /> -->
                     </template>
                 </Toolbar>
             </div>
 
-            <!-- Папки и тесты -->
             <div class="font-semibold text-xl mb-4" style="border-bottom: 1px solid var(--surface-border)">Папки и тесты</div>
 
             <ContextMenu
                 ref="contextMenu"
                 :model="[
-                    { label: 'Переименовать', icon: 'pi pi-pencil', command: renameFolder },
-                    { label: 'Удалить', icon: 'pi pi-trash', command: deleteFolder }
+                    { label: 'Переименовать', icon: 'pi pi-pencil', command: callRenameDialog },
+                    { label: 'Удалить', icon: 'pi pi-trash', command: callDeleteConfirmation }
                 ]"
             />
 
-            <!-- Обёртка вокруг TreeTable для drop в "корень" -->
             <div class="tree-container" @drop="handleRootDrop" @dragover.prevent @dragenter="handleDragEnter" @dragleave="handleDragLeave" :class="{ 'drag-over': isDragOverRoot }" style="min-height: 200px; padding-bottom: 30px">
-                <TreeTable :value="filteredTree" selectionMode="single" v-model:selectionKeys="selectedNode">
-                    <Column field="name" header="Имя" :expander="true">
+                <TreeTable :value="filteredTree" selectionMode="single" v-model:selectionKeys="selectedNode" class="no-padding-table">
+                    <Column field="name" header="Название" :expander="true">
                         <template #body="slotProps">
-                            <div
+                            <div class="item-wrapper"
                                 draggable="true"
                                 @dragstart="onDragStart(slotProps.node, $event)"
                                 @drop="onDropOnFolderWrapper($event, slotProps.node)"
                                 @dragover.prevent
                                 @dragenter.prevent
-                                @contextmenu.prevent="openContextMenu($event, slotProps.node)"
+                                @contextmenu.prevent="slotProps.node.data.type === 'folder' && openContextMenu($event, slotProps.node)"
                                 @click.stop
-                                :class="{ 'folder-item': slotProps.node.data.type === 'folder' }"
                             >
-                                <i :class="slotProps.node.data.type === 'folder' ? 'pi pi-folder' : 'pi pi-file'" />
-                                {{ slotProps.node.data.name }}
+                                <div :class="['item-content', slotProps.node.data.type === 'folder' ? 'folder-item' : 'survey-item']">
+                                    <i :class="slotProps.node.data.type === 'folder' ? 'pi pi-folder' : 'pi pi-file'" />
+                                    {{ slotProps.node.data.name }}
+                                </div>
                             </div>
                         </template>
                     </Column>
 
                     <Column field="modified" header="Последнее изменение">
                         <template #body="slotProps">
-                            <span v-if="slotProps.node.data.modified">{{ formatDate(slotProps.node.data.modified) }}</span>
+                            <div class="item-wrapper">
+                                <span v-if="slotProps.node.data.modified" class="item-content">
+                                    {{ formatDate(slotProps.node.data.modified) }}
+                                </span>
+                            </div>
                         </template>
                     </Column>
 
                     <Column header="">
                         <template #body="slotProps">
-                            <Button v-if="slotProps.node.data.type === 'survey'" @click="goToSurvey(slotProps.node.data)" icon="pi pi-chevron-right" class="back-btn" text severity="secondary" />
+                            <div class="item-wrapper">
+                                <Button
+                                    v-if="slotProps.node.data.type === 'survey'"
+                                    @click="goToSurvey(slotProps.node.data)"
+                                    icon="pi pi-chevron-right"
+                                    class="back-btn"
+                                    text
+                                    severity="secondary"
+                                />
+                            </div>
                         </template>
                     </Column>
                 </TreeTable>
             </div>
+            <FolderDialogs ref="folderDialogsRef" @folder-updated="loadSurveyTree" />
         </div>
     </div>
 </template>
+
+
+<style>
+
+.no-padding-table .p-treetable-tbody > tr > td {
+    padding: 0 !important;
+}
+
+.folder-item {
+    padding: 0.5rem 1rem;
+    display: inline-block;
+}
+
+.tree-container ::v-deep(.p-treetable-tbody) td {
+    padding: 0 !important;
+}
+
+.item-wrapper {
+    width: 100%;
+    height: 100%;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+}
+
+.item-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.back-btn {
+    padding: 0 !important;
+    margin: 0.5rem 1rem;
+}
+
+</style>

@@ -159,7 +159,7 @@ const { onMenuToggle } = useLayout();
                 <i class="pi pi-bars"></i>
             </button>
 
-            <router-link to="/" class="layout-topbar-logo">
+            <router-link to="/pages/dashboard" class="layout-topbar-logo">
                 <img src="/logo.svg" alt="" />
                 <span>EduVision</span>
             </router-link>

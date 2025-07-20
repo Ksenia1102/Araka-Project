@@ -39,40 +39,40 @@ const surveys = ref([
 
 // Фильтруем последние тесты
 const recentSurveys = computed(() => surveys.value.filter((survey) => survey.isRecent));
-function confirmClassDeletion() {
-  displayDeleteClassDialog.value = true;
-}
+// function confirmClassDeletion() {
+//   displayDeleteClassDialog.value = true;
+// }
 
 async function deleteClass() {
-  try {
-    const token = localStorage.getItem('authToken');
-    console.log('Class ID from route:', route.params.classId);
-    const url = `${apiUrl}/api/classes/${route.params.classId}`;
-    console.log('Full DELETE URL:', url);
-    await axios.delete(`${apiUrl}/api/classes/${route.params.classId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+    try {
+        const token = localStorage.getItem('authToken');
+        console.log('Class ID from route:', route.params.classId);
+        const url = `${apiUrl}/api/classes/${route.params.classId}`;
+        console.log('Full DELETE URL:', url);
+        await axios.delete(`${apiUrl}/api/classes/${route.params.classId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
 
-    toast.add({
-      severity: 'success',
-      summary: 'Успех!',
-      detail: 'Класс успешно удалён.',
-      life: 3000
-    });
+        toast.add({
+            severity: 'success',
+            summary: 'Успех!',
+            detail: 'Класс успешно удалён.',
+            life: 3000
+        });
 
-    router.push('/uikit/classes'); // Перенаправляем на страницу классов
-  } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Ошибка',
-      detail: error.response?.data?.error || 'Не удалось удалить класс',
-      life: 3000
-    });
-  } finally {
-    displayDeleteClassDialog.value = false;
-  }
+        router.push('/uikit/classes'); // Перенаправляем на страницу классов
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Ошибка',
+            detail: error.response?.data?.error || 'Не удалось удалить класс',
+            life: 3000
+        });
+    } finally {
+        displayDeleteClassDialog.value = false;
+    }
 }
 function goToSection(surveyId) {
     const classId1 = route.params.classId;
@@ -605,17 +605,17 @@ const downloadReport = async (format, systems) => {
             <div class="flex" style="gap: 0.5rem; align-items: stretch">
                 <i class="pi pi-users" style="font-size: 2.3rem"></i>
                 <h2 class="font-semibold text-4xl mb-6">Класс {{ currentClassName }}</h2>
-                <Button 
-                    label="Удалить класс" 
-                    severity="danger" 
-                    icon="pi pi-trash" 
-                    @click="confirmClassDeletion" 
+                <!-- <Button
+                    label="Удалить класс"
+                    severity="danger"
+                    icon="pi pi-trash"
+                    @click="confirmClassDeletion"
                     class="p-button-outlined"
-                />
-                <Dialog 
-                    header="Подтверждение удаления" 
-                    v-model:visible="displayDeleteClassDialog" 
-                    :style="{ width: '350px' }" 
+                /> -->
+                <Dialog
+                    header="Подтверждение удаления"
+                    v-model:visible="displayDeleteClassDialog"
+                    :style="{ width: '350px' }"
                     :modal="true"
                     >
                     <div class="flex items-center justify-center">
@@ -623,18 +623,18 @@ const downloadReport = async (format, systems) => {
                         <span>Вы действительно хотите удалить класс {{ currentClassName }}? Все связанные данные будут удалены безвозвратно.</span>
                     </div>
                     <template #footer>
-                        <Button 
-                        label="Отмена" 
-                        icon="pi pi-times" 
-                        @click="displayDeleteClassDialog = false" 
-                        text 
+                        <Button
+                        label="Отмена"
+                        icon="pi pi-times"
+                        @click="displayDeleteClassDialog = false"
+                        text
                         />
-                        <Button 
-                        label="Удалить" 
-                        icon="pi pi-check" 
-                        @click="deleteClass" 
-                        severity="danger" 
-                        autofocus 
+                        <Button
+                        label="Удалить"
+                        icon="pi pi-check"
+                        @click="deleteClass"
+                        severity="danger"
+                        autofocus
                         />
                     </template>
                 </Dialog>
