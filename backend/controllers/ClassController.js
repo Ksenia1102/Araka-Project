@@ -16,7 +16,7 @@ class ClassController {
         try {
             const deletedCount = await ClassService.deleteClass(req.params.classId);
             if (deletedCount === 0) {
-            return res.status(404).json({ error: 'Class not found' });
+                return res.status(404).json({ error: 'Class not found' });
             }
             res.json({ success: true });
         } catch (error) {

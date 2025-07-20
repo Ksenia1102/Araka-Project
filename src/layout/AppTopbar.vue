@@ -63,7 +63,8 @@ async function openDemoWindow() {
 
         const demoUrl = `${window.location.origin}/demo?token=${encodeURIComponent(token)}`;
 
-        const newWindow = window.open(demoUrl, '_blank', 'width=1000,height=800');
+        // const newWindow = window.open(demoUrl, '_blank', 'width=1000,height=800');
+        const newWindow = window.open(demoUrl, '_blank');
 
         if (newWindow) {
             demoWindowOpen.value = true;

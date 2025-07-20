@@ -7,40 +7,44 @@ exports.getDataForReport = async (classId, surveyId, gradingSystems) => {
     const surveyData = await Survey.findByPk(surveyId);
     if (!surveyData) throw new Error(`Тест с id=${surveyId} не найден`);
 
-    const answers = await TakenQuestionAnswer.findAll({
-        include: [
-            {
-                model: TakenQuestion,
-                as: 'takenQuestion',
-                required: true,
-                include: [
-                    {
-                        model: TakenSurvey,
-                        as: 'takenSurvey',
-                        where: { survey_id: surveyId, class_id: classId },
-                        attributes: []
-                    },
-                    {
-                        model: Question,
-                        as: 'question',
-                        attributes: ['correct_option']
-                    }
-                ]
-            },
-            {
-                model: Student,
-                as: 'student',
-                attributes: ['id', 'name', 'aruco_num'],
-                required: true
-            }
-        ]
-    });
+    const [allStudents, answers] = await Promise.all([
+        Student.findAll({
+            where: { class_id: classId },
+            attributes: ['id', 'name', 'aruco_num']
+        }),
+        TakenQuestionAnswer.findAll({
+            include: [
+                {
+                    model: TakenQuestion,
+                    as: 'takenQuestion',
+                    required: true,
+                    include: [
+                        {
+                            model: TakenSurvey,
+                            as: 'takenSurvey',
+                            where: { survey_id: surveyId, class_id: classId },
+                            attributes: []
+                        },
+                        {
+                            model: Question,
+                            as: 'question',
+                            attributes: ['id', 'correct_option']
+                        }
+                    ]
+                },
+                {
+                    model: Student,
+                    as: 'student',
+                    attributes: ['id', 'name', 'aruco_num'],
+                    required: true
+                }
+            ]
+        })
+    ]);
 
     const studentsMap = new Map();
-    const correctAnswersByIndex = [];
-
-    // Временное хранилище правильных ответов по порядку вопросов
     const questionOrderMap = new Map();
+    const correctAnswersByIndex = [];
     let questionIndex = 0;
 
     for (const entry of answers) {
@@ -56,13 +60,29 @@ exports.getDataForReport = async (classId, surveyId, gradingSystems) => {
 
         if (!studentsMap.has(studentId)) {
             studentsMap.set(studentId, {
-                aruco_num: String(entry.student.aruco_num || entry.student.id),
+                aruco_num: String(entry.student.aruco_num || studentId),
                 name: entry.student.name,
-                answers: []
+                answers: Array(correctAnswersByIndex.length).fill(null)
             });
         }
 
-        studentsMap.get(studentId).answers.push(isCorrect);
+        const qIndex = questionOrderMap.get(questionId);
+        // Только если позиция ещё не занята (null), записываем isCorrect
+        const currentAnswer = studentsMap.get(studentId).answers[qIndex];
+        if (currentAnswer === null) {
+            studentsMap.get(studentId).answers[qIndex] = isCorrect;
+        }
+    }
+
+    // Добавим студентов без ответов
+    for (const student of allStudents) {
+        if (!studentsMap.has(student.id)) {
+            studentsMap.set(student.id, {
+                aruco_num: String(student.aruco_num || student.id),
+                name: student.name,
+                answers: Array(correctAnswersByIndex.length).fill(null) // пропуски
+            });
+        }
     }
 
     return {
@@ -76,32 +96,57 @@ exports.getDataForReport = async (classId, surveyId, gradingSystems) => {
 };
 
 exports.getDataForExcelReport = async (classId, surveyId, gradingSystems) => {
-    const classData = await Class.findByPk(classId, { attributes: ['title'] });
-    if (!classData) throw new Error(`Класс с id=${classId} не найден`);
-
-    const surveyData = await Survey.findByPk(surveyId, { attributes: ['title'] });
-    if (!surveyData) throw new Error(`Тест с id=${surveyId} не найден`);
-
-    // Получаем список вопросов вместе с вариантами ответов (Options)
-    const questions = await Question.findAll({
-        where: { survey_id: surveyId },
-        order: [['id', 'ASC']],
-        include: [
-            {
-                model: Option, // Предполагаю, что у тебя есть модель Option
-                as: 'options', // Связь: Question.hasMany(Option, {as:'options'})
-                attributes: ['text'],
-                order: [['id', 'ASC']]
-            }
-        ]
-    });
+    const [classData, surveyData, allStudents, questions, answers] = await Promise.all([
+        Class.findByPk(classId, { attributes: ['title'] }),
+        Survey.findByPk(surveyId, { attributes: ['title'] }),
+        Student.findAll({ where: { class_id: classId }, attributes: ['id', 'name', 'aruco_num'] }),
+        Question.findAll({
+            where: { survey_id: surveyId },
+            order: [['id', 'ASC']],
+            include: [
+                {
+                    model: Option,
+                    as: 'options',
+                    attributes: ['text'],
+                    order: [['id', 'ASC']]
+                }
+            ]
+        }),
+        TakenQuestionAnswer.findAll({
+            include: [
+                {
+                    model: TakenQuestion,
+                    as: 'takenQuestion',
+                    required: true,
+                    include: [
+                        {
+                            model: TakenSurvey,
+                            as: 'takenSurvey',
+                            where: { survey_id: surveyId, class_id: classId },
+                            attributes: []
+                        },
+                        {
+                            model: Question,
+                            as: 'question',
+                            attributes: ['id']
+                        }
+                    ]
+                },
+                {
+                    model: Student,
+                    as: 'student',
+                    required: true,
+                    attributes: ['id', 'name', 'class_id', 'aruco_num']
+                }
+            ]
+        })
+    ]);
 
     const questionMap = new Map();
     const correctAnswers = [];
     const questionTexts = [];
 
     questions.forEach((q, idx) => {
-        // Собираем массив текстов вариантов
         const optionTexts = q.options.map((opt) => opt.text);
         questionMap.set(q.id, {
             correct_option: q.correct_option,
@@ -110,36 +155,6 @@ exports.getDataForExcelReport = async (classId, surveyId, gradingSystems) => {
         });
         correctAnswers.push(optionTexts[q.correct_option] || '');
         questionTexts.push(q.text || `Вопрос ${idx + 1}`);
-    });
-
-    // Получаем ответы студентов
-    const answers = await TakenQuestionAnswer.findAll({
-        include: [
-            {
-                model: TakenQuestion,
-                as: 'takenQuestion',
-                required: true,
-                include: [
-                    {
-                        model: TakenSurvey,
-                        as: 'takenSurvey',
-                        where: { survey_id: surveyId, class_id: classId },
-                        attributes: []
-                    },
-                    {
-                        model: Question,
-                        as: 'question',
-                        attributes: ['id']
-                    }
-                ]
-            },
-            {
-                model: Student,
-                as: 'student',
-                required: true,
-                attributes: ['id', 'name', 'class_id', 'aruco_num']
-            }
-        ]
     });
 
     const studentsMap = new Map();
@@ -156,10 +171,8 @@ exports.getDataForExcelReport = async (classId, surveyId, gradingSystems) => {
         if (!questionMeta) continue;
 
         const studentId = student.id;
-
-        // Здесь answer - индекс выбранного варианта, надо получить текст
         const selectedIndex = parseInt(entry.answer);
-        const answerText = questionMeta.options[selectedIndex] || '—';
+        const answerText = questionMeta.options[selectedIndex] || 'Нет ответа';
 
         if (!studentsMap.has(studentId)) {
             studentsMap.set(studentId, {
@@ -167,11 +180,24 @@ exports.getDataForExcelReport = async (classId, surveyId, gradingSystems) => {
                 class: classData.title,
                 aruco_num: student.aruco_num?.toString() || studentId.toString(),
                 date: new Date().toLocaleDateString('ru-RU'),
-                answers: Array(questions.length).fill('')
+                answers: Array(questions.length).fill('Нет ответа')
             });
         }
 
         studentsMap.get(studentId).answers[questionMeta.index] = answerText;
+    }
+
+    // Добавим студентов, которых нет в studentsMap
+    for (const student of allStudents) {
+        if (!studentsMap.has(student.id)) {
+            studentsMap.set(student.id, {
+                name: student.name,
+                class: classData.title,
+                aruco_num: student.aruco_num?.toString() || student.id.toString(),
+                date: new Date().toLocaleDateString('ru-RU'),
+                answers: Array(questions.length).fill('Нет ответа')
+            });
+        }
     }
 
     return {

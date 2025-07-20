@@ -39,15 +39,30 @@ async function generateExcelReport({ class_name, date, test_name, questions, stu
             const correctStr = (correct_answers[i] ?? '').toString().toLowerCase();
             return answerStr === correctStr ? sum + 1 : sum;
         }, 0);
-        const percent = Math.round((correctCount / correct_answers.length) * 100);
-        totalPercent += percent;
-        const grade = convertToGrade(percent);
+        const allAnswersEmpty = answers.every((ans) => ans === null || ans === undefined || ans === 'Нет ответа');
+        let percent = null;
+        let grade = null;
+
+        if (!allAnswersEmpty) {
+            percent = Math.round((correctCount / correct_answers.length) * 100);
+            totalPercent += percent;
+            grade = convertToGrade(percent);
+        }
 
         const rowData = [student.aruco_num || index + 1, student.name, date, ...answers];
-        if (grading_system.includes('percent')) rowData.push(`${percent}%`);
-        if (grading_system.includes('five-point')) rowData.push(grade);
+        if (grading_system.includes('percent')) rowData.push(percent !== null ? `${percent}%` : '');
+        if (grading_system.includes('five-point')) rowData.push(grade !== null ? grade : '');
 
         const row = sheet.addRow(rowData);
+        if (allAnswersEmpty) {
+            row.eachCell((cell) => {
+                cell.fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: 'FFD3D3D3' } // светло-серый
+                };
+            });
+        }
 
         answers.forEach((ans, i) => {
             const col = 4 + i;

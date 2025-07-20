@@ -99,7 +99,7 @@ class ConductingService {
 
         // Проверяем, есть ли активный TakenSurvey
         let takenSurvey = await TakenSurvey.findOne({
-            where: { survey_id: surveyId, class_id: classId }
+            where: { survey_id: surveyId, class_id: classId, is_active: true }
         });
 
         if (!takenSurvey) {

@@ -152,16 +152,29 @@ function generateTestReport({ class_name, date, test_name, students_data, gradin
             currentY += headerHeight;
         }
 
-        const answerSymbols = student.answers.map((ans) => (ans ? '+' : '-')).join('');
+        const allAnswersAreNull = student.answers.every((ans) => ans === null);
+        const answerSymbols = allAnswersAreNull ? 'Нет ответов' : student.answers.map((ans) => (ans === true ? '+ ' : ans === false ? '- ' : '— ')).join('');
 
         const cells = [student.aruco_num, student.name, answerSymbols];
-        if (grading_system.includes('percent')) cells.push(student.score.toString());
-        if (grading_system.includes('five-point')) cells.push(convertToFivePoint(student.score).toString());
+        if (grading_system.includes('percent')) {
+            cells.push(allAnswersAreNull ? '' : student.score.toString());
+        }
+        if (grading_system.includes('five-point')) {
+            cells.push(allAnswersAreNull ? '' : convertToFivePoint(student.score).toString());
+        }
 
         cells.forEach((cell, i) => {
-            doc.rect(2 * 28.35 + colWidths.slice(0, i).reduce((a, b) => a + b, 0), currentY, colWidths[i], rowHeight).stroke();
+            const x = 2 * 28.35 + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
+
+            // если все ответы null — серый фон
+            if (allAnswersAreNull) {
+                doc.rect(x, currentY, colWidths[i], rowHeight).fillAndStroke('#e0e0e0', '#000');
+            } else {
+                doc.rect(x, currentY, colWidths[i], rowHeight).stroke();
+            }
+
             doc.fillColor('black');
-            doc.text(cell, 2 * 28.35 + colWidths.slice(0, i).reduce((a, b) => a + b, 0) + 5, currentY + 5, {
+            doc.text(cell, x + 5, currentY + 5, {
                 width: colWidths[i] - 10,
                 align: i === 0 || i === 1 || i === 2 ? 'left' : 'center',
                 lineBreak: true

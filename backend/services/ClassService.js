@@ -23,44 +23,44 @@ class ClassService {
     }
     static async deleteClass(classId) {
         const transaction = await sequelize.transaction();
-        
+
         try {
             // 1. Удаляем все ответы на вопросы, связанные с классом
             await TakenQuestionAnswer.destroy({
-            where: {
-                student_id: {
-                [Op.in]: sequelize.literal(`(SELECT id FROM student WHERE class_id = ${classId})`)
-                }
-            },
-            transaction
+                where: {
+                    student_id: {
+                        [Op.in]: sequelize.literal(`(SELECT id FROM student WHERE class_id = ${classId})`)
+                    }
+                },
+                transaction
             });
 
             // 2. Удаляем вопросы проведенных опросов
             await TakenQuestion.destroy({
-            where: {
-                taken_survey_id: {
-                [Op.in]: sequelize.literal(`(SELECT id FROM taken_surveys WHERE class_id = ${classId})`)
-                }
-            },
-            transaction
+                where: {
+                    taken_survey_id: {
+                        [Op.in]: sequelize.literal(`(SELECT id FROM taken_surveys WHERE class_id = ${classId})`)
+                    }
+                },
+                transaction
             });
 
             // 3. Удаляем проведенные опросы
             await TakenSurvey.destroy({
-            where: { class_id: classId },
-            transaction
+                where: { class_id: classId },
+                transaction
             });
 
             // 4. Удаляем студентов класса
             await Student.destroy({
-            where: { class_id: classId },
-            transaction
+                where: { class_id: classId },
+                transaction
             });
 
             // 5. Удаляем сам класс
             const deletedCount = await Class.destroy({
-            where: { id: classId },
-            transaction
+                where: { id: classId },
+                transaction
             });
 
             await transaction.commit();
@@ -91,7 +91,7 @@ class ClassService {
     static async getRecentSurveys(classId, limit = 5) {
         try {
             const recent = await TakenSurvey.findAll({
-                where: { class_id: classId },
+                where: { class_id: classId, is_active: false },
                 order: [['date', 'DESC']],
                 limit,
                 include: [
