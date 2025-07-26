@@ -63,7 +63,12 @@ async function openDemoWindow() {
 
         const demoUrl = `${window.location.origin}/demo?token=${encodeURIComponent(token)}`;
 
-        const newWindow = window.open(demoUrl, '_blank', 'width=1000,height=800');
+        // Получаем размеры экрана
+        const width = window.screen.width;
+        const height = window.screen.height;
+
+        // Открываем окно на весь экран
+        const newWindow = window.open(demoUrl, '_blank', `width=${width},height=${height},left=0,top=0`);
 
         if (newWindow) {
             demoWindowOpen.value = true;
@@ -152,6 +157,17 @@ onMounted(() => {
 const { onMenuToggle } = useLayout();
 </script>
 
+<script>
+export default {
+    computed: {
+        logoLink() {
+            const isAuth = !!localStorage.getItem('authToken');
+            return isAuth ? '/pages/dashboard' : '/';
+        }
+    }
+};
+</script>
+
 <template>
     <div class="layout-topbar">
         <div class="layout-topbar-logo-container">
@@ -159,8 +175,8 @@ const { onMenuToggle } = useLayout();
                 <i class="pi pi-bars"></i>
             </button>
 
-            <router-link to="/" class="layout-topbar-logo">
-                <img src="/logo.svg" alt="" />
+            <router-link :to="logoLink" class="layout-topbar-logo">
+                <img style="height: 20px" src="/logo.svg" alt="" />
                 <span>EduVision</span>
             </router-link>
         </div>

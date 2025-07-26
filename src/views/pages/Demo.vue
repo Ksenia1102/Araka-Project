@@ -1,4 +1,4 @@
-<script setup>
+<!-- <script setup>
 import axios from 'axios';
 import { onMounted, onUnmounted, ref } from 'vue';
 // import { useRouter } from 'vue-router';
@@ -129,6 +129,16 @@ async function fetchCurrentQuestion() {
     }
 }
 
+function getLetterKey(numKey) {
+    const letterMap = {
+        1: 'А',
+        2: 'Б',
+        3: 'В',
+        4: 'Г'
+    };
+    return letterMap[numKey] || numKey; // возвращаем исходный ключ, если не нашли в маппере
+}
+
 onMounted(async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const tokenFromUrl = urlParams.get('token');
@@ -146,6 +156,82 @@ onMounted(async () => {
 
 onUnmounted(() => {
     if (ws) ws.close();
+});
+</script> -->
+
+<script setup>
+import { onMounted, ref } from 'vue';
+
+const currentQuestion = ref(null);
+const surveyInfo = ref(null);
+//const noActiveSurvey = ref(false);
+const isLoading = ref(true);
+//const errorMessage = ref('');
+const students = ref([]);
+
+// Генерация липовых данных
+function generateMockData() {
+    // Информация о тесте
+    surveyInfo.value = {
+        title: 'Контрольная работа по математике',
+        class: '8Б',
+        class_id: 42,
+        mediaUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHxTMRg_AGlBEi89MFsWCdac271-UdPU-ysw&s',
+        mediaType: 'image'
+    };
+
+    // Текущий вопрос
+    currentQuestion.value = {
+        question_text: 'Решите квадратное уравнение: x² - 5x + 6 = 0',
+        options: {
+            1: 'x₁ = 2, x₂ = 3',
+            2: 'x₁ = 1, x₂ = 6',
+            3: 'x₁ = -2, x₂ = -3',
+            4: 'Нет решения'
+        }
+    };
+
+    // Список студентов
+    students.value = [
+        { id: 1, name: 'Иванов Иван', aruco_num: 1234 },
+        { id: 2, name: 'Петров Петр', aruco_num: 1235 },
+        { id: 3, name: 'Сидорова Мария', aruco_num: 1236 },
+        { id: 4, name: 'Кузнецов Алексей', aruco_num: 1237 },
+        { id: 5, name: 'Смирнова Анна', aruco_num: 1238 },
+        { id: 6, name: 'Васильев Дмитрий', aruco_num: 1239 },
+        { id: 7, name: 'Николаева Елена', aruco_num: 1240 },
+        { id: 8, name: 'Федоров Сергей', aruco_num: 1241 },
+        { id: 9, name: 'Николаева Елена', aruco_num: 1240 },
+        { id: 10, name: 'Федоров Сергей', aruco_num: 1241 },
+        { id: 11, name: 'Николаева Елена', aruco_num: 1240 },
+        { id: 12, name: 'Кузнецов Алексей', aruco_num: 1237 },
+        { id: 13, name: 'Смирнова Анна', aruco_num: 12 },
+        { id: 14, name: 'Васильев Дмитрий', aruco_num: 1239 },
+        { id: 15, name: 'Николаева Елена', aruco_num: 1240 },
+        { id: 16, name: 'Федоров Сергей', aruco_num: 1241 },
+        { id: 17, name: 'Николаева Елена', aruco_num: 1240 },
+        { id: 18, name: 'Федоров Сергей', aruco_num: 1241 },
+        { id: 19, name: 'НиколаеваПетросян-Колся Елена', aruco_num: 1240 }
+    ];
+
+    isLoading.value = false;
+}
+
+function getLetterKey(numKey) {
+    const letterMap = {
+        1: 'А',
+        2: 'Б',
+        3: 'В',
+        4: 'Г'
+    };
+    return letterMap[numKey] || numKey; // возвращаем исходный ключ, если не нашли в маппере
+}
+
+onMounted(() => {
+    // Имитация загрузки данных
+    setTimeout(() => {
+        generateMockData();
+    }, 1000);
 });
 </script>
 
@@ -198,7 +284,7 @@ onUnmounted(() => {
                     </div>
                     <div class="options-grid">
                         <div v-for="(option, key) in currentQuestion.options" :key="key" class="option-item">
-                            <span class="option-key">{{ key }}:</span>
+                            <span class="option-key">{{ getLetterKey(key) }}:</span>
                             <span class="option-text">{{ option }}</span>
                         </div>
                     </div>

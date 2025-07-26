@@ -455,6 +455,12 @@ function goToSurvey(surveyData) {
     router.push(`/uikit/sur-data/${surveyData.id}`);
 }
 
+function handleRowDoubleClick(node) {
+    if (node.data.type === 'survey') {
+        this.goToSurvey(node.data);
+    }
+}
+
 function onDropOnFolderWrapper(event, targetFolderNode) {
     event.stopPropagation(); // <-- Вот это ключевое!
     onDropOnFolder(targetFolderNode);
@@ -534,7 +540,7 @@ function onDropOnFolderWrapper(event, targetFolderNode) {
 
             <!-- Обёртка вокруг TreeTable для drop в "корень" -->
             <div class="tree-container" @drop="handleRootDrop" @dragover.prevent @dragenter="handleDragEnter" @dragleave="handleDragLeave" :class="{ 'drag-over': isDragOverRoot }" style="min-height: 200px; padding-bottom: 30px">
-                <TreeTable :value="filteredTree" selectionMode="single" v-model:selectionKeys="selectedNode">
+                <TreeTable :value="filteredTree" selectionMode="single" v-model:selectionKeys="selectedNode" @rowDblclick="onRowDoubleClick">
                     <Column field="name" header="Имя" :expander="true">
                         <template #body="slotProps">
                             <div
@@ -545,6 +551,7 @@ function onDropOnFolderWrapper(event, targetFolderNode) {
                                 @dragenter.prevent
                                 @contextmenu.prevent="openContextMenu($event, slotProps.node)"
                                 @click.stop
+                                @dblclick="handleRowDoubleClick(slotProps.node)"
                                 :class="{ 'folder-item': slotProps.node.data.type === 'folder' }"
                             >
                                 <i :class="slotProps.node.data.type === 'folder' ? 'pi pi-folder' : 'pi pi-file'" />
