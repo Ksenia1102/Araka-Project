@@ -279,7 +279,7 @@ function openNewTab() {
                             <div class="border-t">
                                 <ul style="margin: 10px">
                                     <li v-for="classItem in classes" :key="classItem.id" :class="{ selected: selectedClass === classItem.id }" @click="selectClass(classItem.id)" style="cursor: pointer; margin: 10px">
-                                        {{ classItem.title }} (Ученики: {{ classItem.studentsCount }})
+                                        {{ classItem.title }}
                                     </li>
                                 </ul>
                             </div>

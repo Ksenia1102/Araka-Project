@@ -63,8 +63,12 @@ async function openDemoWindow() {
 
         const demoUrl = `${window.location.origin}/demo?token=${encodeURIComponent(token)}`;
 
-        // const newWindow = window.open(demoUrl, '_blank', 'width=1000,height=800');
-        const newWindow = window.open(demoUrl, '_blank');
+        // Получаем размеры экрана
+        const width = window.screen.width;
+        const height = window.screen.height;
+
+        // Открываем окно на весь экран
+        const newWindow = window.open(demoUrl, '_blank', `width=${width},height=${height},left=0,top=0`);
 
         if (newWindow) {
             demoWindowOpen.value = true;
@@ -151,6 +155,8 @@ onMounted(() => {
 });
 
 const { onMenuToggle } = useLayout();
+
+
 </script>
 
 <template>
@@ -161,7 +167,7 @@ const { onMenuToggle } = useLayout();
             </button>
 
             <router-link to="/pages/dashboard" class="layout-topbar-logo">
-                <img src="/logo.svg" alt="" />
+                <img style="height: 2rem" src="/logo.svg" alt="" />
                 <span>EduVision</span>
             </router-link>
         </div>

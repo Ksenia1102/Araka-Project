@@ -16,6 +16,7 @@ const router = useRouter();
 
 const editDialogVisible = ref(false);
 const classesList = ref([]); // Классы для редактирования
+const classInputs = ref(['']);
 
 const confirmClassDeletion = (classId, className) => {
     deleteClassDialog.value.open(classId, className);
@@ -63,12 +64,9 @@ const model = ref([
 // Menu model with "Classes" as the root element
 const model1 = ref([
     {
-        items: [] // Classes will be added directly here
+        items: [] // Сюда будут добавляться новые классы
     }
 ]);
-
-// Fields for new class names
-const newClassInputs = ref(Array(8).fill('')); // Fields for new classes
 
 async function saveClass(classTitle) {
     // Input validation
@@ -111,10 +109,23 @@ async function saveClass(classTitle) {
     }
 }
 
-async function createClasses() {
-    const newClassesTitles = newClassInputs.value.filter((name) => name.trim() !== '');
+// Добавление нового поля ввода
+const addInput = () => {
+    classInputs.value.push('');
+};
 
-    if (newClassesTitles.length === 0) {
+// Удаление поля ввода
+const removeInput = (index) => {
+    classInputs.value.splice(index, 1);
+};
+
+
+async function createClasses() {
+    // const userId = getUserIdFromToken(); // Пример ID пользователя (замените на динамическое значение, если доступно)
+    // Получить список новых классов из введенных данных
+    const nonEmptyClasses = classInputs.value.filter((name) => name.trim() !== '');
+
+    if (nonEmptyClasses.length === 0) {
         toast.add({
             severity: 'warn',
             summary: 'Внимание',
@@ -124,39 +135,40 @@ async function createClasses() {
         return;
     }
 
-    const createdClassItems = []; // Create a temporary array to track created classes
-    for (const name of newClassesTitles) {
+    const classMenu = model1.value[0];
+    console.log(classMenu);
+    console.log(nonEmptyClasses);
+    let firstCreatedClass = null;
+
+    for (const name of nonEmptyClasses) {
         try {
-            const result = await saveClass(name);
-            if (result && result.classId) {
-                createdClassItems.push({
-                    label: result.title,
-                    to: `/uikit/class/${result.classId.id}/${result.title}`,
-                    state: {
-                        classTitle: result.title
-                    },
-                    badge: null
-                });
+            const { classId, title } = await saveClass(name);
+            console.log(classId);
+            if (classId) {
+                const newClass = {
+                    label: title,
+                    to: `/uikit/class/${classId.id}/${title}`
+                };
+                classMenu.items.push(newClass);
+                if (!firstCreatedClass) firstCreatedClass = newClass;
             }
         } catch (error) {
             toast.add({
                 severity: 'error',
                 summary: 'Ошибка',
-                detail: `Ошибка при сохранении класса "${name}":`,
+                detail: `Ошибка при сохранении класса "${name}"`,
                 life: 3000
             });
         }
     }
 
-    await fetchClasses(); // Refresh class list after creation
-
-    // Reset input fields and close modal
-    newClassInputs.value = Array(8).fill('');
+    // Сброс и закрытие
+    classInputs.value = [''];
     display.value = false;
 
-    // Navigate to the first created class (if any)
-    if (createdClassItems.length > 0) {
-        router.push(createdClassItems[0].to);
+    // Переход к первому созданному классу
+    if (firstCreatedClass) {
+        router.push(firstCreatedClass.to);
     }
 }
 
@@ -213,15 +225,28 @@ onMounted(() => {
         </template>
     </ul>
     <ul class="layout-menu" style="background-color: var(--surface-overlay); border-radius: var(--content-border-radius); padding: 0rem; margin: 1rem 0;">
-        <Dialog header="Новые классы" v-model:visible="display" :breakpoints="{ '960px': '75vw' }" :style="{ width: '40vw' }" :modal="true">
+        <Dialog header="Новые классы" v-model:visible="display" :breakpoints="{ '960px': '75vw' }" :style="{ width: '25vw' }" :modal="true">
             <p class="leading-normal m-0 mb-4">Мы рекомендуем выбирать короткие и понятные названия, например, "Химия 9Б" или "Математика 10А".</p>
-            <div class="form-column">
-                <InputText v-maxlength="40" v-for="(_, index) in newClassInputs.slice(0, 4)" :key="`column1-${index}`" v-model="newClassInputs[index]" placeholder="Введите название класса" />
+
+            <div class="dynamic-inputs">
+                <!-- Основное поле ввода -->
+                <div class="input-wrapper">
+                    <InputText v-model="classInputs[0]" placeholder="Введите название класса" v-maxlength="40" class="full-width-input" />
+                </div>
+
+                <!-- Динамически добавляемые поля -->
+                <div class="input-wrapper" v-for="(input, index) in classInputs.slice(1)" :key="index">
+                    <div class="input-with-button">
+                        <InputText v-model="classInputs[index + 1]" placeholder="Введите название класса" v-maxlength="40" class="full-width-input" />
+                        <Button icon="pi pi-times" class="delete-button p-button-text p-button-danger" @click="removeInput(index + 1)" rounded />
+                    </div>
+                </div>
+
+                <!-- Кнопка добавления нового поля -->
+                <Button label="Добавить еще класс" icon="pi pi-plus" class="p-button-text" @click="addInput" />
+
+                <Button label="Создать классы" @click="createClasses" severity="info" icon="pi pi-plus-circle" style="width: 100%" />
             </div>
-            <div class="form-column">
-                <InputText v-maxlength="40" v-for="(_, index) in newClassInputs.slice(4, 8)" :key="`column2-${index}`" v-model="newClassInputs[index + 4]" placeholder="Введите название класса" />
-            </div>
-            <Button label="Создать классы" @click="createClasses" class="import-btn" icon="pi pi-plus-circle" style="width: 100%" />
         </Dialog>
 
         <ul class="layout-menu" style="background-color: var(--surface-overlay); border-radius: var(--content-border-radius); padding: 0.5rem; margin: 1rem 0">
@@ -319,5 +344,30 @@ onMounted(() => {
 
 .delete-btn:hover {
     background: rgba(239, 68, 68, 0.1) !important;
+}
+
+
+.dynamic-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.full-width-input {
+    width: 100%;
+}
+
+.input-with-button {
+    position: relative;
+}
+
+.delete-button {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-right: 0.5rem;
+    padding: 0.5rem;
+    z-index: 1;
 }
 </style>

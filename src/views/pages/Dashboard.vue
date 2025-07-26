@@ -322,6 +322,12 @@ async function moveNodeIntoFolder(dragged, targetFolder) {
 
 const isDragOverRoot = ref(false);
 
+function handleRowDoubleClick(node) {
+    if (node.data.type === 'survey') {
+        this.goToSurvey(node.data);
+    }
+}
+
 // Обработчик перетаскивания в корень
 async function handleRootDrop(event) {
     event.preventDefault();
@@ -552,7 +558,7 @@ function onDropOnFolderWrapper(event, targetFolderNode) {
             />
 
             <div class="tree-container" @drop="handleRootDrop" @dragover.prevent @dragenter="handleDragEnter" @dragleave="handleDragLeave" :class="{ 'drag-over': isDragOverRoot }" style="min-height: 200px; padding-bottom: 30px">
-                <TreeTable :value="filteredTree" selectionMode="single" v-model:selectionKeys="selectedNode" class="no-padding-table">
+                <TreeTable :value="filteredTree" selectionMode="single" v-model:selectionKeys="selectedNode" class="no-padding-table" @rowDblclick="onRowDoubleClick">
                     <Column field="name" header="Название" :expander="true">
                         <template #body="slotProps">
                             <div class="item-wrapper"
@@ -563,6 +569,7 @@ function onDropOnFolderWrapper(event, targetFolderNode) {
                                 @dragenter.prevent
                                 @contextmenu.prevent="slotProps.node.data.type === 'folder' && openContextMenu($event, slotProps.node)"
                                 @click.stop
+                                @dblclick="handleRowDoubleClick(slotProps.node)"
                             >
                                 <div :class="['item-content', slotProps.node.data.type === 'folder' ? 'folder-item' : 'survey-item']">
                                     <i :class="slotProps.node.data.type === 'folder' ? 'pi pi-folder' : 'pi pi-file'" />

@@ -185,11 +185,11 @@ onMounted(() => {
         <div class="flex flex-wrap flex-col gap-4" style="margin-bottom: 10px; width: 50%">
             <div class="flex flex-col grow basis-0 gap-2">
                 <label for="login">Логин</label>
-                <InputText type="text" placeholder="Какой-то логин" id="login" v-model="login" :disabled="!isEditingAuth" />
+                <InputText type="text" placeholder="Логин" id="login" v-model="login" :disabled="!isEditingAuth" />
             </div>
             <div class="flex flex-col grow basis-0 gap-2">
                 <label for="pass">Пароль</label>
-                <InputText type="text" placeholder="Какой-то пароль" id="pass" v-model="pass" :disabled="!isEditingAuth" />
+                <InputText type="text" placeholder="***********" id="pass" v-model="pass" :disabled="!isEditingAuth" />
             </div>
         </div>
         <Button severity="info" :label="buttonLabelAuth" @click="toggleEditAuthMode" style="margin-bottom: 10px" outlined></Button>
