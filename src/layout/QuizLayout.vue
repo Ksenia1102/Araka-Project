@@ -251,7 +251,7 @@ onMounted(() => {
                     <div>
                         <div class="card" style="height: 80vh; width: 120vh; margin-right: 30px; text-align: center">
                             <h2 class="font-bold mb-6 text-max" style="margin-bottom: 2em">Тест закончен!</h2>
-                            <Button label="Сохранить ответы и перейти к результатам теста" severity="info" class="p-button-success text-xl" @click="$emit('goBack')"></Button>
+                            <Button label="Вернуться в библиотеку" severity="info" class="p-button-success text-xl" @click="$emit('goBack')"></Button>
                         </div>
                     </div>
                     <!-- дублирование карточки??? как то это исправить-->

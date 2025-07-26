@@ -32,8 +32,8 @@ export async function checkClassExistence(classId, router, toast, apiUrl, loadin
         if (error.response && error.response.status === 404) {
             // Класс не найден, перенаправляем пользователя
             toast.add({
-                severity: 'error',
-                summary: 'Ошибка',
+                severity: 'warn',
+                summary: 'Внимание',
                 detail: 'Открытый класс не найден. Вы будете перенаправлены на страницу библиотеки.',
                 life: 5000
             });
