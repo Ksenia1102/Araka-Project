@@ -1,9 +1,9 @@
 <script setup>
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
-import { computed, inject, onMounted, ref } from 'vue';
+import { computed, inject, nextTick, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import FolderDialogs from './FolderDialogs.vue'
+import FolderDialogs from './FolderDialogs.vue';
 
 const apiUrl = import.meta.env.VITE_API_URL;
 const toast = useToast();
@@ -110,7 +110,7 @@ const filteredTree = computed(() => {
 
     return surveyTree.value.map(filterNode).filter(Boolean);
 });
-
+const hadFoldersInitially = ref(false);
 // Загрузка данных с сервера
 async function loadSurveyTree() {
     try {
@@ -127,6 +127,12 @@ async function loadSurveyTree() {
 
         // Преобразуем папки
         const folders = transformApiData(foldersRes.data);
+        console.log(folders)
+        console.log(hadFoldersInitially)
+        // Сохраняем, были ли папки до создания новой
+        if (!hadFoldersInitially.value) {
+            hadFoldersInitially.value = folders.length > 0;
+        }
 
         // Объединяем: папки + тесты без папок (после папок)
         surveyTree.value = [...folders, ...unfolderedSurveys];
@@ -182,6 +188,9 @@ const display = ref(false); // видимость модалки
 const newFolderName = ref('');
 const freeSurveys = ref([]); // тесты без папок
 const selectedSurveys = ref([]); // выбранные тесты в модалке
+const showFirstFolderHint = ref(false);
+const firstFolderRef = ref(null);
+
 // const router = useRouter();
 
 // открытие модалки
@@ -215,6 +224,10 @@ async function saveNewFolder() {
     try {
         const token = localStorage.getItem('authToken');
         loading.show('Создание папки...');
+
+        // Сохраняем, были ли папки до создания новой
+        const hadFoldersBefore = surveyTree.value.some((node) => node.data.type === 'folder');
+
         const response = await axios.post(
             `${apiUrl}/api/folders`,
             {
@@ -230,6 +243,17 @@ async function saveNewFolder() {
 
         // Обновляем дерево после успешного создания
         await loadSurveyTree();
+        await nextTick(); // убедимся, что дерево перерисовано
+
+        // Показываем подсказку только если папок не было до этого, а теперь они есть
+        if (!hadFoldersBefore) {
+            const firstFolderNode = surveyTree.value.find((node) => node.data.type === 'folder');
+            if (firstFolderNode) {
+                firstFolderRef.value = firstFolderNode.key;
+                showFirstFolderHint.value = true;
+            }
+        }
+
         closeCreateFolderDialog();
 
         toast.add({
@@ -248,6 +272,7 @@ async function saveNewFolder() {
         });
     }
 }
+
 // сортировка папок перед тестами
 function sortSurveyTree(nodes) {
     nodes.sort((a, b) => {
@@ -571,9 +596,23 @@ function onDropOnFolderWrapper(event, targetFolderNode) {
                                 @click.stop
                                 @dblclick="handleRowDoubleClick(slotProps.node)"
                             >
-                                <div :class="['item-content', slotProps.node.data.type === 'folder' ? 'folder-item' : 'survey-item']">
+                                <div
+                                    :class="['item-content', slotProps.node.data.type === 'folder' ? 'folder-item' : 'survey-item']"
+                                    :ref="slotProps.node.key === firstFolderRef ? 'firstFolderElement' : null"
+                                >
                                     <i :class="slotProps.node.data.type === 'folder' ? 'pi pi-folder' : 'pi pi-file'" />
                                     {{ slotProps.node.data.name }}
+                                    <!-- Подсказка -->
+                                    <div
+                                        v-if="showFirstFolderHint && slotProps.node.key === firstFolderRef"
+                                        class="tooltip-overlay"
+                                    >
+                                        <div class="tooltip-box">
+                                            <div class="tooltip-title">Подсказка</div>
+                                            Нажмите правой кнопкой на папку, чтобы переименовать или удалить
+                                            <Button label="Понятно" class="mt-2 confirm-button" size="medium" @click="showFirstFolderHint = false" />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </template>
@@ -643,5 +682,58 @@ function onDropOnFolderWrapper(event, targetFolderNode) {
     padding: 0 !important;
     margin: 0.5rem 1rem;
 }
+.tooltip-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    backdrop-filter: blur(2px);
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.tooltip-box {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    width: 400px;
+    max-width: 90vw;
+    text-align: center;
+    font-size: 1.1rem;
+    line-height: 1.5;
+}
+
+.tooltip-title {
+    font-weight: bold;
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.tooltip-text {
+    margin-bottom: 1.5rem;
+}
+
+.tooltip-box .p-button {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.confirm-button {
+    font-size: 1.1rem;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 1.5rem;
+}
+
 
 </style>

@@ -34,11 +34,11 @@ class AuthService {
             errors.push('Пароль должен содержать хотя бы одну цифру');
         }
 
-        if (!/[a-z]/.test(password)) {
+        if (!/[a-zа-я]/.test(password)) {
             errors.push('Пароль должен содержать хотя бы одну строчную букву');
         }
 
-        if (!/[A-Z]/.test(password)) {
+        if (!/[A-ZА-Я]/.test(password)) {
             errors.push('Пароль должен содержать хотя бы одну заглавную букву');
         }
 
