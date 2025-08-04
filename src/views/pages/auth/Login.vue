@@ -264,7 +264,7 @@ function goBack() {
 
                         <label for="password1" class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2">Пароль</label>
                         <p v-if="errors.password" class="text-red-500 text-sm">{{ errors.password }}</p>
-                        <Password id="password1" v-model="password" placeholder="Пароль" :toggleMask="true" class="mb-4" fluid :feedback="false"></Password>
+                        <Password id="password1" v-model="password" placeholder="Пароль" :toggleMask="true" class="mb-4" fluid :feedback="false" @keyup.enter="loginUser"></Password>
                         <p v-if="serverError" class="text-red-500 text-sm mb-4">{{ serverError }}</p>
                         <Button :to="{ name: 'registration' }" label="Нет аккаунта" class="w-full" severity="secondary" text @click="goToRegistration" />
                         <Button :to="{ name: 'registration' }" label="Подвтердить почту" class="w-full" severity="secondary" text @click="goToCode" />
